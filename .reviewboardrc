@@ -1,0 +1,4 @@
+REPOSITORY = 'ara/bootrom'
+REVIEWBOARD_URL = 'https://reviews.leaflabs.com'
+GUESS_FIELDS = 'auto'
+TARGET_GROUPS = 'ara-firmware'
