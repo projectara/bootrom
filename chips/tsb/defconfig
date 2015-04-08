@@ -1,0 +1,56 @@
+#
+# bootrom/ Configuration
+#
+
+#
+# Build Setup
+#
+# CONFIG_EXPERIMENTAL is not set
+CONFIG_DEFAULT_SMALL=y
+CONFIG_HOST_LINUX=y
+
+#
+# Binary Output Formats
+#
+CONFIG_RAW_BINARY=y
+
+#
+# Debug Options
+#
+# CONFIG_DEBUG is not set
+
+#
+# chip Options
+#
+CONFIG_ARCH_CHIP="tsb"
+# chip revision:
+#   higher 4bits are production chip revision, so it is 0 for all ESx.
+#   lower 4bits are minor revisions, here is stands for the x in ESx
+CONFIG_CHIP_REVISION=0x03
+#
+# Boot options
+#
+CONFIG_BOOT_RUNFROMROM=y
+# CONFIG_BOOT_RUNFROMISRAM is not set
+
+#
+# UART Configuration
+#
+CONFIG_UART_BAUD=115200
+CONFIG_UART_CLOCK_DIVIDER=26
+
+#
+# GPIO Configuration
+#
+# CONFIG_GPIO is not set
+
+#
+# Crypto API
+#
+# CONFIG_CRYPTO is not set
+
+#
+# Greybus utility
+#
+# CONFIG_GREYBUS_DEBUG is not set
+# CONFIG_MANIFEST_BOOT is not set

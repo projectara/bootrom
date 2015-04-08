@@ -1,0 +1,18 @@
+#! /bin/bash
+
+if [ "$1" != "" ]
+then
+	CONFIG_CHIP=$1
+else
+	CONFIG_CHIP="tsb"
+fi
+
+echo "Configuring for chip "${CONFIG_CHIP}
+DEFCONFIG=chips/${CONFIG_CHIP}/defconfig
+if test ! -f ${DEFCONFIG}
+then
+	echo "ERROR - invalid chip name \""${CONFIG_CHIP}"\" to be configured"
+	exit 1
+fi
+
+cp ${DEFCONFIG} .config

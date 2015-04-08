@@ -1,0 +1,5 @@
+
+include $(TOPDIR)/chips/tsb/defconfig
+
+CONFIG_DEBUG=y
+CONFIG_UART_CLOCK_DIVIDER=16

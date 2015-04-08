@@ -30,3 +30,7 @@
 
 # Debug files
 *.dSYM/
+
+# Files generated during build
+.config
+build

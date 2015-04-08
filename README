@@ -1,0 +1,16 @@
+README
+
+Build:
+The boot ROM code can only be built under Linux. Tested build environment is
+Ubuntu 14.04.
+
+To build the code, do:
+    ./configure <chip_name>
+    make
+
+The <chip_name> defaults to "tsb" if not specified. This is for the official
+Toshiba UniPro Bridge chips (both APBridge and GPBridge).
+
+Other available configurations include:
+    es1tsb  - to build image to run on ES1 chip (in workram)
+    fpgatsb - to build image to run on HAPS board, with ES3 FPGA bits
