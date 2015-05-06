@@ -29,11 +29,26 @@
 #include <stdint.h>
 #include "chipapi.h"
 #include "debug.h"
+#include "data_loading.h"
+#include "tftf.h"
+#include "ffff.h"
 
+extern data_load_ops spi_ops;
 void bootrom_main(void) {
     chip_init();
 
     dbginit();
     dbgprint("Hello world!\r\n");
+
+    spi_ops.init();
+    uint32_t is_secure_image;
+    if (!locate_second_stage_firmware_on_storage(&spi_ops)) {
+        if (!load_tftf_image(&spi_ops, &is_secure_image)) {
+            spi_ops.finish();
+            jump_to_image();
+        }
+    }
+    spi_ops.finish();
+    dbgprint("failed to load image, entering infinite loop\r\n");
     while(1);
 }

@@ -26,24 +26,23 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "chip.h"
-#include "chipapi.h"
+#include <stddef.h>
+#include "tftf.h"
 #include "debug.h"
-#include "tsb_scm.h"
+#include "crypto.h"
 
-void chip_init(void) {
-    /* Configure clocks */
-    tsb_clk_init();
+void hash_start(void) {
+
 }
 
-extern char _workram_start;
-extern char _bootrom_data_area;
-int chip_validate_data_load_location(void *base, uint32_t length) {
-    if ((uint32_t)base < (uint32_t)&_workram_start) {
-        return -1;
-    }
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
-        return -1;
-    }
+void hash_update(unsigned char *data, uint32_t datalen) {
+
+}
+
+void hash_final(unsigned char *digest) {
+
+}
+
+int verify_signature(unsigned char *digest, tftf_signature *signature) {
     return 0;
 }

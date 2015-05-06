@@ -14,3 +14,39 @@ Toshiba UniPro Bridge chips (both APBridge and GPBridge).
 Other available configurations include:
     es1tsb  - to build image to run on ES1 chip (in workram)
     fpgatsb - to build image to run on HAPS board, with ES3 FPGA bits
+
+Description:
+When the boot ROM starts, it is supposed to setup the environment and load
+second stage firmware image from either SPI flash or UniPro.
+
+The image file to be loaded, either from SPI flash or UniPro, is packed into
+TFTF file format. The TFTF file format describes each section of data/code in
+the second stage firmware, including the location and length of each section.
+The TFTF file format also includes signature of the second stage firmware, to
+be verified against the root public key built into the boot ROM.
+
+When loading image from SPI flash, there is also FFFF involved. FFFF stands for
+Flash Format For Firmware. It works as a "partition table" of the SPI flash,
+the boot ROM use it to locate the second stage firmware (in TFTF format) on the
+SPI flash.
+There is a FFFF table at the very beginning of the SPI flash, and a (supposely)
+identical copy of it at the beginning of next erase block of the SPI flash.
+The duplicated FFFF tables are used to provide a way to go back to the original
+FFFF table if one of the copy got corrupted during image updating.
+
+Memory map (workram):
+     ------------------------------------
+    | 0x1002FFFF | workram end           |
+     ------------------------------------
+    | 0x1002FFF8 | communication area    |
+     ------------------------------------
+    |    ...     | stack                 |
+     ------------------------------------
+    |    ...     | ...                   |
+     ------------------------------------
+    | 0x1002D000 | .data section         |
+     ------------------------------------
+    |     ...    | open for 2nd stage FW |
+     ------------------------------------
+    | 0x10000000 | workram start         |
+     ------------------------------------

@@ -35,10 +35,12 @@
 #define dbginit() chip_dbginit()
 #define dbgprint(x) chip_dbgprint(x)
 #define dbgputc(x) chip_dbgputc(x)
+#define dbgflush() chip_dbgflush()
 #else
 #define dbginit()
 #define dbgprint(x)
 #define dbgputc(x)
+#define dbgflush()
 #endif /* _DEBUG */
 
 #endif /* __COMMON_INCLUDE_DEBUG_H */

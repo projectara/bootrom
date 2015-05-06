@@ -33,5 +33,6 @@ CHIP_CSRC += $(CHIP_SRCDIR)/tsb_scm.c
 ifeq ($(CONFIG_DEBUG),y)
 CHIP_CSRC +=  $(CHIP_SRCDIR)/tsb_dbguart.c
 endif
+CHIP_CSRC += $(CHIP_SRCDIR)/tsb_spi.c
 
 CHIP_ASRC =  $(CHIP_SRCDIR)/boot.S

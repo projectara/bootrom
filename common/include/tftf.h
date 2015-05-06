@@ -26,20 +26,58 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_CHIPAPI_H
-#define __COMMON_INCLUDE_CHIPAPI_H
+#ifndef __COMMON_INCLUDE_TFTF_H
+#define __COMMON_INCLUDE_TFTF_H
 
 #include <stdint.h>
+#include "data_loading.h"
 
-void chip_init(void);
+#define TFTF_HEADER_SIZE                  512
+#define TFTF_SENTINEL_VALUE               {'T','F','T','F'}
 
-// For debug output
-void chip_dbginit(void);
-void chip_dbgputc(int);
-void chip_dbgprint(char *);
-void chip_dbgflush(void);
+/* Section types */
+#define TFTF_SECTION_END                  0xFE
+#define TFTF_SECTION_RAW_CODE             1
+#define TFTF_SECTION_RAW_DATA             2
+#define TFTF_SECTION_COMPRESSED_CODE      3
+#define TFTF_SECTION_COMPRESSED_DATA      4
+#define TFTF_SECTION_MANIFEST             5
+#define TFTF_SECTION_SIGNATURE            0x80
+#define TFTF_SECTION_CERTIFICATE          0x81
 
-int chip_validate_data_load_location(void *base, uint32_t length);
+typedef struct {
+    uint32_t section_length;
+    uint32_t expanded_length;
+    uint32_t copy_offset;
+    uint32_t section_type;
+} __attribute__ ((packed)) tftf_section_descriptor;
 
-void chip_jump_to_image(uint32_t start_address);
-#endif /* __COMMON_INCLUDE_CHIPAPI_H */
+typedef union {
+    struct {
+        uint32_t sentinel_value;
+        char build_timestamp[16];
+        char firmware_package_name[48];
+        uint32_t load_length;
+        uint32_t load_base;
+        uint32_t expanded_length;
+        uint32_t start_location;
+        uint32_t unipro_vid;
+        uint32_t unipro_pid;
+        uint32_t ara_vid;
+        uint32_t ara_pid;
+        tftf_section_descriptor sections[];
+    };
+    unsigned char buffer[TFTF_HEADER_SIZE];
+} __attribute__ ((packed)) tftf_header;
+
+typedef struct {
+    /* TBD */
+    unsigned char signature[64];
+} __attribute__ ((packed)) tftf_signature;
+
+typedef void (*image_entry_func)(void);
+
+int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image);
+void jump_to_image(void);
+
+#endif /* __COMMON_INCLUDE_TFTF_H */

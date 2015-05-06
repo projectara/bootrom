@@ -94,6 +94,12 @@ end_init_data_sec:
 exception_common_handler:
 	b exception_common_handler
 
+.globl chip_jump_to_image
+.type chip_jump_to_image, %function
+chip_jump_to_image:
+    orr r0, #1    /* set Thumb mode for bx */
+    bx r0
+
 #ifndef BOOT_FROM_ROM
 .globl	Reset_Handler
 .type	Reset_Handler, %function

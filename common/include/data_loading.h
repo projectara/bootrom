@@ -26,24 +26,39 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "chip.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "tsb_scm.h"
+#ifndef __COMMON_INCLUDE_DATA_LOADING_H
+#define __COMMON_INCLUDE_DATA_LOADING_H
 
-void chip_init(void) {
-    /* Configure clocks */
-    tsb_clk_init();
-}
+#include <stdint.h>
 
-extern char _workram_start;
-extern char _bootrom_data_area;
-int chip_validate_data_load_location(void *base, uint32_t length) {
-    if ((uint32_t)base < (uint32_t)&_workram_start) {
-        return -1;
-    }
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
-        return -1;
-    }
-    return 0;
-}
+typedef int (*data_loading_init)(void);
+
+/* "read" function for random access.
+   "load" function for serialized access.
+
+   These functions are expected to read exactly the requested number of bytes.
+   So unlike tradition "read" function that returns bytes read, only 0 and -1
+   are valid return value here.
+
+   For image loading methods supports only serialized access, such as UniPro,
+   "read" should be set to NULL.
+
+   For image loading methods supports random access, such as SPI flash,
+   "load" should load data from the end of previous "load" or "read".
+   For the first "load" before any "read", the address starts at 0
+
+   A call to "read" with 0 length can be used to set the address for the
+   following "load" */
+typedef int (*data_loading_read)(void *dest, uint32_t addr, uint32_t length);
+typedef int (*data_loading_load)(void *dest, uint32_t length);
+
+typedef void (*data_loading_finish)(void);
+
+typedef struct {
+    data_loading_init init;
+    data_loading_read read;
+    data_loading_load load;
+    data_loading_finish finish;
+} data_load_ops;
+
+#endif /* __COMMON_INCLUDE_DATA_LOADING_H */

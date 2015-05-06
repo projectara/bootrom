@@ -45,6 +45,7 @@
 #define UART_FCR_IIR_IID1_XFIFOR (1 << 2) // FIFO RX Reset
 
 #define UART_LSR_THRE (0x1 << 5)
+#define UART_LSR_TX_EMPTY (0x1 << 6)
 
 void chip_dbginit(void) {
     int i;
@@ -97,4 +98,9 @@ void chip_dbgprint(char *str) {
         chip_dbgputc(*str);
         str++;
     }
+}
+
+void chip_dbgflush(void) {
+    while ((getreg32(UART_LSR) & UART_LSR_TX_EMPTY) != UART_LSR_TX_EMPTY)
+        ;
 }

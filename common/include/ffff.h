@@ -26,24 +26,53 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "chip.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "tsb_scm.h"
+#ifndef __COMMON_INCLUDE_FFFF_H
+#define __COMMON_INCLUDE_FFFF_H
 
-void chip_init(void) {
-    /* Configure clocks */
-    tsb_clk_init();
-}
+#include <stdint.h>
+#include "data_loading.h"
 
-extern char _workram_start;
-extern char _bootrom_data_area;
-int chip_validate_data_load_location(void *base, uint32_t length) {
-    if ((uint32_t)base < (uint32_t)&_workram_start) {
-        return -1;
-    }
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
-        return -1;
-    }
-    return 0;
-}
+#define FFFF_HEADER_SIZE                  512
+#define FFFF_ERASE_BLOCK_SIZE_MAX         (1024 * 512)
+
+#define FFFF_SENTINEL_SIZE                16
+#define FFFF_SENTINEL_VALUE               "FlashFormatForFW"
+
+/* Element types */
+#define FFFF_ELEMENT_END                  0
+#define FFFF_ELEMENT_STAGE_2_FW           1
+#define FFFF_ELEMENT_STAGE_3_FW           2
+#define FFFF_ELEMENT_IMS_CERT             3
+#define FFFF_ELEMENT_CMS_CERT             4
+#define FFFF_ELEMENT_DATA                 5
+
+typedef struct {
+    uint32_t element_type;
+    uint32_t element_id;
+    uint32_t element_generation;
+    uint32_t element_location;
+    uint32_t element_length;
+} __attribute__ ((packed)) ffff_element_descriptor;
+
+#define FFFF_ELEMENT_SIZE sizeof(ffff_element_descriptor)
+
+typedef union {
+    struct {
+        char sentinel_value[FFFF_SENTINEL_SIZE];
+        char build_timestamp[16];
+        char flash_image_name[48];
+        uint32_t flash_capacity;
+        uint32_t erase_block_size;
+        uint32_t header_size;
+        uint32_t flash_image_length;
+        uint32_t header_generation;
+        ffff_element_descriptor elements[];
+    };
+    struct {
+        unsigned char leading_buffer[FFFF_HEADER_SIZE - FFFF_SENTINEL_SIZE];
+        char trailing_sentinel_value[FFFF_SENTINEL_SIZE];
+    };
+} __attribute__ ((packed)) ffff_header;
+
+int locate_second_stage_firmware_on_storage(data_load_ops *ops);
+#endif /* __COMMON_INCLUDE_FFFF_H */

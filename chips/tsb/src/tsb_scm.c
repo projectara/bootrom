@@ -57,6 +57,11 @@ void tsb_clk_enable(uint32_t clk) {
     scm_write(TSB_SCM_CLOCKENABLE0 + CLK_OFFSET(clk), CLK_MASK(clk));
 }
 
+void tsb_clk_disable(uint32_t clk)
+{
+    scm_write(TSB_SCM_CLOCKGATING0 + CLK_OFFSET(clk), CLK_MASK(clk));
+}
+
 void tsb_reset(uint32_t rst) {
     scm_write(TSB_SCM_SOFTRESET0 + CLK_OFFSET(rst), CLK_MASK(rst));
     scm_write(TSB_SCM_SOFTRESETRELEASE0 + CLK_OFFSET(rst), CLK_MASK(rst));
