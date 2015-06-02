@@ -67,9 +67,12 @@ build/%.o: %.c
 	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
 
 build/%.o: %.S
-	@ echo Compiling $<
+	@ echo Assembling $<
 	$(Q) $(CC) $(AFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) -c $<
 	$(Q) $(CC) $(AFLAGS) -o $@ -c $<
 
 clean:
 	$(Q) -rm -rf $(OUTROOT)
+
+distclean: clean
+	$(Q) -rm -rf .config
