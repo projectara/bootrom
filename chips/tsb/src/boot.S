@@ -29,6 +29,8 @@
 .syntax		unified
 .file		"boot.S"
 
+#include "chipdef.h"
+
 .text
 .thumb
 .thumb_func
@@ -55,9 +57,56 @@ _vectors:
 	.word exception_common_handler
 	.word exception_common_handler
 
+/* experiment on ES1 shows this is enough for 0.1us */
+#define DELAY_100NS_LOOP_COUNT 3
+
 .globl __start
 .type __start, %function
 __start:
+#if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
+    ldr r1, =BOOTRET_O
+    ldr r0, [r1]
+    tst r0, #1
+    beq cold_boot
+
+    ldr r2, =RETSRAMRET
+    ldr r0, =0
+    str r0, [r2]
+
+    ldr r3, =DELAY_100NS_LOOP_COUNT
+delay_100ns_loop:
+    subs r3, r3, #1
+    bne delay_100ns_loop
+
+    ldr r2, =RETSRAMCLKCONT
+    ldr r0, =1
+    str r0, [r2]
+
+    /* delay 5 CPU cycles or more */
+    nop
+    nop
+    nop
+    nop
+    nop
+
+    ldr r2, =RETSRAMCENCONT
+    ldr r0, =0
+    str r0, [r2]
+
+    ldr r2, =_resume_address
+    ldm r2, {r0, r1}
+    mvn r1, r1
+    cmp r0, r1   /* check the complement of the resume address */
+    bne cold_boot
+
+    ldr r3, =0
+    str r3, [r2], #4 /* clear the resume address */
+    str r3, [r2]
+    orr r0, #1   /* make sure thumb bit is set */
+    bx r0   /* jump to resume address */
+
+cold_boot:
+#endif
     /* clear workram */
     /* WARNING!!!: Assumption here is that workram will always be
        a multiple of 32 bytes. If this become not true for some interesting

@@ -2,7 +2,11 @@
 _workram_start = ORIGIN(sram);
 _workram_end = ORIGIN(sram) + LENGTH(sram);
 
-_communication_area = ORIGIN(sram) + LENGTH(sram) - 8;
+_resume_address_size = 8;
+_communication_area_size = 200; /* except for resume address */
+
+_resume_address = _workram_end - _resume_address_size;
+_communication_area = _resume_address - _communication_area_size;
 _stack_top = _communication_area;
 
 /* The high 12kB is used for boot ROM .data, .bss, stack and communication.
