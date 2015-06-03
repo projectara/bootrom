@@ -26,34 +26,25 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "chip.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "tsb_scm.h"
+.syntax		unified
+.file		"bootstrap.S"
 
-void chip_init(void) {
-#ifdef BOOT_FROM_SLOW_ROM
+.extern _bootstrap_lma, _bootstrap_vma, _bootstrap_size
 
-    #define ARMV7M_NVIC_BASE    0xe000e000
-    #define NVIC_VECTAB_OFFSET  0x0d08 /* Vector table offset register */
-    #define NVIC_VECTAB         (ARMV7M_NVIC_BASE + NVIC_VECTAB_OFFSET)
+.section .bootstrap, "ax"
+.align 4
 
-    extern uint32_t _vectors[32];
+.global copy_to_ram
 
-    putreg32((uint32_t)&_vectors[0], NVIC_VECTAB);
-#endif
-    /* Configure clocks */
-    tsb_clk_init();
-}
+.thumb_func
+copy_to_ram:
+    ldr r3, [r1], #4
+    str r3, [r2], #4
+    cbz r0, done_copy_to_ram
+    sub r0, r0, #4
+    b copy_to_ram
+done_copy_to_ram:
+    b bootrom_main
 
-extern char _workram_start;
-extern char _bootrom_data_area;
-int chip_validate_data_load_location(void *base, uint32_t length) {
-    if ((uint32_t)base < (uint32_t)&_workram_start) {
-        return -1;
-    }
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
-        return -1;
-    }
-    return 0;
-}
+.align 4
+_copy_to_ram:

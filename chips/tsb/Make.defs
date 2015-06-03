@@ -39,11 +39,12 @@ CHIPOPTIMIZATION = -Os
 
 CHIPLINKFLAGS = --gc-sections
 
-ifeq ($(CONFIG_BOOT_RUNFROMISRAM),y)
-    LDSCRIPT = $(CHIP_DIR)/scripts/ld-workram.script
+ifeq ($(CONFIG_BOOT_FROM_SLOW_ROM),y)
+  LDSCRIPT = $(CHIP_DIR)/scripts/ld-spirom.script
+  CHIPDEFINES += -DBOOT_FROM_SLOW_ROM
 else
-    LDSCRIPT = $(CHIP_DIR)/scripts/ld.script
-    CHIPDEFINES += -DBOOT_FROM_ROM
+  LDSCRIPT = $(CHIP_DIR)/scripts/ld.script
+  CHIPDEFINES += -DBOOT_FROM_ROM
 endif
 
 CROSS_COMPILE = arm-none-eabi-

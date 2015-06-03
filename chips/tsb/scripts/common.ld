@@ -17,6 +17,16 @@ OUTPUT_ARCH(arm)
 EXTERN(_vectors)
 SECTIONS
 {
+
+   /* bootstrap sections are meant to contain input sections only when building 
+    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other 
+    * circumstances, such as when building for ES3's actual ROM, they must be 
+    * empty. */
+	.bootstrap.loader : {
+		*(.bootstrap.loader)
+		_spi_stext = ABSOLUTE(.);
+	} > rom
+
 	.text : {
 		_stext = ABSOLUTE(.);
 		*(.vectors)
@@ -25,15 +35,31 @@ SECTIONS
 		*(.gnu.linkonce.t.*)
 		*(.gnu.linkonce.r.*)
 		_etext = ABSOLUTE(.);
-	} > rom
+	} > REGION_TEXT AT > rom
 
-	_data_in_rom = ALIGN(0x4);
-	.data (_bootrom_data_area): AT (_data_in_rom) {
-		_sdata = ABSOLUTE(.);
+	_stext_lma = LOADADDR(.text);
+	_text_size = SIZEOF(.text);
+
+	.data (_bootrom_data_area): {
+		_sdata = ALIGN(4);
 		*(.data .data.*)
 		*(.gnu.linkonce.d.*)
 		_edata = ALIGN(4);
-	} > sram
+	} > sram AT > rom
+
+	_data_in_rom = LOADADDR(.data);
+
+   /* bootstrap sections are meant to contain input sections only when building 
+    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other 
+    * circumstances, such as when building for ES3's actual ROM, they must be 
+    * empty. */
+	.bootstrap :  {
+		*(.bootstrap)
+	} > REGION_TEXT AT > rom
+
+	_bootstrap_lma = LOADADDR(.bootstrap);
+	_bootstrap_vma = ADDR(.bootstrap);
+	_bootstrap_size = SIZEOF(.bootstrap);
 
 	.bss ALIGN(4): {
 		_sbss = ABSOLUTE(.);

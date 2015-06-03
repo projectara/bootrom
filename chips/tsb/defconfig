@@ -30,9 +30,6 @@ CONFIG_CHIP_REVISION=0x03
 #
 # Boot options
 #
-CONFIG_BOOT_RUNFROMROM=y
-# CONFIG_BOOT_RUNFROMISRAM is not set
-
 #
 # UART Configuration
 #

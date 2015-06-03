@@ -10,6 +10,6 @@ MEMORY
 
 ENTRY(__start)
 
-REGION_ALIAS("REGION_TEXT", rom);
+REGION_ALIAS("REGION_TEXT", sram);
 
 INCLUDE chips/tsb/scripts/common.ld

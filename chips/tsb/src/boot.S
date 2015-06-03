@@ -38,7 +38,24 @@
 
 .globl bootrom_main
 
-.globl _vector
+.globl	Reset_Handler
+.type	Reset_Handler, %function
+Reset_Handler:
+    ldr sp, =_stack_top
+    b bootrom_main
+
+.type exception_common_handler, %function
+exception_common_handler:
+	b exception_common_handler
+
+.globl chip_jump_to_image
+.type chip_jump_to_image, %function
+chip_jump_to_image:
+    orr r0, #1    /* set Thumb mode for bx */
+    bx r0
+
+.section .vectors
+.globl _vectors
 _vectors:
 	.word _stack_top
 	.word __start
@@ -59,6 +76,19 @@ _vectors:
 
 /* experiment on ES1 shows this is enough for 0.1us */
 #define DELAY_100NS_LOOP_COUNT 3
+
+#ifdef BOOT_FROM_SLOW_ROM
+.section .bootstrap.loader, "ax"
+#else
+.text
+#endif
+
+#ifdef BOOT_FROM_SLOW_ROM
+.globl _bootstrap_vectors
+_bootstrap_vectors:
+	.word _stack_top
+	.word __start
+#endif
 
 .globl __start
 .type __start, %function
@@ -137,22 +167,33 @@ init_data_sec:
     str r0, [r2], #4
     b init_data_sec
 end_init_data_sec:
+#ifdef BOOT_FROM_SLOW_ROM
+	b bootstrap
+#else
 	b bootrom_main
+#endif
 
-.type exception_common_handler, %function
-exception_common_handler:
-	b exception_common_handler
+#ifdef BOOT_FROM_SLOW_ROM
+.globl bootstrap
+.extern copy_to_ram
 
-.globl chip_jump_to_image
-.type chip_jump_to_image, %function
-chip_jump_to_image:
-    orr r0, #1    /* set Thumb mode for bx */
-    bx r0
+bootstrap:
+    ldr r0, =_bootstrap_lma
+    ldr r1, =_bootstrap_size
+    ldr r2, =_bootstrap_vma
 
-#ifndef BOOT_FROM_ROM
-.globl	Reset_Handler
-.type	Reset_Handler, %function
-Reset_Handler:
-    ldr sp, =_stack_top
-    b __start
+bootstrap_copy:
+    cbz r1, done_bootstrap_copy
+    ldr r3, [r0], #4
+    str r3, [r2], #4
+    sub r1, r1, #4
+    b bootstrap_copy
+
+done_bootstrap_copy:
+    ldr r0, =_text_size
+    add r0, r0, #3
+    bic r0, r0, #3
+    ldr r1, =_stext_lma
+    ldr r2, =_stext
+    b copy_to_ram
 #endif

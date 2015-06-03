@@ -1,6 +1,0 @@
-
-include $(TOPDIR)/chips/tsb/defconfig
-
-CONFIG_DEBUG=y
-CONFIG_BOOT_RUNFROMROM=y
-CONFIG_BOOT_RUNFROMISRAM=

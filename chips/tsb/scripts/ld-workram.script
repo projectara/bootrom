@@ -18,4 +18,6 @@ MEMORY
 
 ENTRY(Reset_Handler)
 
+REGION_ALIAS("REGION_TEXT", rom);
+
 INCLUDE chips/tsb/scripts/common.ld
