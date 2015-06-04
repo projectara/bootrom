@@ -27,6 +27,8 @@
  */
 
 #include <stddef.h>
+#include <string.h>
+#include "bootrom.h"
 #include "tftf.h"
 #include "debug.h"
 #include "data_loading.h"
@@ -191,6 +193,12 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
         /* finished loading and verifying secured image */
         *is_secure_image = 1;
     }
+
+    communication_area *p = (communication_area *)&_communication_area;
+    memcpy(p->stage_2_firmware_description,
+           tftf.header.build_timestamp,
+           sizeof(p->stage_2_firmware_description));
+
     return 0;
 }
 

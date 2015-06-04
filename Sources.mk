@@ -40,6 +40,7 @@ CMN_CSRC =  $(CMN_SRCDIR)/start.c
 CMN_CSRC += $(CMN_SRCDIR)/tftf.c
 CMN_CSRC += $(CMN_SRCDIR)/ffff.c
 CMN_CSRC += $(CMN_SRCDIR)/crypto.c
+CMN_CSRC += $(CMN_SRCDIR)/utils.c
 
 CMN_ASRC =
 
