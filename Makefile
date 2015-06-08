@@ -38,6 +38,29 @@ else
 export Q := @
 endif
 
+#
+# "ES3 Bridge ASIC Boot ROM High Level Design" specifies 2 compile-time
+# switches:
+#    Production/Development: Assign UART to debug if Development
+#    Normal/Simulation: If Simulation, bypass crypto and memory clearing so
+#        that chip-level simulations run quicker.
+#
+XFLAGS =
+#  _PRODUCTION==1:  Shipping version - prevent debug from using UART
+#  _PRODUCTION!=1:  Development version - debug uses UART
+ifeq ($(_PRODUCTION),1)
+XCFLAGS += -D_PRODUCTION
+XAFLAGS += -D_PRODUCTION
+endif
+
+#  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
+#  _SIMULATION!=1:  Use memory clearing and real crypto
+ifeq ($(_SIMULATION),1)
+XCFLAGS += -D_SIMULATION
+XAFLAGS += -D_SIMULATION
+endif
+
+
 include $(TOPDIR)/.config
 
 CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
@@ -48,6 +71,10 @@ ifdef CONFIG_ARCH_EXTRA
 endif
 
 include $(CHIP_DIR)/Make.defs
+
+CFLAGS += $(XCFLAGS)
+AFLAGS += $(XAFLAGS)
+
 
 _dummy := $(shell [ -d $(OUTROOT) ] || mkdir -p $(OUTROOT))
 include $(TOPDIR)/Sources.mk

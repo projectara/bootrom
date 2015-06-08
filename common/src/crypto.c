@@ -31,18 +31,62 @@
 #include "debug.h"
 #include "crypto.h"
 
+
+/**
+ * @brief Initialize the SHA hash
+ *
+ * @param none
+ *
+ * @returns Nothing
+ */
 void hash_start(void) {
-
+#ifndef _SIMULATION
+    /* TODO: Add hash initialization code once license is signed */
+#endif
 }
 
+
+/**
+ * @brief Add data to the SHA hash
+ *
+ * @param data Pointer to the run of data to add to the hash.
+ * @param datalen The length in bytes of the data run.
+ *
+ * @returns Nothing
+ */
 void hash_update(unsigned char *data, uint32_t datalen) {
-
+#ifndef _SIMULATION
+    /* TODO: Add hash update code once license is signed */
+#endif
 }
 
+
+/**
+ * @brief Finalize the SHA hash and return the digest
+ *
+ * @param digest Pointer to the digest buffer
+ *
+ * @returns Nothing
+ */
 void hash_final(unsigned char *digest) {
-
+#ifndef _SIMULATION
+    /* TODO: Add hash finalization code once license is signed */
+#endif
 }
 
+
+/**
+ * @brief Verify a SHA digest against a signature
+ *
+ * @param digest The SHA digest obtained from hash-final.
+ * @param signature A pointer to the TFTF signature block.
+ *
+ * @returns 0 if the digest verifies, non-zero otherwise
+ */
 int verify_signature(unsigned char *digest, tftf_signature *signature) {
+#ifdef _SIMULATION
+    return 0;
+#endif
+    /* TODO: Add signature verification code once license is signed */
     return 0;
 }

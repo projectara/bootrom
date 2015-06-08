@@ -137,10 +137,16 @@ delay_100ns_loop:
 
 cold_boot:
 #endif
-    /* clear workram */
-    /* WARNING!!!: Assumption here is that workram will always be
-       a multiple of 32 bytes. If this become not true for some interesting
-       reason, we have to modify the code here. */
+    /* Clear workram
+     *
+     * WARNING!!!: Assumption here is that workram will always be
+     * a multiple of 32 bytes. If this becomes untrue for some interesting
+     * reason, we have to modify the code here.
+     *
+     * NOTE: We do not clear workram if we're running on a chip simulator,
+     * because the simulator has already zapped memory and this loop slows
+     * down the simulation.
+     */
     ldr r0, =0
     mov r1, r0
     mov r2, r0
@@ -149,7 +155,13 @@ cold_boot:
     mov r5, r0
     mov r6, r0
     mov r7, r0
+#ifdef _SIMULATION
+    /* Just clear the BootRom .data, .bss, stack and communication region*/
+    ldr r8, =_bootrom_data_area
+#else
+    /* Clear all of work RAM */
     ldr r8, =_workram_start
+#endif
     ldr r9, =_workram_end
 clear_workram:
     stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
