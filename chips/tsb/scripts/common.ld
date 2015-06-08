@@ -18,10 +18,12 @@ EXTERN(_vectors)
 SECTIONS
 {
 
-   /* bootstrap sections are meant to contain input sections only when building 
-    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other 
-    * circumstances, such as when building for ES3's actual ROM, they must be 
-    * empty. */
+   /* 
+    * bootstrap sections are meant to contain input sections only when building 
+    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
+    * circumstances, such as when building for ES3's actual ROM, they must be
+    * empty.
+    */
 	.bootstrap.loader : {
 		*(.bootstrap.loader)
 		_spi_stext = ABSOLUTE(.);
@@ -49,10 +51,12 @@ SECTIONS
 
 	_data_in_rom = LOADADDR(.data);
 
-   /* bootstrap sections are meant to contain input sections only when building 
-    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other 
-    * circumstances, such as when building for ES3's actual ROM, they must be 
-    * empty. */
+   /* 
+    * bootstrap sections are meant to contain input sections only when building
+    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
+    * circumstances, such as when building for ES3's actual ROM, they must be
+    * empty.
+    */
 	.bootstrap :  {
 		*(.bootstrap)
 	} > REGION_TEXT AT > rom
