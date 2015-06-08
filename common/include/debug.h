@@ -32,15 +32,25 @@
 #include "chipapi.h"
 
 #ifdef _DEBUG
-#define dbginit() chip_dbginit()
-#define dbgprint(x) chip_dbgprint(x)
-#define dbgputc(x) chip_dbgputc(x)
-#define dbgflush() chip_dbgflush()
+    #define dbginit() chip_dbginit()
+    #define dbgputc(x) chip_dbgputc(x)
+    #define dbgprint(x) chip_dbgprint(x)
+    void dbgprintbool(uint8_t flag);
+    void dbgprinthex8(uint8_t num);
+    void dbgprinthex32(uint32_t num);
+    void dbgprinthex64(uint64_t num);
+    void dbgprinthexbuf(uint8_t * buf, int len);
+    #define dbgflush() chip_dbgflush()
 #else
-#define dbginit()
-#define dbgprint(x)
-#define dbgputc(x)
-#define dbgflush()
+    #define dbginit()
+    #define dbgputc(x)
+    #define dbgprint(x)
+    #define dbgprintbool(x)
+    #define dbgprinthex8(x)
+    #define dbgprinthex32(x)
+    #define dbgprinthex64(x)
+    #define dbgprinthexbuf(buf,len)
+    #define dbgflush()
 #endif /* _DEBUG */
 
 #endif /* __COMMON_INCLUDE_DEBUG_H */

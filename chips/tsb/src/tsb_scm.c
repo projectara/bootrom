@@ -38,6 +38,10 @@
 #define TSB_SCM_SOFTRESETRELEASE0       0x00000100
 #define TSB_SCM_CLOCKGATING0            0x00000200
 #define TSB_SCM_CLOCKENABLE0            0x00000300
+#define TSB_SCM_BOOTSELECTOR            0x00000400
+#define TSB_SCM_ECCERROR                0x000004c4
+#define TSB_SCM_VID                     0x00000700
+#define TSB_SCM_PID                     0x00000704
 #define TSB_SCM_PINSHARE                0x00000800
 
 
@@ -70,4 +74,20 @@ void tsb_reset(uint32_t rst) {
 void tsb_set_pinshare(uint32_t bits) {
     uint32_t r = scm_read(TSB_SCM_PINSHARE);
     scm_write(TSB_SCM_PINSHARE, r | bits);
+}
+
+uint32_t tsb_get_bootselector(void) {
+    return scm_read(TSB_SCM_BOOTSELECTOR);
+}
+
+uint32_t tsb_get_eccerror(void) {
+    return scm_read(TSB_SCM_ECCERROR);
+}
+
+uint32_t tsb_get_vid(void) {
+    return scm_read(TSB_SCM_VID);
+}
+
+uint32_t tsb_get_pid(void) {
+    return scm_read(TSB_SCM_PID);
 }

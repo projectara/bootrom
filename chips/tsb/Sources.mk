@@ -34,6 +34,8 @@ ifeq ($(CONFIG_DEBUG),y)
 CHIP_CSRC +=  $(CHIP_SRCDIR)/tsb_dbguart.c
 endif
 CHIP_CSRC += $(CHIP_SRCDIR)/tsb_spi.c
+CHIP_CSRC += $(CHIP_SRCDIR)/tsb_unipro.c
+CHIP_CSRC += $(CHIP_SRCDIR)/tsb_isaa.c
 
 CHIP_ASRC = $(CHIP_SRCDIR)/boot.S
 CHIP_ASRC += $(CHIP_SRCDIR)/copy_to_ram.S

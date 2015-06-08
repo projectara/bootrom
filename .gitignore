@@ -31,6 +31,10 @@
 # Debug files
 *.dSYM/
 
+# Eclipse files
+*~
+.project
+
 # Files generated during build
 .config
 build

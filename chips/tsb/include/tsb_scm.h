@@ -140,6 +140,14 @@
 #define TSB_PIN_DBG             (1 << 9)
 
 
+/* BOOTLSELECTOR bits */
+#define TSB_EBOOTSELECTOR_SPIBOOT_N (1 << 0)
+#define TSB_EBOOTSELECTOR_DEBUG_0   (1 << 1)
+
+
+/* ECCERROR bits */
+#define TSB_ECCERROR_ECC_ERROR  (1 << 0)
+
 #define CLK_OFFSET(clk) (((clk >> 22) & 0xfc))
 #define CLK_MASK(clk)   (1 << (clk & 0x1f))
 
@@ -172,5 +180,9 @@ void tsb_clk_dump(void);
 void tsb_reset(uint32_t rst);
 void tsb_set_pinshare(uint32_t pin);
 void tsb_clr_pinshare(uint32_t pin);
+uint32_t tsb_get_bootselector(void);
+uint32_t tsb_get_eccerror(void);
+uint32_t tsb_get_vid(void);
+uint32_t tsb_get_pid(void);
 
 #endif /* __ARCH_ARM_SRC_TSB_TSB_SCM_H */

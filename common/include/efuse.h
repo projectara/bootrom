@@ -26,56 +26,33 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_CHIPAPI_H
-#define __COMMON_INCLUDE_CHIPAPI_H
+#ifndef __COMMON_EFUSE_H
+#define __COMMON_EFUSE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-void chip_init(void);
-
-/* For debug output */
-void chip_dbginit(void);
-void chip_dbgputc(int);
-void chip_dbgprint(char *);
-void chip_dbgflush(void);
-
-int chip_validate_data_load_location(void *base, uint32_t length);
-
-void chip_jump_to_image(uint32_t start_address);
-
-void chip_unipro_init(void);
-
-#define ATTR_LOCAL 0
-#define ATTR_PEER  1
-/**
- * @brief Perform a DME get request
- * @param attr DME attribute address
- * @param val destination to read into
- * @param selector attribute selector index, or NCP_SELINDEXNULL if none
- * @param peer 1 if peer access, 0 if local
- * @param result_code destination for access result
- * @return 0
- */
-int chip_unipro_attr_read(uint16_t attr,
-                          uint32_t *val,
-                          uint16_t selector,
-                          int peer,
-                          uint32_t *result_code);
 
 /**
- * @brief Perform a DME set request
- * @param attr DME attribute address
- * @param val value to write
- * @param selector attribute selector index, or NCP_SELINDEXNULL if none
- * @param peer 1 if peer access, 0 if local
- * @param result_code destination for access result
- * @return 0
+ * @brief Validate and make available e­fuse information
+ *
+ * @param none
+ *
+ * @returns Zero on success, errno value on error
  */
-int chip_unipro_attr_write(uint16_t attr,
-                           uint32_t val,
-                           uint16_t selector,
-                           int peer,
-                           uint32_t *result_code);
+int efuse_init(void);
 
 
-#endif /* __COMMON_INCLUDE_CHIPAPI_H */
+/**
+ * @brief Disable JTAG and IMS/CMS access
+ *
+ * Used when transitioning from the bootloader to an untrusted image or on
+ * resume-from-suspend.
+ *
+ * @param None
+ *
+ * @returns Nothing
+ */
+void efuse_rig_for_untrusted(void);
+
+#endif /* __COMMON_EFUSE_H */

@@ -96,6 +96,9 @@
 #define CM3UP_BASE      0xE000E000
 #define CM3UP_SIZE      0x1000
 
+#define ISAA_BASE       0x40084000
+#define ISAA_SIZE       0x1000
+
 #define PMU_BASE        0x40090000
 #define PMU_SIZE        64
 

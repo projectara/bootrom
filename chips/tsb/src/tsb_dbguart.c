@@ -37,12 +37,12 @@
 
 #define UART_DLL     ((UART_CLOCK_DIVIDER >> 0) & 0xff)
 #define UART_DLH     ((UART_CLOCK_DIVIDER >> 8) & 0xff)
-#define UART_LCR_DLAB  (0x1 << 7) // Divisor latch
-#define UART_LCR_DLS_8 (0x3 << 0) // 8 bit
+#define UART_LCR_DLAB  (0x1 << 7) /* Divisor latch */
+#define UART_LCR_DLS_8 (0x3 << 0) /* 8 bit */
 
-#define UART_FCR_IIR_IID0_FIFOE  (1 << 0) // FIFO Enable
-#define UART_FCR_IIR_IID1_RFIFOR (1 << 1) // FIFO RX Reset
-#define UART_FCR_IIR_IID1_XFIFOR (1 << 2) // FIFO RX Reset
+#define UART_FCR_IIR_IID0_FIFOE  (1 << 0) /* FIFO Enable */
+#define UART_FCR_IIR_IID1_RFIFOR (1 << 1) /* FIFO RX Reset */
+#define UART_FCR_IIR_IID1_XFIFOR (1 << 2) /* FIFO RX Reset */
 
 #define UART_LSR_THRE (0x1 << 5)
 #define UART_LSR_TX_EMPTY (0x1 << 6)
