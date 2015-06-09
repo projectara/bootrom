@@ -11,7 +11,7 @@ _stack_top = _communication_area;
 
 /* The high 12kB is used for boot ROM .data, .bss, stack and communication.
    May need to revisit the number later. */
-_bootrom_data_area = ORIGIN(sram) + LENGTH(sram) - 12k;
+_bootrom_data_area = _workram_end - 12k;
 
 OUTPUT_ARCH(arm)
 EXTERN(_vectors)
@@ -29,7 +29,7 @@ SECTIONS
 		_spi_stext = ABSOLUTE(.);
 	} > rom
 
-	.text : {
+	.text (_bootrom_text_area) : {
 		_stext = ABSOLUTE(.);
 		*(.vectors)
 		*(.text .text.*)
