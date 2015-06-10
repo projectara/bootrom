@@ -39,11 +39,15 @@ CHIPOPTIMIZATION = -Os
 
 CHIPLINKFLAGS = --gc-sections
 
-ifeq ($(CONFIG_BOOT_FROM_SLOW_ROM),y)
-  LDSCRIPT = $(CHIP_DIR)/scripts/ld-spirom.script
-  CHIPDEFINES += -DBOOT_FROM_SLOW_ROM
+ifneq ("$(wildcard $(ARCH_EXTRA_DIR)/scripts/ld.script)","")
+  LDSCRIPT = $(ARCH_EXTRA_DIR)/scripts/ld.script
 else
   LDSCRIPT = $(CHIP_DIR)/scripts/ld.script
+endif
+
+ifeq ($(CONFIG_BOOT_FROM_SLOW_ROM),y)
+  CHIPDEFINES += -DBOOT_FROM_SLOW_ROM
+else
   CHIPDEFINES += -DBOOT_FROM_ROM
 endif
 

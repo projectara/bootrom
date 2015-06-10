@@ -26,57 +26,7 @@
  # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ##
 
-TOPDIR := ${shell pwd}
+ARCH_EXTRA_SRCDIR = chips/$(CONFIG_ARCH_EXTRA)/src
 
-OUTROOT := build
-
-#  VERBOSE==1:  Echo commands
-#  VERBOSE!=1:  Do not echo commands
-ifeq ($(VERBOSE),1)
-export Q :=
-else
-export Q := @
-endif
-
-include $(TOPDIR)/.config
-
-CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
-CHIP_DIR := $(TOPDIR)/chips/$(CONFIG_ARCH_CHIP)
-
-ifdef CONFIG_ARCH_EXTRA
-  ARCH_EXTRA_DIR = $(TOPDIR)/chips/$(CONFIG_ARCH_EXTRA)
-endif
-
-include $(CHIP_DIR)/Make.defs
-
-_dummy := $(shell [ -d $(OUTROOT) ] || mkdir -p $(OUTROOT))
-include $(TOPDIR)/Sources.mk
-_dummy := $(foreach d,$(SRCDIRS), \
-		  $(shell [ -d $(OUTROOT)/$(d) ] || mkdir -p $(OUTROOT)/$(d)))
-
-BIN = $(OUTROOT)/bootrom
-
-all: $(BIN)
-
-$(BIN): $(AOBJS) $(COBJS)
-	@ echo Linking $@
-	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS)
-	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $(BIN) $(BIN).bin
-
--include $(COBJS:.o=.d) $(AOBJS:.o=.d)
-
-build/%.o: %.c
-	@ echo Compiling $<
-	$(Q) $(CC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) -c $<
-	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
-
-build/%.o: %.S
-	@ echo Assembling $<
-	$(Q) $(CC) $(AFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) -c $<
-	$(Q) $(CC) $(AFLAGS) -o $@ -c $<
-
-clean:
-	$(Q) -rm -rf $(OUTROOT)
-
-distclean: clean
-	$(Q) -rm -rf .config
+ARCH_EXTRA_CSRC =
+ARCH_EXTRA_ASRC =

@@ -33,6 +33,14 @@
 
 include $(CHIP_DIR)/Sources.mk
 
+ifdef CONFIG_ARCH_EXTRA
+  include $(ARCH_EXTRA_DIR)/Sources.mk
+else
+  ARCH_EXTRA_SRCDIR =
+  ARCH_EXTRA_CSRC =
+  ARCH_EXTRA_ASRC =
+endif
+
 CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 
@@ -44,10 +52,10 @@ CMN_CSRC += $(CMN_SRCDIR)/utils.c
 
 CMN_ASRC =
 
-CSRC = $(CHIP_CSRC) $(CMN_CSRC)
-ASRC = $(CHIP_ASRC) $(CMN_ASRC)
+CSRC = $(CHIP_CSRC) $(CMN_CSRC) $(ARCH_EXTRA_CSRC)
+ASRC = $(CHIP_ASRC) $(CMN_ASRC) $(ARCH_EXTRA_ASRC)
 
-SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR)
+SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR) $(ARCH_EXTRA_SRCDIR)
 
 COBJS := $(foreach f, $(CSRC), $(OUTROOT)/$(patsubst %.c,%.o, $(f)))
 AOBJS := $(foreach f, $(ASRC), $(OUTROOT)/$(patsubst %.S,%.o, $(f)))
