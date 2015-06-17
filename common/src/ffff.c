@@ -154,6 +154,8 @@ static int locate_second_stage_firmware(data_load_ops *ops) {
     }
     if (ffff.cur_element->element_location + ffff.cur_element->element_length >
         ffff.cur_header->flash_image_length) {
+        dbgprint("Second-stage firmware element's location + length exceed \
+                  flash-image size.\r\n");
         return -1;
     }
 

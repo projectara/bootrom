@@ -33,6 +33,7 @@
 #include "common.h"
 #include "efuse.h"
 #include "unipro.h"
+#include "chipdef.h"
 #include "debug.h"
 #include "data_loading.h"
 #include "tftf.h"
@@ -40,7 +41,13 @@
 
 
 
-extern data_load_ops spi_ops;
+#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
+extern data_load_ops tsb_spi_ops;
+#define spi_ops tsb_spi_ops
+#else
+extern data_load_ops mmapped_ops;
+#define spi_ops mmapped_ops
+#endif
 
 
 /**
