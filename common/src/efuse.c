@@ -34,11 +34,13 @@
  */
 #include <stdint.h>
 #include <errno.h>
+#include <string.h> /***** temp, for fake endpoint ID *****/
 #include "chip.h"
 #include "chipapi.h"
 #include "debug.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
+#include "common.h"
 #include "unipro.h"
 #include "efuse.h"
 
@@ -57,8 +59,8 @@ union large_uint {
   uint64_t quad;
 };
 
-static uint32_t         vid_value;
-static uint32_t         pid_value;
+static uint32_t         ara_vid;
+static uint32_t         ara_pid;
 static union large_uint serial_number;
 static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
 
@@ -70,6 +72,15 @@ static bool valid_hamming_weight(uint8_t *buf, int len);
 static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val);
 static bool get_endpoint_id(union large_uint * endpoint_id);
 
+
+/**
+ * @brief Valdate and publish the e-Fuses as DME attributes
+ *
+ * @param none
+ *
+ * @returns 0 on success
+ *          errno on failure
+ */
 int efuse_init(void) {
     uint32_t    register_val;
     uint32_t    dme_write_result;
@@ -87,22 +98,26 @@ int efuse_init(void) {
     }
 
 
-    /* Verify VID/PID/SN (in e­-Fuse) have proper Hamming weight
+    /* obtain and verify VID/PID/SN (in e­-Fuse) have proper Hamming weight
      * These have 2 valid values:
      *      Unset:  0
      *      Set:    Must have equal number of 1's and 0's
      */
-    vid_value = tsb_get_vid();
-    /*****/dbgprint("efuse_init: VID = ");dbgprinthex32(vid_value);dbgprint("\r\n");
-    if (!valid_hamming_weight((uint8_t *)&vid_value, sizeof(vid_value))) {
-        dbgprint("efuse_init: Invalid VID\r\n");
+    ara_vid = tsb_get_vid();
+    /*****/dbgprint("efuse_init: VID = ");dbgprinthex32(ara_vid);dbgprint("\r\n");
+    if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
+        dbgprint("efuse_init: Invalid Ara VID: ");
+        dbgprinthex32(ara_vid);
+        dbgprint("\r\n");
         return EFAULT;
     }
 
-    pid_value = tsb_get_pid();
-    /*****/dbgprint("efuse_init: PID = ");dbgprinthex32(pid_value);dbgprint("\r\n");
-    if (!valid_hamming_weight((uint8_t *)&pid_value, sizeof(pid_value))) {
-        dbgprint("efuse_init: Invalid PID\r\n");
+    ara_pid = tsb_get_pid();
+    /*****/dbgprint("efuse_init: PID = ");dbgprinthex32(ara_pid);dbgprint("\r\n");
+    if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
+        dbgprint("efuse_init: Invalid Ara PID: ");
+        dbgprinthex32(ara_pid);
+        dbgprint("\r\n");
         return EFAULT;
     }
 
@@ -110,7 +125,9 @@ int efuse_init(void) {
     /*****/dbgprint("efuse_init: SN =  ");dbgprinthex64(serial_number.quad);dbgprint("\r\n");
     if (!valid_hamming_weight((uint8_t *)&serial_number,
                               sizeof(serial_number))) {
-        dbgprint("efuse_init: Invalid serial number\r\n");
+        dbgprint("efuse_init: Invalid serial number: ");
+        dbgprinthex64(serial_number.quad);
+        dbgprint("\r\n");
         return EFAULT;
     }
 
@@ -120,11 +137,15 @@ int efuse_init(void) {
     (void)get_endpoint_id(&endpoint_id);
     /*****/dbgprint("efuse_init: endpoint ID: ");dbgprinthex64(endpoint_id.quad);dbgprint("\r\n");
 
-
-    /* Advertise various values via DME attribute registers */
-    chip_unipro_attr_write(DME_DDBL2_VID, vid_value, 0,
+    /*
+     *  Advertise various values via DME attribute registers
+     *
+     * NB. The UniPro Mfgr's ID and PID are hard-wired into their DME
+     * attributes, so there is no need to fetch/store them in this function.
+     */
+    chip_unipro_attr_write(DME_DDBL2_VID, ara_vid, 0,
                            ATTR_LOCAL, &dme_write_result);
-    chip_unipro_attr_write(DME_DDBL2_PID, pid_value, 0,
+    chip_unipro_attr_write(DME_DDBL2_PID, ara_pid, 0,
                            ATTR_LOCAL, &dme_write_result);
     chip_unipro_attr_write(DME_DDBL2_SERIALNO_L, serial_number.low, 0,
                            ATTR_LOCAL, &dme_write_result);
@@ -140,7 +161,9 @@ int efuse_init(void) {
 
 
 void efuse_rig_for_untrusted(void) {
+#ifdef ALLOW_JTAG_FOR_UNTRUSTED_IMAGES
     tsb_jtag_disable();
+#endif
     tsb_disable_ims_access();
     tsb_disable_cms_access();
 }
@@ -241,14 +264,37 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
 
     /* Get the IMS and determine the course of action */
     tsb_get_ims(ims_value, sizeof(ims_value));
-    /*****/dbgprint("efuse_init: IMS =\r\n");dbgprinthexbuf((uint8_t *)&ims_value[0], IMS_LENGTH);dbgprint("\r\n");
+    /*****/dbgprint("efuse_init: IMS =\r\n");dbgprinthexbuf((uint8_t *)&ims_value[0],
+    /*****/         IMS_LENGTH);dbgprint("\r\n");
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
 
-        /***** THIS IS TBD UNTIL WE GET THE IMS->EID ALGORITHM *****/
-        /*****/dbgprint("WARNING: Endpoint ID unavailable\r\n");
-        endpoint_id->quad = 0;   /***** TODO: compute Endpoint Unique ID from IMS *****/
-        have_endpoint_id =  true;
+        if (!valid_hamming_weight((uint8_t *)ims_value, IMS_LENGTH)) {
+            dbgprint("efuse_init: Invalid IMS\r\n");
+        } else {
+            /***** THIS IS TBD UNTIL WE GET THE *REAL* IMS->EID ALGORITHM! *****/
+            /* Compute a fake IMS */
+            int i = 8;
+            int len = IMS_LENGTH - 8;
+            union large_uint temp;
+
+            memcpy(endpoint_id, &ims_value[0], 8);
+            while (len > 0) {
+                if (len >= 8) {
+                    memcpy(&temp, &ims_value[i], 8);
+                } else {
+                    memcpy(&temp, &ims_value[i], len);
+                }
+                endpoint_id->quad ^= temp.quad;
+
+                len -= 8;
+                i += 8;
+            }
+            /*****/dbgprint("efuse_init: FAKE endpoint unique Id =  ");
+            /*****/dbgprinthex64(endpoint_id->quad);
+            /*****/dbgprint("\r\n");
+            have_endpoint_id =  true;
+        }
     }
 
     return have_endpoint_id;

@@ -292,6 +292,8 @@
 
 /*
  * DME attributes
+ * NB. The chip manufacturer hard-wires the values of
+ * DME_DDBL1_REVISION..DME_DDBL1_LENGTH.
  */
 #define DME_DDBL1_REVISION          0x5000
 #define DME_DDBL1_LEVEL             0x5001

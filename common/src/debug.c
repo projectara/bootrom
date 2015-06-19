@@ -122,4 +122,3 @@ void dbgprinthexbuf(uint8_t * buf, int len) {
         len--;
     }
 }
-

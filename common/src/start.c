@@ -30,6 +30,7 @@
 #include "chipapi.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
+#include "common.h"
 #include "efuse.h"
 #include "unipro.h"
 #include "debug.h"
@@ -37,19 +38,6 @@
 #include "tftf.h"
 #include "ffff.h"
 
-/*****
- * TBD: temporary ifdefs for testing/bringup:
- *****/
-/* Define UNIPRO_ACTIVE to activate UniPro code */
-/* #define UNIPRO_ACTIVE */
-
-/* Define BOOT_OVER_UNIPRO to activate BOU (requires UNIPRO_ACTIVE) */
-/* #define BOOT_OVER_UNIPRO */
-
-/* Define ALLOW_JTAG_FOR_UNTRUSTED_IMAGES to leave JTAG, IMS, CMS accessible
- *  during initial bring-up of 2nd-level code from untrusted images
- */
-/* #define ALLOW_JTAG_FOR_UNTRUSTED_IMAGES */
 
 
 extern data_load_ops spi_ops;
@@ -127,13 +115,11 @@ void bootrom_main(void) {
                     dbgprint("Untrusted image\r\n");
                     boot_status = INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED;
 
-#ifdef ALLOW_JTAG_FOR_UNTRUSTED_IMAGES
                     /*
                      *  Disable JTAG, IMS, CMS access before starting
                      * untrusted image
                      */
                     efuse_rig_for_untrusted();
-#endif
                 }
                 /* Log that we're starting the boot-from-SPIROM */
                 chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,

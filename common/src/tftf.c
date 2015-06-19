@@ -34,6 +34,7 @@
 #include "data_loading.h"
 #include "chipapi.h"
 #include "crypto.h"
+#include "unipro.h"
 
 typedef struct {
     tftf_header header;
@@ -48,6 +49,11 @@ static const char tftf_sentinel_value[] = TFTF_SENTINEL_VALUE;
 static int load_tftf_header(data_load_ops *ops) {
     tftf_section_descriptor *section;
     uint32_t *psentinel = (uint32_t *)&tftf_sentinel_value[0];
+    uint32_t unipro_vid = 0;
+    uint32_t unipro_pid = 0;
+    uint32_t ara_vid = 0;
+    uint32_t ara_pid = 0;
+    uint32_t read_stat;
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
@@ -67,6 +73,41 @@ static int load_tftf_header(data_load_ops *ops) {
         return -1;
     }
 
+    /*
+     * Check that the UniPro and Ara VID+PID matches the corresponding chip
+     * VID+PID.
+     * Note: a 0-valued chip VID/PID acts as a wild card and no comparison
+     * takes place for that VID/PID.
+     */
+    chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_vid, 0,
+                          ATTR_LOCAL, &read_stat);
+    chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
+                          ATTR_LOCAL, &read_stat);
+    chip_unipro_attr_read(DME_DDBL2_VID, &ara_vid, 0, ATTR_LOCAL, &read_stat);
+    chip_unipro_attr_read(DME_DDBL2_PID, &ara_pid, 0, ATTR_LOCAL, &read_stat);
+    if (((unipro_vid != 0) && (unipro_vid != tftf.header.unipro_vid)) ||
+        ((unipro_pid != 0) && (unipro_pid != tftf.header.unipro_pid)) ||
+        ((ara_vid != 0) && (ara_vid != tftf.header.ara_vid)) ||
+        ((ara_pid != 0) && (ara_pid != tftf.header.ara_pid))) {
+        dbgprint("Image does not match our VID/PID\r\n");
+#ifndef _PRODUCTION
+        dbgprint("        __chip__ __tftf__\r\n");
+        dbgprint("U-MID = "); dbgprinthex32(unipro_vid); dbgprint(" ");
+        dbgprinthex32(tftf.header.unipro_vid); dbgprint("\r\n");
+        dbgprint("U-PID = "); dbgprinthex32(unipro_pid); dbgprint(" ");
+        dbgprinthex32(tftf.header.unipro_pid); dbgprint("\r\n");
+        dbgprint("A-MID = "); dbgprinthex32(ara_vid); dbgprint(" ");
+        dbgprinthex32(tftf.header.ara_vid); dbgprint("\r\n");
+        dbgprint("A-PID = "); dbgprinthex32(ara_pid); dbgprint(" ");
+        dbgprinthex32(tftf.header.ara_pid); dbgprint("\r\n");
+#endif
+        return -1;
+    }
+
+
+     /*
+      * Process the TFTF sections
+      */
     section = &tftf.header.sections[0];
     while(1) {
         if ((uint32_t)section - (uint32_t)&tftf.header >= TFTF_HEADER_SIZE) {
