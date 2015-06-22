@@ -108,4 +108,10 @@
 #define RETSRAMCLKCONT  (PMU_BASE + 0x18)
 #define BOOTRET_O       (PMU_BASE + 0x2C)
 
+/* ISAA registers */
+#define _DISABLE_IMS_ACCESS         (ISAA_BASE + 0x00000400)
+#define _DISABLE_CMS_ACCESS         (ISAA_BASE + 0x00000404)
+#define _JTAG_DISABLE               (ISAA_BASE + 0x0000040c)
+#define DISABLE_JTAG_IMS_CMS_ACCESS (0x00000001)
+
 #endif /* __ARCH_ARM_TSB_CHIPDEF_H */

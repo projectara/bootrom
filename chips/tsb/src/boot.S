@@ -99,6 +99,9 @@ __start:
     tst r0, #1
     beq cold_boot
 
+    /*
+     * "Resume" path
+     */
     ldr r2, =RETSRAMRET
     ldr r0, =0
     str r0, [r2]
@@ -123,11 +126,27 @@ delay_100ns_loop:
     ldr r0, =0
     str r0, [r2]
 
+    /*
+     * Check for the resume address and its complement before jumping to it
+     */
     ldr r2, =_resume_address
     ldm r2, {r0, r1}
     mvn r1, r1
     cmp r0, r1   /* check the complement of the resume address */
     bne cold_boot
+
+    /*
+     * Before resuming the higher-level code, ensure that IMS and CMS
+     * and JTAG are disabled.
+     */
+    ldr r0, = DISABLE_JTAG_IMS_CMS_ACCESS
+    ldr r3, =_DISABLE_IMS_ACCESS
+    str r0, [r3]
+    ldr r3, = _DISABLE_CMS_ACCESS
+    str r0, [r3]
+    ldr r3, = _JTAG_DISABLE
+    str r0, [r3]
+
 
     ldr r3, =0
     str r3, [r2], #4 /* clear the resume address */
