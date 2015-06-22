@@ -88,7 +88,9 @@ void bootrom_main(void) {
                                ATTR_LOCAL, &dme_write_result);
 
     /* Validate and make available e-fuse information */
+#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
     status = efuse_init();
+#endif
     if (0 != status) {
         dbgprint("bootrom_main: eFuse failure\r\n");
         boot_status |= status & INIT_STATUS_ERROR_CODE_MASK;
