@@ -141,6 +141,12 @@ static int load_tftf_header(data_load_ops *ops) {
                 return -1;
             }
 
+            if (section->section_type == TFTF_SECTION_COMPRESSED_CODE ||
+                section->section_type == TFTF_SECTION_COMPRESSED_DATA) {
+                dbgprint("compressed section not supported in boot ROM\r\n");
+                return -1;
+            }
+
             if (tftf.crypto_state == CRYPTO_STATE_HASHING &&
                 section->section_type != TFTF_SECTION_CERTIFICATE) {
                 dbgprint("ilegal section after first signature\r\n");
@@ -190,13 +196,6 @@ static int process_tftf_section(data_load_ops *ops,
 
     dest = (unsigned char*)tftf.header.load_base + section->copy_offset;
 
-    if (section->section_type == TFTF_SECTION_COMPRESSED_CODE ||
-        section->section_type == TFTF_SECTION_COMPRESSED_DATA) {
-        /* for compressed section, copy the compressed data to the end of
-           the section, so in-place decompression would be easier */
-        dest += section->expanded_length - section->section_length;
-    }
-
     if (ops->load(dest, section->section_length)) {
         dbgprint("invalid tftf header size\r\n");
         return -1;
@@ -206,11 +205,6 @@ static int process_tftf_section(data_load_ops *ops,
         hash_update(dest, section->section_length);
     }
 
-    if (section->section_type == TFTF_SECTION_COMPRESSED_CODE ||
-        section->section_type == TFTF_SECTION_COMPRESSED_DATA) {
-        dbgprint("WARNING: decompression not implemented yet\r\n");
-        /* TBD: decompress section */
-    }
     return 0;
 }
 
