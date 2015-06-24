@@ -36,7 +36,6 @@ void chip_init(void);
 /* For debug output */
 void chip_dbginit(void);
 void chip_dbgputc(int);
-void chip_dbgprint(char *);
 void chip_dbgflush(void);
 
 int chip_validate_data_load_location(void *base, uint32_t length);

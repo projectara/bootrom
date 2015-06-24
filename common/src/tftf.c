@@ -76,6 +76,7 @@ static int load_tftf_header(data_load_ops *ops) {
     /*
      * Check that the UniPro and Ara VID+PID matches the corresponding chip
      * VID+PID.
+     *
      * Note: a 0-valued chip VID/PID acts as a wild card and no comparison
      * takes place for that VID/PID.
      */
@@ -92,14 +93,14 @@ static int load_tftf_header(data_load_ops *ops) {
         dbgprint("Image does not match our VID/PID\r\n");
 #ifndef _PRODUCTION
         dbgprint("        __chip__ __tftf__\r\n");
-        dbgprint("U-MID = "); dbgprinthex32(unipro_vid); dbgprint(" ");
-        dbgprinthex32(tftf.header.unipro_vid); dbgprint("\r\n");
-        dbgprint("U-PID = "); dbgprinthex32(unipro_pid); dbgprint(" ");
-        dbgprinthex32(tftf.header.unipro_pid); dbgprint("\r\n");
-        dbgprint("A-MID = "); dbgprinthex32(ara_vid); dbgprint(" ");
-        dbgprinthex32(tftf.header.ara_vid); dbgprint("\r\n");
-        dbgprint("A-PID = "); dbgprinthex32(ara_pid); dbgprint(" ");
-        dbgprinthex32(tftf.header.ara_pid); dbgprint("\r\n");
+        dbgprintx32("U-MID = ", unipro_vid, " ");
+        dbgprintx32(NULL, tftf.header.unipro_vid, "\r\n");
+        dbgprintx32("U-PID = ", unipro_pid, " ");
+        dbgprintx32(NULL, tftf.header.unipro_pid, "\r\n");
+        dbgprintx32("A-MID = ", ara_vid, " ");
+        dbgprintx32(NULL, tftf.header.ara_vid, "\r\n");
+        dbgprintx32("A-PID = ", ara_pid, " ");
+        dbgprintx32(NULL, tftf.header.ara_pid, "\r\n");
 #endif
         return -1;
     }

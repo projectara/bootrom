@@ -47,6 +47,13 @@
 #define UART_LSR_THRE (0x1 << 5)
 #define UART_LSR_TX_EMPTY (0x1 << 6)
 
+/**
+ * @brief Initialize the debug serial port
+ *
+ * @param None
+ *
+ * @returns Nothing
+ */
 void chip_dbginit(void) {
     int i;
 
@@ -86,6 +93,13 @@ void chip_dbginit(void) {
     }
 }
 
+/**
+ * @brief Print a character out the debug serial port
+ *
+ * @param c The character to display
+ *
+ * @returns Nothing
+ */
 void chip_dbgputc(int c) {
     while ((getreg32(UART_LSR) & UART_LSR_THRE) != UART_LSR_THRE)
         ;
@@ -93,13 +107,13 @@ void chip_dbgputc(int c) {
     putreg32(c, UART_RBR_THR_DLL);
 }
 
-void chip_dbgprint(char *str) {
-    while (*str != 0) {
-        chip_dbgputc(*str);
-        str++;
-    }
-}
-
+/**
+ * @brief Flush the debug serial port
+ *
+ * @param Nothing
+ *
+ * @returns Nothing
+ */
 void chip_dbgflush(void) {
     while ((getreg32(UART_LSR) & UART_LSR_TX_EMPTY) != UART_LSR_TX_EMPTY)
         ;

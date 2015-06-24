@@ -34,12 +34,15 @@
 #ifdef _DEBUG
     #define dbginit() chip_dbginit()
     #define dbgputc(x) chip_dbgputc(x)
-    #define dbgprint(x) chip_dbgprint(x)
+    void dbgprint(char *str);
     void dbgprintbool(uint8_t flag);
     void dbgprinthex8(uint8_t num);
     void dbgprinthex32(uint32_t num);
     void dbgprinthex64(uint64_t num);
     void dbgprinthexbuf(uint8_t * buf, int len);
+    void dbgprintx32(char * s1, uint32_t num, char * s2);
+    void dbgprintx64(char * s1, uint64_t num, char * s2);
+    void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2);
     #define dbgflush() chip_dbgflush()
 #else
     #define dbginit()
@@ -50,6 +53,9 @@
     #define dbgprinthex32(x)
     #define dbgprinthex64(x)
     #define dbgprinthexbuf(buf,len)
+    #define dbgprintx32(s1,x,s2)
+    #define dbgprintx64(s1,x,s2)
+    #define dbgprintxbuf(s1,buf,len,s2)
     #define dbgflush()
 #endif /* _DEBUG */
 

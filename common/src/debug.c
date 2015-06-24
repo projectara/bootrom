@@ -29,6 +29,21 @@
 #include <stddef.h>
 #include "debug.h"
 
+/**
+ * @brief Print out a string
+ *
+ * @param str The string to display (safe with NULL pointer)
+ *
+ * @returns Nothing
+ */
+void dbgprint(char *str) {
+    if (str != NULL) {
+        while (*str != 0) {
+            dbgputc(*str);
+            str++;
+        }
+    }
+}
 
 /**
  * @brief Print out a boolean as a T/F flag
@@ -40,7 +55,6 @@
 void dbgprintbool(uint8_t flag) {
     dbgputc(flag? 'T' : 'F');
 }
-
 
 /**
  * @brief Print out an 8-bit unsigned integer in hex
@@ -63,7 +77,6 @@ void dbgprinthex8(uint8_t num) {
     }
 }
 
-
 /**
  * @brief Print out a 32-bit unsigned integer in hex
  *
@@ -81,7 +94,6 @@ void dbgprinthex32(uint32_t num) {
     }
 }
 
-
 /**
  * @brief Print out a 64-bit unsigned integer in hex
  *
@@ -98,7 +110,6 @@ void dbgprinthex64(uint64_t num) {
         dbgprinthex8(byte_value);
     }
 }
-
 
 /**
  * @brief Print out a byte array
@@ -121,4 +132,50 @@ void dbgprinthexbuf(uint8_t * buf, int len) {
         }
         len--;
     }
+}
+
+/**
+ * @brief Print out a message containing a 32-bit unsigned integer
+ *
+ * @param s1 The optional string to issue before the number.
+ * @param num The number to display
+ * @param s2 The optional string to issue after the number.
+ *
+ * @returns Nothing
+ */
+void dbgprintx32(char * s1, uint32_t num, char * s2) {
+    dbgprint(s1);
+    dbgprinthex32(num);
+    dbgprint(s2);
+}
+
+/**
+ * @brief Print out a message containing a 64-bit unsigned integer
+ *
+ * @param s1 The optional string to issue before the number.
+ * @param num The number to display
+ * @param s2 The optional string to issue after the number.
+ *
+ * @returns Nothing
+ */
+void dbgprintx64(char * s1, uint64_t num, char * s2) {
+    dbgprint(s1);
+    dbgprinthex64(num);
+    dbgprint(s2);
+}
+
+/**
+ * @brief Print out a message containing a byte array
+ *
+ * @param s1 The optional string to issue before the number.
+ * @param buf Pointer to the memory to display
+ * @param len The length in bytes of the buffer
+ * @param s2 The optional string to issue after the number.
+ *
+ * @returns Nothing
+ */
+void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2) {
+    dbgprint(s1);
+    dbgprinthexbuf(buf, len);
+    dbgprint(s2);
 }

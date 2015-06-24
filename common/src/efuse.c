@@ -91,7 +91,7 @@ int efuse_init(void) {
      * See ARA_ESx_APBridge_RegisterMap_revxxx.pdf
      */
     register_val = tsb_get_eccerror();
-    dbgprint("efuse_init: EccError = ");dbgprinthex32(register_val);dbgprint("\r\n");
+    /*****/dbgprintx32("efuse_init: EccError = ", register_val, "\r\n");
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
         dbgprint("efuse_init Efuse ECC error\r\n");
         return EHOSTDOWN;
@@ -113,7 +113,7 @@ int efuse_init(void) {
     }
 
     ara_pid = tsb_get_pid();
-    /*****/dbgprint("efuse_init: PID = ");dbgprinthex32(ara_pid);dbgprint("\r\n");
+    /*****/dbgprintx32("efuse_init: PID = ", ara_pid, "\r\n");
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
         dbgprint("efuse_init: Invalid Ara PID: ");
         dbgprinthex32(ara_pid);
@@ -122,7 +122,7 @@ int efuse_init(void) {
     }
 
     serial_number.quad = tsb_get_serial_no();
-    /*****/dbgprint("efuse_init: SN =  ");dbgprinthex64(serial_number.quad);dbgprint("\r\n");
+    /*****/dbgprintx64("efuse_init: SN =  ", serial_number.quad, "\r\n");
     if (!valid_hamming_weight((uint8_t *)&serial_number,
                               sizeof(serial_number))) {
         dbgprint("efuse_init: Invalid serial number: ");
@@ -135,7 +135,7 @@ int efuse_init(void) {
      * non-zero, compute the Endpoint Unique ID
      */
     (void)get_endpoint_id(&endpoint_id);
-    /*****/dbgprint("efuse_init: endpoint ID: ");dbgprinthex64(endpoint_id.quad);dbgprint("\r\n");
+    /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
 
     /*
      *  Advertise various values via DME attribute registers
@@ -264,8 +264,8 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
 
     /* Get the IMS and determine the course of action */
     tsb_get_ims(ims_value, sizeof(ims_value));
-    /*****/dbgprint("efuse_init: IMS =\r\n");dbgprinthexbuf((uint8_t *)&ims_value[0],
-    /*****/         IMS_LENGTH);dbgprint("\r\n");
+    /*****/dbgprintxbuf("efuse_init: IMS =\r\n", (uint8_t *)&ims_value[0],
+    /*****/             IMS_LENGTH, "\r\n");
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
 
@@ -290,9 +290,8 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
                 len -= 8;
                 i += 8;
             }
-            /*****/dbgprint("efuse_init: FAKE endpoint unique Id =  ");
-            /*****/dbgprinthex64(endpoint_id->quad);
-            /*****/dbgprint("\r\n");
+            /*****/dbgprintx64("efuse_init: FAKE endpoint unique Id =  ",
+            /*****/            endpoint_id->quad, "\r\n");
             have_endpoint_id =  true;
         }
     }
