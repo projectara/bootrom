@@ -119,7 +119,9 @@ void bootrom_main(void) {
                      *  Disable JTAG, IMS, CMS access before starting
                      * untrusted image
                      */
+#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
                     efuse_rig_for_untrusted();
+#endif
                 }
                 /* Log that we're starting the boot-from-SPIROM */
                 chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
