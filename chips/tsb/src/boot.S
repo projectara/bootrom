@@ -156,6 +156,10 @@ delay_100ns_loop:
 
 cold_boot:
 #endif
+#if CONFIG_CHIP_REVISION < CHIP_REVISION_ES3
+    // ES2's ARM core doesn't seem to load the correct stack pointer
+    ldr sp, =_stack_top
+#endif
     /* Clear workram
      *
      * WARNING!!!: Assumption here is that workram will always be
