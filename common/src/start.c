@@ -39,16 +39,7 @@
 #include "tftf.h"
 #include "ffff.h"
 
-
-
-#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
-extern data_load_ops tsb_spi_ops;
-#define spi_ops tsb_spi_ops
-#else
-extern data_load_ops mmapped_ops;
-#define spi_ops mmapped_ops
-#endif
-
+extern data_load_ops spi_ops;
 
 /**
  * @brief Bootloader "C" entry point
@@ -83,9 +74,7 @@ void bootrom_main(void) {
                                ATTR_LOCAL, &dme_write_result);
 
     /* Validate and make available e-fuse information */
-#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
     status = efuse_init();
-#endif
     if (0 != status) {
         dbgprint("bootrom_main: eFuse failure\r\n");
         boot_status |= status & INIT_STATUS_ERROR_CODE_MASK;
@@ -126,9 +115,7 @@ void bootrom_main(void) {
                      *  Disable JTAG, IMS, CMS access before starting
                      * untrusted image
                      */
-#if (CONFIG_CHIP_REVISION == CHIP_REVISION_ES3)
                     efuse_rig_for_untrusted();
-#endif
                 }
                 /* Log that we're starting the boot-from-SPIROM */
                 chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,

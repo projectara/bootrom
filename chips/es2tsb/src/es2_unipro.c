@@ -27,67 +27,23 @@
  */
 
 #include <stddef.h>
-#include "chip.h"
 #include "chipapi.h"
+#include "tsb_unipro.h"
 #include "debug.h"
-#include "tsb_scm.h"
-#include "data_loading.h"
 
-static uint8_t *current_addr = NULL;
-static uint8_t initialized = 0;
-
-static int data_load_mmapped_init(void) {
-    if (initialized != 1) {
-        current_addr = (uint8_t*) MMAP_LOAD_BASE;
-        initialized = 1;
-
-        /* enable SPI master clock.
-           Pinshare should be default to SPI (CS0) after reset */
-        tsb_clk_enable(TSB_CLK_SPIP);
-        tsb_clk_enable(TSB_CLK_SPIS);
-        return 0;
-    }
-    return -1;
+void chip_unipro_init(void) {
+    return;
 }
 
-static int data_load_mmapped_read(void *dest, uint32_t addr, uint32_t length) {
-    if(initialized != 1 || addr + length >= MMAP_LOAD_SIZE)
-        return -1;
-
-    current_addr = (uint8_t*) (MMAP_LOAD_BASE + addr);
-    uint8_t *dst;
-    for (dst = (uint8_t*) dest;
-            current_addr < (uint8_t*) (MMAP_LOAD_BASE + addr + length);)
-        *dst++ = *current_addr++;
-
+int chip_unipro_attr_read(uint16_t attr, uint32_t *val, uint16_t selector,
+                          int peer, uint32_t *result_code) {
+    *val = 0;
+    *result_code = 0;
     return 0;
 }
 
-static int data_load_mmapped_load(void *dest, uint32_t length) {
-    if(initialized != 1 ||
-       current_addr + length >= (uint8_t*)(MMAP_LOAD_BASE + MMAP_LOAD_SIZE))
-        return -1;
-
-    uint8_t *load_end = current_addr + length;
-    uint8_t *dst;
-    for (dst = (uint8_t*) dest; current_addr < load_end;)
-        *dst++ = *current_addr++;
-
+int chip_unipro_attr_write(uint16_t attr, uint32_t val, uint16_t selector,
+                           int peer, uint32_t *result_code) {
+    *result_code = 0;
     return 0;
 }
-
-void data_load_mmapped_finish(void) {
-    /* disable SPI master clock. */
-    tsb_clk_disable(TSB_CLK_SPIS);
-    tsb_clk_disable(TSB_CLK_SPIP);
-
-    initialized = 0;
-    current_addr = NULL;
-}
-
-data_load_ops mmapped_ops = {
-    .init = data_load_mmapped_init,
-    .read = data_load_mmapped_read,
-    .load = data_load_mmapped_load,
-    .finish = data_load_mmapped_finish
-};

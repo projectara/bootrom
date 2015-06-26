@@ -173,7 +173,7 @@ static void data_load_spi_finish(void) {
     tsb_clk_disable(TSB_CLK_SPIS);
 }
 
-data_load_ops tsb_spi_ops = {
+data_load_ops spi_ops = {
     .init = data_load_spi_init,
     .read = data_load_spi_read,
     .load = data_load_spi_load,
