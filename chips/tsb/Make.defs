@@ -27,6 +27,7 @@
  ##
 
 CHIPINCLUDES = -I$(CHIP_DIR)/include
+CHIPINCLUDES += -Ichips/$(CONFIG_ARCH_EXTRA)/include
 
 CHIPCFLAGS = -mcpu=cortex-m3 -mthumb -mfloat-abi=soft
 CHIPCFLAGS += -fno-builtin -ffunction-sections

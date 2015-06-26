@@ -185,4 +185,6 @@ uint32_t tsb_get_eccerror(void);
 uint32_t tsb_get_vid(void);
 uint32_t tsb_get_pid(void);
 
+uint32_t tsb_get_debug_reg(uint32_t offset);
+
 #endif /* __ARCH_ARM_SRC_TSB_TSB_SCM_H */

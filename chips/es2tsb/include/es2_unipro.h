@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Google Inc.
+/*
+ * Copyright (c) 2014 Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,38 +26,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "chip.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "tsb_scm.h"
+#ifndef __ARCH_ARM_SRC_TSB_ES2TSB_ES2_UNIPRO_H
+#define __ARCH_ARM_SRC_TSB_ES2TSB_ES2_UNIPRO_H
 
-void chip_init(void) {
-#ifdef BOOT_FROM_SLOW_ROM
+static int unipro_attr_access(uint16_t attr, uint32_t *val, uint16_t selector,
+                       int peer, int write, uint32_t *result_code);
 
-    #define ARMV7M_NVIC_BASE    0xe000e000
-    #define NVIC_VECTAB_OFFSET  0x0d08 /* Vector table offset register */
-    #define NVIC_VECTAB         (ARMV7M_NVIC_BASE + NVIC_VECTAB_OFFSET)
+static uint32_t unipro_read(uint32_t offset);
+static void unipro_write(uint32_t offset, uint32_t v);
 
-    extern uint32_t _vectors[32];
-
-    putreg32((uint32_t)&_vectors[0], NVIC_VECTAB);
-#endif
-    /* Configure clocks */
-    tsb_clk_init();
+static inline int unipro_attr_local_write(uint16_t attr,
+                                          uint32_t val,
+                                          uint16_t selector,
+                                          uint32_t *result_code)
+{
+    return chip_unipro_attr_write(attr, val, selector, 0, result_code);
 }
 
-extern char _workram_start;
-extern char _bootrom_data_area, _bootrom_text_area;
-int chip_validate_data_load_location(void *base, uint32_t length) {
-    if ((uint32_t)base < (uint32_t)&_workram_start) {
-        return -1;
-    }
-#if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
-#else
-    if ((uint32_t)base + length >= (uint32_t)&_bootrom_text_area) {
 #endif
-        return -1;
-    }
-    return 0;
-}
