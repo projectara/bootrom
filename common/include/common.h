@@ -36,7 +36,7 @@
 
 #ifdef UNIPRO_ACTIVE
 /* Define BOOT_OVER_UNIPRO to activate BOU (requires UNIPRO_ACTIVE) */
-/* #define BOOT_OVER_UNIPRO */
+#define BOOT_OVER_UNIPRO
 #endif
 
 /* Define ALLOW_JTAG_FOR_UNTRUSTED_IMAGES to leave JTAG accessible
