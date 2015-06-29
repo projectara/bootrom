@@ -31,9 +31,6 @@
 
 /*****TBD: temporary #define's for testing/bringup: *****/
 
-/* Define UNIPRO_ACTIVE to activate UniPro code */
-/* #define UNIPRO_ACTIVE */
-
 #ifdef UNIPRO_ACTIVE
 /* Define BOOT_OVER_UNIPRO to activate BOU (requires UNIPRO_ACTIVE) */
 #define BOOT_OVER_UNIPRO
