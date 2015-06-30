@@ -12,6 +12,14 @@ DEFCONFIG=chips/${CONFIG_CHIP}/defconfig
 if test ! -f ${DEFCONFIG}
 then
 	echo "ERROR - invalid chip name \""${CONFIG_CHIP}"\" to be configured"
+	echo "Valid chip names currently supported are:"
+	for chip in `ls chips/`
+	do
+		if test -f chips/${chip}/defconfig
+		then
+			echo "	${chip}"
+		fi
+	done
 	exit 1
 fi
 
