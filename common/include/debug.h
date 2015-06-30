@@ -45,18 +45,18 @@
     void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2);
     #define dbgflush() chip_dbgflush()
 #else
-    #define dbginit()
-    #define dbgputc(x)
-    #define dbgprint(x)
-    #define dbgprintbool(x)
-    #define dbgprinthex8(x)
-    #define dbgprinthex32(x)
-    #define dbgprinthex64(x)
-    #define dbgprinthexbuf(buf,len)
-    #define dbgprintx32(s1,x,s2)
-    #define dbgprintx64(s1,x,s2)
-    #define dbgprintxbuf(s1,buf,len,s2)
-    #define dbgflush()
+    static inline void dbginit(void) { }
+    static inline void dbgputc(int x) { }
+    static inline void dbgprint(char *str) { }
+    static inline void dbgprintbool(uint8_t flag) { }
+    static inline void dbgprinthex8(uint8_t num) { }
+    static inline void dbgprinthex32(uint32_t num) { }
+    static inline void dbgprinthex64(uint64_t num) { }
+    static inline void dbgprinthexbuf(uint8_t * buf, int len) { }
+    static inline void dbgprintx32(char * s1, uint32_t num, char * s2) { }
+    static inline void dbgprintx64(char * s1, uint64_t num, char * s2) { }
+    static inline void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2) { }
+    static inline void dbgflush(void) { }
 #endif /* _DEBUG */
 
 #endif /* __COMMON_INCLUDE_DEBUG_H */
