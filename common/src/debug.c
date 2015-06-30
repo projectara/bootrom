@@ -29,6 +29,8 @@
 #include <stddef.h>
 #include "debug.h"
 
+#ifdef _DEBUG
+
 /**
  * @brief Print out a string
  *
@@ -179,3 +181,5 @@ void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2) {
     dbgprinthexbuf(buf, len);
     dbgprint(s2);
 }
+
+#endif  /* #ifdef _DEBUG */
