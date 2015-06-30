@@ -25,7 +25,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <stddef.h>
 #include <string.h>
 #include "bootrom.h"
@@ -35,6 +34,10 @@
 #include "chipapi.h"
 #include "crypto.h"
 #include "unipro.h"
+#include "utils.h"
+
+#define NEW_VALIDATION
+
 
 typedef struct {
     tftf_header header;
@@ -43,12 +46,16 @@ typedef struct {
     tftf_signature signature;
 } tftf_processing_state;
 
+
 static tftf_processing_state tftf;
-static const char tftf_sentinel_value[] = TFTF_SENTINEL_VALUE;
+
+/*
+ * Prototypes
+ */
+bool valid_tftf_header(tftf_header * header);
 
 static int load_tftf_header(data_load_ops *ops) {
     tftf_section_descriptor *section;
-    uint32_t *psentinel = (uint32_t *)&tftf_sentinel_value[0];
     uint32_t unipro_vid = 0;
     uint32_t unipro_pid = 0;
     uint32_t ara_vid = 0;
@@ -60,16 +67,9 @@ static int load_tftf_header(data_load_ops *ops) {
     if (ops->load(&tftf.header, TFTF_HEADER_SIZE)) {
         return -1;
     }
-    /* first check the sentinel value */
-    if (tftf.header.sentinel_value != *psentinel) {
-        dbgprint("invalid tftf sentinel value\r\n");
-        return -1;
-    }
 
-    if (tftf.header.expanded_length < tftf.header.load_length ||
-        chip_validate_data_load_location((void *)tftf.header.load_base,
-                                         tftf.header.expanded_length)) {
-        dbgprint("out of memory range\r\n");
+    if (!valid_tftf_header(&tftf.header)) {
+        dbgprint("invalid TFTF header\r\n");
         return -1;
     }
 
@@ -131,16 +131,6 @@ static int load_tftf_header(data_load_ops *ops) {
                 hash_update((unsigned char *)&tftf.header, header_hash_len);
             }
         } else {
-            if (section->section_type != TFTF_SECTION_RAW_CODE &&
-                section->section_type != TFTF_SECTION_RAW_DATA &&
-                section->section_type != TFTF_SECTION_COMPRESSED_CODE &&
-                section->section_type != TFTF_SECTION_COMPRESSED_DATA &&
-                section->section_type != TFTF_SECTION_MANIFEST &&
-                section->section_type != TFTF_SECTION_CERTIFICATE) {
-                dbgprint("Invalid section type found\r\n");
-                return -1;
-            }
-
             if (section->section_type == TFTF_SECTION_COMPRESSED_CODE ||
                 section->section_type == TFTF_SECTION_COMPRESSED_DATA) {
                 dbgprint("compressed section not supported in boot ROM\r\n");
@@ -241,4 +231,149 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
 void jump_to_image(void) {
     dbgflush();
     chip_jump_to_image(tftf.header.start_location);
+}
+
+/**
+ * @brief Determine if the TFTF section type is valid
+ *
+ * @param section_type The section type to check
+ *
+ * @returns True if a valid section type, false otherwise
+ */
+bool valid_tftf_type(uint32_t section_type) {
+     return (((section_type >= TFTF_SECTION_RAW_CODE) &&
+              (section_type <= TFTF_SECTION_MANIFEST)) ||
+             (section_type == TFTF_SECTION_SIGNATURE) ||
+             (section_type == TFTF_SECTION_CERTIFICATE) ||
+             (section_type == TFTF_SECTION_END));
+}
+
+/**
+ * @brief Validate a TFTF section descriptor
+ *
+ * @param section The TFTF section descriptor to validate
+ * @param header The TFTF header to which it belongs
+ * @param section_contains_start Pointer to a flag that will be set if the
+ *        image entry point lies within this section. (Untouched if not)
+ * @param end_of_sections Pointer to a flag that will be set if the section
+ *        type is the end-of-section-table marker. (Untouched if not)
+ *
+ * @returns True if valid section, false otherwise
+ */
+bool valid_tftf_section(tftf_section_descriptor * section,
+                        tftf_header * header,
+                        bool * section_contains_start,
+                        bool * end_of_sections) {
+    uint32_t    section_start;
+    uint32_t    section_end;
+    uint32_t    tftf_end;
+    tftf_section_descriptor * other_section;
+
+    if (!valid_tftf_type(section->section_type)) {
+        dbgprint("Invalid section type found\r\n");
+        return false;
+    }
+
+    /* Is this the end-of-table marker? */
+    if (section->section_type == TFTF_SECTION_END) {
+        *end_of_sections = true;
+        return true;
+    }
+
+    /*
+     * Convert the section limits to absolute addresses to compare against
+     * absolute addresses found in the TFTF header.
+     */
+    section_start = header->load_base + section->copy_offset;
+    section_end = section_start + section->expanded_length;
+    tftf_end = header->load_base + header->expanded_length;
+
+    /* Does the section fall outside the overall TFTF span? */
+    if ((section_start < header->load_base) || (section_end > tftf_end)) {
+        dbgprint("TFTF section outside of TFTF\r\n");
+        return false;
+    }
+
+    /* Does the section contain the entry point? */
+    if ((header->start_location >= section_start) &&
+       (header->start_location < section_end)) {
+        /*****/dbgprint("TFTF section contains start\r\n");
+        *section_contains_start = true;
+    }
+
+    /*
+     * Check this section for collision against all following sections.
+     * Since we're called in a scanning fashion from the start to the end of
+     * the sections array, all sections before us have already validated that
+     * they don't collide with us.
+     */
+    for (other_section = section + 1;
+         ((other_section < &header->sections[TFTF_MAX_SECTIONS]) &&
+          (other_section->section_type != TFTF_SECTION_END));
+         other_section++) {
+        if ((other_section->section_type != TFTF_SECTION_END) &&
+            (other_section->expanded_length >= section->copy_offset) &&
+            (other_section->copy_offset <= section->expanded_length)) {
+            dbgprint("TFTF sections collide\r\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * @brief Validate a TFTF header
+ *
+ * @param header The TFTF header to validate
+ *
+ * @returns True if valid section, false otherwise
+ */
+bool valid_tftf_header(tftf_header * header) {
+    tftf_section_descriptor * section;
+    bool section_contains_start = false;
+    bool end_of_sections = false;
+
+    /* Verify the sentinel */
+    if (header->sentinel_value != TFTF_SENTINEL) {
+        dbgprintx32("TFTF invalid sentinel: ", header->sentinel_value, "\r\n");
+        return false;
+    }
+
+    /* Verify the expanded/compressed lengths are sane */
+    if (header->expanded_length < header->load_length) {
+        dbgprintx32("TFTF comperssed > raw: ", header->sentinel_value, "\r\n");
+        return false;
+    }
+
+    /* Verify that the TFTF fits in available memory */
+    if (chip_validate_data_load_location((void *)header->load_base,
+                                         header->expanded_length)) {
+        dbgprintx32("TFTF length: ", header->sentinel_value, "\r\n");
+        return false;
+    }
+
+    /* Verify all of the sections */
+    for (section = &header->sections[0];
+         (section < &header->sections[TFTF_MAX_SECTIONS]) && !end_of_sections;
+         section++) {
+        if (!valid_tftf_section(section, header, &section_contains_start,
+                                &end_of_sections)) {
+            /* valid_tftf_section will have already printed the error */
+            return false;
+        }
+    }
+
+    /*
+     * Verify that the remainder of the header (i.e., unused section
+     * descriptors and the padding) is zero-filled
+     */
+    if (!is_constant_fill((uint8_t *)section,
+                          (uint32_t)&header[1] - (uint32_t)section,
+                          0x00)) {
+        dbgprint("TFTF non-zero fill\r\n");
+        return false;
+    }
+
+    return true;
 }

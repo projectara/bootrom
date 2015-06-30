@@ -27,7 +27,10 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "ffff.h"
+#include "utils.h"
 #include "debug.h"
 #include "data_loading.h"
 
@@ -41,54 +44,173 @@ typedef struct {
 static ffff_processing_state ffff;
 static const char ffff_sentinel_value[] = FFFF_SENTINEL_VALUE;
 
-static int validate_ffff_header(ffff_header *header) {
+/**
+ * @brief Validate an FFFF element
+ *
+ * @param section The FFFF element descriptor to validate
+ * @param header (The RAM-address of) the FFFF header to which it belongs
+ * @param rom_address The address in SPIROM of the header
+ * @param end_of_elements Pointer to a flag that will be set if the element
+ *        type is the FFFF_ELEMENT_END marker. (Untouched if not)
+ *
+ * @returns True if valid element, false otherwise
+ */
+bool valid_ffff_element(ffff_element_descriptor * element,
+                        ffff_header * header, uint32_t rom_address,
+                        bool *end_of_elements) {
+    ffff_element_descriptor * other_element;
+    uint32_t element_location_min = rom_address + header->erase_block_size;
+    uint32_t element_location_max = header->flash_image_length;
+    uint32_t this_start;
+    uint32_t this_end;
+    uint32_t that_start;
+    uint32_t that_end;
+
+    /* Is this the end-of-table marker? */
+    if (element->element_type == FFFF_ELEMENT_END) {
+        *end_of_elements = true;
+        return true;
+    }
+
+    /* Do we overlap the header or spill over the end? */
+    this_start = element->element_location;
+    this_end = this_start + element->element_length - 1;
+    if ((this_start < element_location_min) ||
+        (this_end >= element_location_max)) {
+        dbgprint("FFFF element in reserved memory\r\n");
+        return false;
+    }
+
+    /* Are we block-aligned? */
+    if (!block_aligned(element->element_location, header->erase_block_size)) {
+        dbgprint("FFFF element not block aligned\r\n");
+        return false;
+    }
+
+    /*
+     * Check this element for collisions against all following sections and
+     * for duplicates of this element.
+     * Since we're called in a scanning fashion from the start to the end of
+     * the elements array, all elements before us have already validated that
+     * they don't duplcate or collide with us.
+     */
+    for (other_element = element + 1;
+         ((other_element < &header->elements[FFFF_MAX_ELEMENTS]) &&
+          (other_element->element_type != FFFF_ELEMENT_END));
+         other_element++) {
+        /* check for collision */
+        that_start = other_element->element_location;
+        that_end = that_start + other_element->element_length - 1;
+        if ((that_end >= this_start) && (that_start <= this_end)) {
+            dbgprint("FFFF elements collide\r\n");
+            return false;
+        }
+
+
+        /*
+         * Check for other duplicate entries per the specification:
+         * "At most, one element table entry with a particular element type,
+         * element ID, and element generation may be present in the element
+         * table."
+         */
+        if ((element->element_type == other_element->element_type) &&
+            (element->element_id == other_element->element_id) &&
+            (element->element_generation ==
+                    other_element->element_generation)) {
+            dbgprint("FFFF duplicate element\r\n");
+            return false;
+        }
+    }
+
+    /* No errors found! */
+    return true;
+}
+
+static int validate_ffff_header(ffff_header *header, uint32_t address) {
     int i;
+    ffff_element_descriptor * element;
+    bool end_of_elements = false;
+
+    /* Check for leading and trailing sentinels */
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->sentinel_value[i] != ffff_sentinel_value[i]) {
+            dbgprint("FFFF Bad sentinel\r\n");
             return -1;
         }
     }
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->trailing_sentinel_value[i] != ffff_sentinel_value[i]) {
+            dbgprint("FFFF Bad sentinel\r\n");
             return -1;
         }
     }
 
     if (header->erase_block_size > FFFF_ERASE_BLOCK_SIZE_MAX) {
+        dbgprint("FFFF Bad erase block size\r\n");
         return -1;
     }
 
     if (header->flash_capacity < (header->erase_block_size << 1)) {
-        return -1;
+        dbgprint("FFFF Bad flash capacity\r\n");
+       return -1;
     }
 
     if (header->flash_image_length > header->flash_capacity) {
+        dbgprint("FFFF image length > flash capacity\r\n");
         return -1;
     }
 
     if (header->header_size != FFFF_HEADER_SIZE) {
+        dbgprint("FFFF Bad header size\r\n");
+       return -1;
+    }
+
+    /* Validate the FFFF elements */
+    for (element = &header->elements[0];
+         (element < &header->elements[FFFF_MAX_ELEMENTS]) && !end_of_elements;
+         element++) {
+        if (!valid_ffff_element(element, header, address, &end_of_elements)) {
+            /* valid_ffff_element will have already printed the error */
+            return false;
+        }
+    }
+    if (!end_of_elements) {
+        dbgprint("FFFF no-end-of-elements marker");
+    }
+
+    /*
+     * Verify that the remainder of the header (i.e., unused section
+     * descriptors and the padding) is zero-filled
+     */
+    if (!is_constant_fill((uint8_t *)element,
+                          (uint32_t)&header[1] -
+                              (uint32_t)&header->trailing_sentinel_value,
+                          0x00)) {
+        dbgprint("FFFF non-zero padding\r\n");
         return -1;
     }
 
+    /* No errors found! */
     return 0;
 }
 
 static int locate_ffff_table(data_load_ops *ops)
 {
-    uint32_t address = FFFF_HEADER_SIZE;
+    uint32_t address = 0;//FFFF_HEADER_SIZE;
 
     ffff.cur_header = &ffff.header1;
 
     /* First look for header at beginning of the storage */
-    if (ops->read(&ffff.header1, 0, sizeof(ffff_header))) {
+    if (ops->read(&ffff.header1, address, sizeof(ffff_header))) {
         return -1;
-    } else if (validate_ffff_header(&ffff.header1)) {
+    } else if (validate_ffff_header(&ffff.header1, address)) {
         /* There is no valid FFFF table at address 0, this means the first
            copy of FFFF table is corrupted. So look for the second copy only */
+        address = FFFF_HEADER_SIZE;
         while(address < FFFF_ERASE_BLOCK_SIZE_MAX * 2) {
             if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
                 return -1;
-            } else if(!validate_ffff_header(&ffff.header2)) {
+            } else if(!validate_ffff_header(&ffff.header2, address)) {
                 ffff.cur_header = &ffff.header2;
                 return 0;
             }
@@ -98,14 +220,14 @@ static int locate_ffff_table(data_load_ops *ops)
         return -1;
     }
 
-    /* a valid FFFF table is at address 0, now look for the second one */
+    /* A valid FFFF table is at address 0, now look for the second one */
     address = ffff.header1.erase_block_size;
     if (address < ffff.header1.header_size) {
         address = ffff.header1.header_size;
     }
     if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
         return -1;
-    } else if(validate_ffff_header(&ffff.header2)) {
+    } else if(validate_ffff_header(&ffff.header2, address)) {
         /* Did not find the second copy, so use the first one */
         dbgprint("failed to find the second FFFF table\r\n");
         return 0;

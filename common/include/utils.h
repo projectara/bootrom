@@ -27,27 +27,8 @@
  */
 
 #include <stddef.h>
-#include <utils.h>
-
-/*
- * Compared to crypto functions, time spent in the memcpy can be ignored,
- * so let's keep it simple instead of optmizing for speed at this moment.
- */
-void *memcpy(void *dest, const void *src, size_t n) {
-    size_t i;
-    unsigned char *pd = (unsigned char*)dest;
-    const unsigned char *ps = (const unsigned char*)src;
-
-    /*
-     * Parameter validation is skipped here, since this is used internally
-     * only and the paramters are expected to be vailidated by caller
-     */
-
-    for (i = 0; i < n; i++) {
-        *pd++ = *ps++;
-    }
-    return dest;
-}
+#include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief Determine if a value is a power of 2
@@ -56,9 +37,7 @@ void *memcpy(void *dest, const void *src, size_t n) {
  *
  * @returns true if it is a power of 2, false otherwise
  */
-bool is_power_of_2(uint32_t x) {
-     return ((x != 0) && !(x & (x - 1)));
-}
+bool is_power_of_2(uint32_t x);
 
 /**
  * @brief Determine if an address is block-aligned
@@ -68,9 +47,7 @@ bool is_power_of_2(uint32_t x) {
  *
  * @returns true if it is block-aligned, false otherwise
  */
-bool block_aligned(uint32_t address, uint32_t block_size) {
-     return ((address & (block_size - 1)) == 0);
-}
+bool block_aligned(uint32_t address, uint32_t block_size);
 
 /**
  * @brief Round up an address to the next block boundary
@@ -80,9 +57,7 @@ bool block_aligned(uint32_t address, uint32_t block_size) {
  *
  * @returns A block-aligned address
  */
-uint32_t next_block_boundary(uint32_t address, uint32_t block_size) {
-     return (address + (block_size - 1)) & ~(block_size - 1);
-}
+uint32_t next_block_boundary(uint32_t address, uint32_t block_size);
 
 /**
  * @brief Check a range of bytes for a constant fill
@@ -93,11 +68,4 @@ uint32_t next_block_boundary(uint32_t address, uint32_t block_size) {
  *
  * @returns True if the buffer is filled with a constan byte, false otherwise.
  */
-bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte) {
-     while (len-- > 0) {
-         if (*buf++ != fill_byte) {
-             return false;
-         }
-     }
-     return true;
-}
+bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
