@@ -4,7 +4,7 @@ if [ "$1" != "" ]
 then
 	CONFIG_CHIP=$1
 else
-	CONFIG_CHIP="tsb"
+	CONFIG_CHIP="es3tsb"
 fi
 
 echo "Configuring for chip "${CONFIG_CHIP}

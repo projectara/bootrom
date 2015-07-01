@@ -8,11 +8,12 @@ To build the code, do:
     ./configure <chip_name>
     make
 
-The <chip_name> defaults to "tsb" if not specified. This is for the official
-Toshiba UniPro Bridge chips (both APBridge and GPBridge).
+The <chip_name> defaults to "es3tsb" if not specified. This is for the official
+ES3 Toshiba UniPro Bridge chips (both APBridge and GPBridge).
 
 Other available configurations include:
     es1tsb  - to build image to run on ES1 chip (in workram)
+    es2tsb  - to build image to run on ES2 chip (in workram)
     fpgatsb - to build image to run on HAPS board, with ES3 FPGA bits
 
 Description:
@@ -38,7 +39,7 @@ Memory map (workram):
      ------------------------------------
     | 0x1002FFFF | workram end           |
      ------------------------------------
-    | 0x1002FFF8 | communication area    |
+    | 0x1002FF30 | communication area    |
      ------------------------------------
     |    ...     | stack                 |
      ------------------------------------
