@@ -81,14 +81,24 @@ include $(TOPDIR)/Sources.mk
 _dummy := $(foreach d,$(SRCDIRS), \
 		  $(shell [ -d $(OUTROOT)/$(d) ] || mkdir -p $(OUTROOT)/$(d)))
 
-BIN = $(OUTROOT)/bootrom
+ELF = $(OUTROOT)/bootrom
+BIN = $(ELF).bin
+HEX = $(ELF).hex
 
-all: $(BIN)
+all: $(HEX)
 
-$(BIN): $(AOBJS) $(COBJS)
+$(ELF): $(AOBJS) $(COBJS)
 	@ echo Linking $@
 	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS)
-	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $(BIN) $(BIN).bin
+
+$(BIN): $(ELF)
+	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@
+
+# TBD: figure out the "version"
+# also, the "--gpb" seems not needed because we are not differentiating
+# the apbridge and gpbridge in the boot ROM
+$(HEX): $(BIN)
+	$(Q) bin2verilog --input $< --out $@ --version 1 --gpb
 
 -include $(COBJS:.o=.d) $(AOBJS:.o=.d)
 

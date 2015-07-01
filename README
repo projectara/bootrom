@@ -4,6 +4,17 @@ Build:
 The boot ROM code can only be built under Linux. Tested build environment is
 Ubuntu 14.04.
 
+Environment setup:
+The boot ROM build environment is similar to the firmware build for Toshiba
+Bridge chip. Please follow
+    https://github.com/projectara/Firmware-wiki/wiki/Software-Setup
+to setup the build environment.
+
+In addition, the boot ROM build relies on
+    http://github.com/projectara/bootrom-tools.
+Please clone this repository and make sure the "scripts" folder in this tree
+is included in the PATH.
+
 To build the code, do:
     ./configure <chip_name>
     make
