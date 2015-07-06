@@ -445,6 +445,7 @@
 #define REG_RX_PAUSE_SIZE_41                   0x000012A4
 #define REG_RX_PAUSE_SIZE_42                   0x000012A8
 #define REG_RX_PAUSE_SIZE_43                   0x000012AC
+    #define RX_PAUSE_RESTART                   0x80000000
 #define CPB_RX_TRANSFERRED_DATA_SIZE_00        0x00001300
 #define CPB_RX_TRANSFERRED_DATA_SIZE_01        0x00001304
 #define CPB_RX_TRANSFERRED_DATA_SIZE_02        0x00001308

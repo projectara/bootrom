@@ -26,61 +26,49 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <string.h>
-#include "bootrom.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "data_loading.h"
-#include "greybus.h"
-#include "fw_over_unipro.h"
+#ifndef __COMMON_INCLUDE_GREYBUS_H
+#define __COMMON_INCLUDE_GREYBUS_H
 
-static int cport_connected = 0;
-int fwou_cport_connected(void) {
-    if (cport_connected == 1) {
-        /* Don't know what to do if it is already connected */
-        return -1;
-    }
-    dbgprint("data port connected\r\n");
+#define GREYBUS_MAJOR_VERSION        0
+#define GREYBUS_MINOR_VERSION        1
 
-    chip_unipro_init_cport(FW_OVER_UNIPRO_CPORT);
+typedef struct {
+    uint16_t size;
+    uint16_t id;
+    uint8_t  type;
+    uint8_t  status;
+    uint16_t padding;
+} __attribute__ ((packed)) gb_operation_header;
 
-    cport_connected = 1;
-    return 0;
-}
+#define GB_TYPE_RESPONSE  0x80
 
-int fwou_cport_disconnected(void) {
-    if (cport_connected == 0) {
-        return -1;
-    }
-    return 0;
-}
+#define GB_CTRL_OP_VERSION           0x01
+#define GB_CTRL_OP_PROBE_AP          0x02
+#define GB_CTRL_OP_GET_MANIFEST_SIZE 0x03
+#define GB_CTRL_OP_GET_MANIFEST      0x04
+#define GB_CTRL_OP_CONNECTED         0x05
+#define GB_CTRL_OP_DISCONNECTED      0x06
 
-static int data_load_unipro_init(void) {
-    int rc;
+#define GB_OP_SUCCESS                0x00
+#define GB_OP_INVALID                0x06
+#define GB_OP_UNKNOWN_ERROR          0xFE
 
-    /* poll until data cport connected */
-    while (cport_connected == 0) {
-        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
-        if (rc == -1) {
-            dbgprint("unipro init failed\r\n");
-            return -1;
-        }
-    }
+#define CONTROL_CPORT 2
 
-    return 0;
-}
+int control_cport_handler(unsigned int cportid,
+                          void *data,
+                          size_t len);
 
-static int data_load_unipro_load(void *dest, uint32_t length, bool hash) {
-    return 0;
-}
+int greybus_op_response(unsigned int cport,
+                        gb_operation_header *op_header,
+                        uint8_t status,
+                        unsigned char *payload_data,
+                        uint16_t payload_size);
 
-static void data_load_unipro_finish(void) {
-}
+int greybus_send_request(unsigned int cport,
+                         uint16_t id,
+                         uint8_t type,
+                         unsigned char *payload_data,
+                         uint16_t payload_size);
 
-data_load_ops unipro_ops = {
-    .init = data_load_unipro_init,
-    .read = NULL,
-    .load = data_load_unipro_load,
-    .finish = data_load_unipro_finish
-};
+#endif /* __COMMON_INCLUDE_GREYBUS_H */

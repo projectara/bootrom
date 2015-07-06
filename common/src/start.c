@@ -40,6 +40,7 @@
 #include "ffff.h"
 
 extern data_load_ops spi_ops;
+extern data_load_ops unipro_ops;
 
 /**
  * @brief Bootloader "C" entry point
@@ -57,6 +58,7 @@ void bootrom_main(void) {
 #ifdef BOOT_OVER_UNIPRO
     bool        fallback_boot_unipro = false;
 #endif
+    uint32_t is_secure_image;
 
     chip_init();
 
@@ -64,7 +66,7 @@ void bootrom_main(void) {
     dbgprint("Hello world!\r\n");
 
     chip_unipro_init();
-
+    
     /* Advertise our boot status */
     chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                            ATTR_LOCAL, &dme_write_result);
@@ -97,7 +99,6 @@ void bootrom_main(void) {
         dbgprint("bootrom_main: Boot from SPIROM\r\n");
 
         spi_ops.init();
-        uint32_t is_secure_image;
         if (locate_second_stage_firmware_on_storage(&spi_ops) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
             chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
@@ -146,7 +147,14 @@ void bootrom_main(void) {
         boot_status = fallback_boot_unipro?
                 INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED :
                 INIT_STATUS_UNIPRO_BOOT_STARTED;
-        /***** BOU TBD ****/
+        chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
+                               ATTR_LOCAL, &dme_write_result);
+        unipro_ops.init();
+        if (!load_tftf_image(&unipro_ops, &is_secure_image)) {
+            unipro_ops.finish();
+            jump_to_image();
+        }
+        unipro_ops.finish();
     }
 #endif
 

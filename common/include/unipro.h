@@ -29,10 +29,6 @@
 #ifndef __COMMON_INCLUDE_UNIPRO_H
 #define __COMMON_INCLUDE_UNIPRO_H
 
-/* This file contains testing code, will not be in the final boot ROM.
-   Functions in this file takes the roles of everything on the other end of
-   UniPro to serve the bridge chip, including switch/SVC to setup connection
-   and AP as the server of image downloading. */
 /*
  * "Don't care" selector index
  */

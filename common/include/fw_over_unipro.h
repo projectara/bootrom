@@ -26,61 +26,19 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <string.h>
-#include "bootrom.h"
-#include "chipapi.h"
-#include "debug.h"
-#include "data_loading.h"
-#include "greybus.h"
-#include "fw_over_unipro.h"
+#ifndef __COMMON_INCLUDE_FW_OVER_UNIPRO_H
+#define __COMMON_INCLUDE_FW_OVER_UNIPRO_H
 
-static int cport_connected = 0;
-int fwou_cport_connected(void) {
-    if (cport_connected == 1) {
-        /* Don't know what to do if it is already connected */
-        return -1;
-    }
-    dbgprint("data port connected\r\n");
+#define FW_OVER_UNIPRO_MAJOR_VERSION        0
+#define FW_OVER_UNIPRO_MINOR_VERSION        1
 
-    chip_unipro_init_cport(FW_OVER_UNIPRO_CPORT);
+#define FW_OVER_UNIPRO_OP_VERSION           0x01
+#define FW_OVER_UNIPRO_OP_PROBE_AP          0x02
+#define FW_OVER_UNIPRO_OP_GET_MANIFEST_SIZE 0x03
 
-    cport_connected = 1;
-    return 0;
-}
+#define FW_OVER_UNIPRO_CPORT 3
 
-int fwou_cport_disconnected(void) {
-    if (cport_connected == 0) {
-        return -1;
-    }
-    return 0;
-}
+int fwou_cport_connected(void);
+int fwou_cport_disconnected(void);
 
-static int data_load_unipro_init(void) {
-    int rc;
-
-    /* poll until data cport connected */
-    while (cport_connected == 0) {
-        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
-        if (rc == -1) {
-            dbgprint("unipro init failed\r\n");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int data_load_unipro_load(void *dest, uint32_t length, bool hash) {
-    return 0;
-}
-
-static void data_load_unipro_finish(void) {
-}
-
-data_load_ops unipro_ops = {
-    .init = data_load_unipro_init,
-    .read = NULL,
-    .load = data_load_unipro_load,
-    .finish = data_load_unipro_finish
-};
+#endif /* __COMMON_INCLUDE_FW_OVER_UNIPRO_H */

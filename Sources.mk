@@ -50,6 +50,7 @@ CMN_CSRC += $(CMN_SRCDIR)/ffff.c
 CMN_CSRC += $(CMN_SRCDIR)/crypto.c
 CMN_CSRC += $(CMN_SRCDIR)/utils.c
 CMN_CSRC += $(CMN_SRCDIR)/unipro.c
+CMN_CSRC += $(CMN_SRCDIR)/gbcore.c
 CMN_CSRC += $(CMN_SRCDIR)/debug.c
 
 CMN_ASRC =

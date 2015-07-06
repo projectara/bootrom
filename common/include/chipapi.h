@@ -30,6 +30,7 @@
 #define __COMMON_INCLUDE_CHIPAPI_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 void chip_init(void);
 
@@ -43,6 +44,7 @@ int chip_validate_data_load_location(void *base, uint32_t length);
 void chip_jump_to_image(uint32_t start_address);
 
 void chip_unipro_init(void);
+void chip_unipro_init_cport(int16_t cportid);
 
 #define ATTR_LOCAL 0
 #define ATTR_PEER  1
@@ -76,5 +78,31 @@ int chip_unipro_attr_write(uint16_t attr,
                            int peer,
                            uint32_t *result_code);
 
+/**
+ * @brief send data down a CPort
+ * @param cportid cport to send down
+ * @param buf data buffer
+ * @param len size of data to send
+ * @return 0 on success, <0 on error
+ */
+int chip_unipro_send(unsigned int cportid, const void *buf, size_t len);
+
+/**
+ * @brief handler callback for UniPro data RX
+ * @param cportid cport which received data
+ * @param data pointer to the data buffer
+ * @param len number of bytes of data received
+ * @return 0 on success, <0 on error
+ */
+typedef int (*unipro_rx_handler)(unsigned int cportid,
+                                 void *data,
+                                 size_t len);
+
+/**
+ * @brief wait for data from a cport
+ * @param cportid cport for the rx
+ * @param handler rx handler callback, called before RX is restarted
+ */
+int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler);
 
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */
