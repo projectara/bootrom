@@ -57,7 +57,7 @@ static int load_tftf_header(data_load_ops *ops) {
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
-    if (ops->load(&tftf.header, TFTF_HEADER_SIZE)) {
+    if (ops->load(&tftf.header, TFTF_HEADER_SIZE, false)) {
         return -1;
     }
     /* first check the sentinel value */
@@ -174,10 +174,11 @@ static int load_tftf_header(data_load_ops *ops) {
 static int process_tftf_section(data_load_ops *ops,
                                 tftf_section_descriptor *section) {
     unsigned char *dest;
+    bool hash_loaded_data = false;
 
     if (section->section_type == TFTF_SECTION_SIGNATURE) {
         dbgprint("WARNING: signature verification not implemented yet\r\n");
-        if (ops->load(&tftf.signature, sizeof(tftf.signature))) {
+        if (ops->load(&tftf.signature, sizeof(tftf.signature), false)) {
             dbgprint("error loading signature\r\n");
             return -1;
         }
@@ -200,14 +201,15 @@ static int process_tftf_section(data_load_ops *ops,
 
     dest = (unsigned char*)tftf.header.load_base + section->copy_offset;
 
-    if (ops->load(dest, section->section_length)) {
+    if (tftf.crypto_state == CRYPTO_STATE_HASHING) {
+        hash_loaded_data = true;
+    }
+
+    if (ops->load(dest, section->section_length, hash_loaded_data)) {
         dbgprint("invalid tftf header size\r\n");
         return -1;
     }
 
-    if (tftf.crypto_state == CRYPTO_STATE_HASHING) {
-        hash_update(dest, section->section_length);
-    }
 
     return 0;
 }

@@ -32,6 +32,7 @@
 #include "debug.h"
 #include "tsb_scm.h"
 #include "data_loading.h"
+#include "crypto.h"
 
 static uint8_t *current_addr = NULL;
 static uint8_t initialized = 0;
@@ -63,7 +64,7 @@ static int data_load_mmapped_read(void *dest, uint32_t addr, uint32_t length) {
     return 0;
 }
 
-static int data_load_mmapped_load(void *dest, uint32_t length) {
+static int data_load_mmapped_load(void *dest, uint32_t length, bool hash) {
     if(initialized != 1 ||
        current_addr + length >= (uint8_t*)(MMAP_LOAD_BASE + MMAP_LOAD_SIZE))
         return -1;
@@ -73,6 +74,9 @@ static int data_load_mmapped_load(void *dest, uint32_t length) {
     for (dst = (uint8_t*) dest; current_addr < load_end;)
         *dst++ = *current_addr++;
 
+    if (hash) {
+        hash_update((unsigned char *)dest, length);
+    }
     return 0;
 }
 

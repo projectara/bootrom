@@ -31,6 +31,7 @@
 #include "tsb_scm.h"
 #include "debug.h"
 #include "data_loading.h"
+#include "crypto.h"
 
 static uint32_t current_addr;
 
@@ -74,7 +75,7 @@ static int data_load_spi_init(void) {
     return 0;
 }
 
-static int data_load_spi_load(void *dest, uint32_t length) {
+static int data_load_spi_load(void *dest, uint32_t length, bool hash) {
     uint32_t c;
     uint32_t sr, dr;
     unsigned char *pdest = (unsigned char *)dest;
@@ -156,6 +157,9 @@ static int data_load_spi_load(void *dest, uint32_t length) {
         current_addr += count;
     }
 
+    if (hash) {
+        hash_update((unsigned char *)dest, length);
+    }
     return 0;
 }
 
@@ -165,7 +169,7 @@ static int data_load_spi_read(void *dest, uint32_t addr, uint32_t length) {
         return 0;
     }
 
-    return data_load_spi_load(dest, length);
+    return data_load_spi_load(dest, length, false);
 }
 
 static void data_load_spi_finish(void) {

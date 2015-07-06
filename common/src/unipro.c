@@ -35,7 +35,7 @@ static int data_load_unipro_init(void) {
     return 0;
 }
 
-static int data_load_unipro_load(void *dest, uint32_t length) {
+static int data_load_unipro_load(void *dest, uint32_t length, bool hash) {
     return 0;
 }
 
