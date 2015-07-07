@@ -12,7 +12,7 @@ to setup the build environment.
 
 In addition, the boot ROM build relies on
     http://github.com/projectara/bootrom-tools.
-Please clone this repository and make sure the "scripts" folder in this tree
+Please clone this repository and make sure the folder of the bootrom-tools tree
 is included in the PATH.
 
 To build the code, do:
