@@ -38,6 +38,9 @@
 #define FFFF_SENTINEL_SIZE                16
 #define FFFF_SENTINEL_VALUE               "FlashFormatForFW"
 
+#define FFFF_MAX_ELEMENTS                 19
+#define FFFF_PADDING                      16
+
 /* Element types */
 #define FFFF_ELEMENT_END                  0
 #define FFFF_ELEMENT_STAGE_2_FW           1
@@ -56,7 +59,7 @@ typedef struct {
 
 #define FFFF_ELEMENT_SIZE sizeof(ffff_element_descriptor)
 
-typedef union {
+typedef //union {
     struct {
         char sentinel_value[FFFF_SENTINEL_SIZE];
         char build_timestamp[16];
@@ -66,12 +69,14 @@ typedef union {
         uint32_t header_size;
         uint32_t flash_image_length;
         uint32_t header_generation;
-        ffff_element_descriptor elements[];
-    };
-    struct {
-        unsigned char leading_buffer[FFFF_HEADER_SIZE - FFFF_SENTINEL_SIZE];
+        ffff_element_descriptor elements[FFFF_MAX_ELEMENTS];
+        uint8_t padding[FFFF_PADDING];
         char trailing_sentinel_value[FFFF_SENTINEL_SIZE];
-    };
+//    };
+//    struct {
+//        unsigned char leading_buffer[FFFF_HEADER_SIZE - FFFF_SENTINEL_SIZE];
+//        char trailing_sentinel_value[FFFF_SENTINEL_SIZE];
+//    };
 } __attribute__ ((packed)) ffff_header;
 
 int locate_second_stage_firmware_on_storage(data_load_ops *ops);

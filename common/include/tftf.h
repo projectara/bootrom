@@ -30,10 +30,19 @@
 #define __COMMON_INCLUDE_TFTF_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "data_loading.h"
 
 #define TFTF_HEADER_SIZE                  512
-#define TFTF_SENTINEL_VALUE               {'T','F','T','F'}
+#define TFTF_MAX_SECTIONS                 25
+
+/**
+ * @brief TFTF Sentinal value "TFTF"
+ *
+ * Note: string must be in reverse order so that it looks OK on a little-
+ * endian dump.
+ */
+#define TFTF_SENTINEL                     0x46544654
 
 /* Section types */
 #define TFTF_SECTION_END                  0xFE
@@ -65,7 +74,7 @@ typedef union {
         uint32_t unipro_pid;
         uint32_t ara_vid;
         uint32_t ara_pid;
-        tftf_section_descriptor sections[];
+        tftf_section_descriptor sections[TFTF_MAX_SECTIONS];
     };
     unsigned char buffer[TFTF_HEADER_SIZE];
 } __attribute__ ((packed)) tftf_header;
