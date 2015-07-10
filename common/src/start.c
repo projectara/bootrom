@@ -66,7 +66,7 @@ void bootrom_main(void) {
     dbgprint("Hello world!\r\n");
 
     chip_unipro_init();
-    
+
     /* Advertise our boot status */
     chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                            ATTR_LOCAL, &dme_write_result);

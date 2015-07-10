@@ -43,4 +43,7 @@ static inline int unipro_attr_local_write(uint16_t attr,
     return chip_unipro_attr_write(attr, val, selector, 0, result_code);
 }
 
+#define TRANSFER_MODE          (2)
+#define TRANSFER_MODE_2_CTRL_0 (0xAAAAAAAA)
+
 #endif
