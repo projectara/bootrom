@@ -41,6 +41,9 @@ else
   ARCH_EXTRA_ASRC =
 endif
 
+MANIFEST = IID1-simple-bootrom-mnfs
+MANIFEST_SRCDIR = manifest
+
 CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 
@@ -58,7 +61,7 @@ CMN_ASRC =
 CSRC = $(CHIP_CSRC) $(CMN_CSRC) $(ARCH_EXTRA_CSRC)
 ASRC = $(CHIP_ASRC) $(CMN_ASRC) $(ARCH_EXTRA_ASRC)
 
-SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR) $(ARCH_EXTRA_SRCDIR)
+SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR) $(ARCH_EXTRA_SRCDIR) $(MANIFEST_SRCDIR)
 
 COBJS := $(foreach f, $(CSRC), $(OUTROOT)/$(patsubst %.c,%.o, $(f)))
 AOBJS := $(foreach f, $(ASRC), $(OUTROOT)/$(patsubst %.S,%.o, $(f)))

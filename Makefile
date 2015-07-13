@@ -92,7 +92,17 @@ CFLAGS += -I$(MANIFEST_OUTDIR)
 
 all: $(HEX)
 
-$(ELF): $(AOBJS) $(COBJS)
+$(MANIFEST_OUTDIR)/$(MANIFEST).h: $(MANIFEST_OUTDIR)/$(MANIFEST).mnfb
+	@echo "Generating manifest data..."
+	$(Q) xxd -i <$< >$@
+
+$(MANIFEST_OUTDIR)/$(MANIFEST).mnfb: $(MANIFEST_OUTDIR)/$(MANIFEST)
+	$(Q) manifesto $<
+
+$(MANIFEST_OUTDIR)/$(MANIFEST): $(MANIFEST_SRCDIR)/$(MANIFEST)
+	$(Q) cp $< $@
+
+$(ELF): $(MANIFEST_OUTDIR)/$(MANIFEST).h $(AOBJS) $(COBJS)
 	@ echo Linking $@
 	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS)
 
