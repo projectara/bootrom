@@ -10,11 +10,6 @@ Bridge chip. Please follow
     https://github.com/projectara/Firmware-wiki/wiki/Software-Setup
 to setup the build environment.
 
-In addition, the boot ROM build relies on
-    http://github.com/projectara/bootrom-tools.
-Please clone this repository and make sure the folder of the bootrom-tools tree
-is included in the PATH.
-
 To build the code, do:
     ./configure <chip_name>
     make

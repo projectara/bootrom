@@ -113,7 +113,7 @@ $(BIN): $(ELF)
 # also, the "--gpb" seems not needed because we are not differentiating
 # the apbridge and gpbridge in the boot ROM
 $(HEX): $(BIN)
-	$(Q) bin2verilog --input $< --out $@ --version 1 --gpb
+	$(Q) tools/bin2verilog --input $< --out $@ --version 1 --gpb
 
 -include $(COBJS:.o=.d) $(AOBJS:.o=.d)
 

@@ -1,0 +1,208 @@
+#! /usr/bin/env python
+
+#
+# Copyright (c) 2015 Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+# contributors may be used to endorse or promote products derived from this
+# software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# Convert a raw binary file into a Verilog download file for Toshiba.
+#
+# See: Toshiba's "ARA ES3 Bridge ROM Programming Guide"
+#
+
+from __future__ import print_function
+from time import gmtime, strftime
+from struct import unpack_from
+import sys
+import argparse
+import errno
+
+DEFAULT_ROM_SIZE = 148 * 1024
+
+
+def warning(*objs):
+    print("WARNING: ", *objs, file=sys.stderr)
+
+
+def error(*objs):
+    print("ERROR: ", *objs, file=sys.stderr)
+
+
+def auto_int(x):
+    # Workaround to allow hex numbers to be entered for numeric arguments.
+    return int(x, 0)
+
+
+def validate_args(args):
+    # Sanity-check the command line args and return a "valid" flag
+    success = True
+    if not args.input:
+        error("Missing --input file")
+        success = False
+    if not args.out:
+        error("Missing --out file")
+        success = False
+    if not args.apb and not args.gpb:
+        error("You must specify --apb or --gpb")
+        success = False
+    elif args.apb and args.gpb:
+        error("You must specify only one of --apb or --gpb")
+        success = False
+    if args.load < 0 or args.load > 0xffffffff:
+        error("--load is out of range")
+        success = False
+    if args.size < 0 or args.size > 0xffffffff:
+        error("--start is out of range")
+        success = False
+    if args.version < 1 or args.version > 9:
+        error("--version is out of range")
+        success = False
+    return success
+
+
+def filter_file(infilename, outfilename, load, rom_size, version,
+                is_ap_bridge):
+    """Filter the .bin file into a Verilog download file
+
+    Create the Verilog download file and filter the bin file into it.
+    The Verilog download file is padded out with FFFFFFFF up to the last
+    2 ULONGs, which contain the serial number.
+    """
+    # Convert the rom size from bytes to ULONGs
+    rom_size /= 4
+    with open(infilename, "rb") as infile:
+        with open(outfilename, "w") as outfile:
+            # Read the input file and pad as needed to be DWORD-aligned
+            buffer = infile.read()
+            padding = len(buffer) % 4
+            if padding > 0:
+                while padding < 4:
+                    buffer += "\0"
+                    padding += 1
+            address = load
+
+            # Write the file out as "@addr ULONG" in hex.
+            for offset in range(0, (rom_size - 2) * 4, 4):
+                if offset < len(buffer):
+                    # Get the next ULONG
+                    unpacked_data = unpack_from("<L", buffer, offset)
+                    data = unpacked_data[0]
+                else:
+                    # Pad with 0xFFFFFFFF
+                    data = 0xffffffff
+                outfile.write("@{0:x} {1:08x}\n".format(address, data))
+                address += 1
+
+            # Append the 8-character serial number
+            timestamp = strftime("%y%m%d", gmtime())
+            timestamp += "{0:d}{1:d}".format(is_ap_bridge, version)
+            outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
+                          address, ord(timestamp[0]), ord(timestamp[1]),
+                          ord(timestamp[2]), ord(timestamp[3])))
+            outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
+                          address+1, ord(timestamp[4]), ord(timestamp[5]),
+                          ord(timestamp[6]), ord(timestamp[7])))
+
+
+def main():
+    """Application to convert a raw binary file into a Verilog download file
+
+    This is covered in detail in "ES3 Bridge ASIC Boot ROM High Level Design".
+
+    Usage: bin2verilog --in <file> --out <file> \
+           [--apb | --gpb] --offset <num> --size <num>
+    Where:
+        --input
+            The pathname of the input (.bin) file.
+        --out
+            Specifies the output file
+        --load
+            Set the offset of the start of the input to <num> instead of zero.
+        --size
+            Set the size of the output ROM <num>
+        --version
+            Set the version number of the output file serial number
+        --apb
+            Designate the target as an AP bridge
+        --gpb
+            Designate the target as a GP bridge
+    """
+    parser = argparse.ArgumentParser()
+
+    # String/file args
+    parser.add_argument("--input",
+                        help="The name of the input binary file")
+
+    parser.add_argument("--out",
+                        help="The name of the Verilog download file")
+
+    # Numeric args
+    parser.add_argument("--load",
+                        type=auto_int,
+                        default=0,
+                        help="The load address for the image (if not zero)")
+
+    parser.add_argument("--size",
+                        type=auto_int,
+                        default=DEFAULT_ROM_SIZE,
+                        help="Set the size of the output ROM")
+
+    parser.add_argument("--version",
+                        type=auto_int,
+                        default=0,
+                        help="version number of the output file")
+
+    # Flags args
+    parser.add_argument("--apb",
+                        action='store_true',
+                        help="target is AP Bridge")
+
+    parser.add_argument("--gpb",
+                        action='store_true',
+                        help="target is GP Bridge")
+
+    args = parser.parse_args()
+
+    # Sanity-check the arguments
+    if not validate_args(args):
+        print("Invalid args")
+        sys.exit(errno.EINVAL)
+
+    # Filter the file
+    try:
+        filter_file(args.input, args.out, args.load, args.size, args.version,
+                    args.apb)
+        print("Wrote", args.out)
+    except:
+        error("Could not filter", args.input, "to", args.out)
+
+    print("Done")
+
+## Launch main
+#
+if __name__ == '__main__':
+    main()
