@@ -39,6 +39,15 @@
 
 /* AP/GP Bridge peripherals memory map */
 
+/* Include chip-specific elements of the memory map */
+#if CONFIG_CHIP_REVISION == CHIP_REVISION_ES1
+#include "es1_chipdef.h"
+#elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES2
+#include "es2_chipdef.h"
+#elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES3
+#include "es3_chipdef.h"
+#endif
+
 #define SYSCTL_BASE     0x40000000
 #define SYSCTL_SIZE     0x1000
 
@@ -80,22 +89,6 @@
 
 #define GDMACN_BASE     0x40015000
 #define GDMACN_SIZE     0x1000
-
-#if CONFIG_CHIP_REVISION == CHIP_REVISION_ES3
-#define SPI_BASE        0x40018000
-#define SPI_SIZE        0x800
-#elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES2
-#define SPI_BASE        0x01000000
-#define SPI_SIZE        0x1000000
-#elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES1
-#define SPI_BASE        0x00000000
-#define SPI_SIZE        0x1000000
-#endif
-
-#if CONFIG_CHIP_REVISION != CHIP_REVISION_ES3
-#define MMAP_LOAD_BASE  SPI_BASE
-#define MMAP_LOAD_SIZE  SPI_SIZE
-#endif
 
 #define UHSSD_BASE      0x40019000
 #define UHSSD_SIZE      0x100
