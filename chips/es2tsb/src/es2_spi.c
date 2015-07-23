@@ -80,13 +80,14 @@ static int data_load_mmapped_load(void *dest, uint32_t length, bool hash) {
     return 0;
 }
 
-void data_load_mmapped_finish(void) {
+static int data_load_mmapped_finish(bool valid, bool is_secure_image) {
     /* disable SPI master clock. */
     tsb_clk_disable(TSB_CLK_SPIS);
     tsb_clk_disable(TSB_CLK_SPIP);
 
     initialized = 0;
     current_addr = NULL;
+    return 0;
 }
 
 data_load_ops spi_ops = {

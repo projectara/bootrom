@@ -58,7 +58,7 @@ typedef int (*data_loading_init)(void);
 typedef int (*data_loading_read)(void *dest, uint32_t addr, uint32_t length);
 typedef int (*data_loading_load)(void *dest, uint32_t length, bool hash);
 
-typedef void (*data_loading_finish)(void);
+typedef int (*data_loading_finish)(bool valid, bool is_secure_image);
 
 typedef struct {
     data_loading_init init;

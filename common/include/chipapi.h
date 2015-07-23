@@ -114,7 +114,7 @@ int chip_unipro_send(unsigned int cportid, const void *buf, size_t len);
  * @param len number of bytes of data received
  * @return 0 on success, <0 on error
  */
-typedef int (*unipro_rx_handler)(unsigned int cportid,
+typedef int (*unipro_rx_handler)(uint32_t cportid,
                                  void *data,
                                  size_t len);
 

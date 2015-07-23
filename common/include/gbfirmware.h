@@ -26,19 +26,56 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_FW_OVER_UNIPRO_H
-#define __COMMON_INCLUDE_FW_OVER_UNIPRO_H
+#ifndef __COMMON_INCLUDE_GBFIRMWARE_H
+#define __COMMON_INCLUDE_GBFIRMWARE_H
 
-#define FW_OVER_UNIPRO_MAJOR_VERSION        0
-#define FW_OVER_UNIPRO_MINOR_VERSION        1
+extern uint32_t gbfw_cportid;
 
-#define FW_OVER_UNIPRO_OP_VERSION           0x01
-#define FW_OVER_UNIPRO_OP_PROBE_AP          0x02
-#define FW_OVER_UNIPRO_OP_GET_MANIFEST_SIZE 0x03
+/* Greybus FirmWare request types */
+#define GB_FW_OP_INVALID            0x00
+#define GB_FW_OP_PROTOCOL_VERSION   0x01
+#define GB_FW_OP_FIRMWARE_SIZE      0x02
+#define GB_FW_OP_GET_FIRMWARE       0x03
+#define GB_FW_OP_READY_TO_BOOT      0x04
 
-#define FW_OVER_UNIPRO_CPORT 3
+/* Greybus FirmWare boot statuses */
+#define GB_FW_BOOT_STATUS_INVALID   0x00
+#define GB_FW_BOOT_STATUS_INSECURE  0x01
+#define GB_FW_BOOT_STATUS_SECURE    0x02
 
-int fwou_cport_connected(void);
-int fwou_cport_disconnected(void);
+/* Greybus FirmWare boot instructions */
+#define GB_FW_BOOT_INSTR_FAILURE   0x00
+#define GB_FW_BOOT_INSTR_OK        0x01
 
-#endif /* __COMMON_INCLUDE_FW_OVER_UNIPRO_H */
+/* Greybus FirmWare error codes */
+#define GB_FW_ERR_INVALID          (-1)
+#define GB_FW_ERR_FAILURE          (-2)
+
+/* Boot stage whose firmware we request */
+#define NEXT_BOOT_STAGE            (BOOT_STAGE + 1)
+
+/* Greybus FirmWare request and response payloads */
+struct __attribute__ ((__packed__)) gbfw_protocol_version_request {
+  uint8_t major, minor;
+};
+
+struct __attribute__ ((__packed__)) gbfw_firmware_size_request {
+  uint8_t stage;
+};
+
+struct __attribute__ ((__packed__)) gbfw_firmware_size_response {
+  size_t size;
+};
+
+struct __attribute__ ((__packed__)) gbfw_get_firmware_request {
+  uint32_t offset, size;
+};
+
+struct __attribute__ ((__packed__)) gbfw_ready_to_boot_request {
+  uint8_t stage, status;
+};
+
+int greybus_cport_connect(void);
+int greybus_cport_disconnect(void);
+
+#endif

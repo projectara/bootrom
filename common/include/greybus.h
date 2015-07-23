@@ -53,19 +53,21 @@ typedef struct {
 #define GB_OP_INVALID                0x06
 #define GB_OP_UNKNOWN_ERROR          0xFE
 
-#define CONTROL_CPORT 2
+#define GB_MAX_PAYLOAD_SIZE          (0x200)
 
-int control_cport_handler(unsigned int cportid,
+#define CONTROL_CPORT 0
+
+int control_cport_handler(uint32_t cportid,
                           void *data,
                           size_t len);
 
-int greybus_op_response(unsigned int cport,
+int greybus_op_response(uint32_t cport,
                         gb_operation_header *op_header,
                         uint8_t status,
                         unsigned char *payload_data,
                         uint16_t payload_size);
 
-int greybus_send_request(unsigned int cport,
+int greybus_send_request(uint32_t cport,
                          uint16_t id,
                          uint8_t type,
                          unsigned char *payload_data,

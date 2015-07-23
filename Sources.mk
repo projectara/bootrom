@@ -57,6 +57,7 @@ CMN_CSRC += $(CMN_SRCDIR)/unipro.c
 CMN_CSRC += $(CMN_SRCDIR)/gbcore.c
 endif
 CMN_CSRC += $(CMN_SRCDIR)/debug.c
+CMN_CSRC += $(CMN_SRCDIR)/gbfirmware.c
 
 CMN_ASRC =
 

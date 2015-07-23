@@ -32,13 +32,15 @@
 #include "chipapi.h"
 #include "debug.h"
 #include "greybus.h"
-#include "fw_over_unipro.h"
+#include "gbfirmware.h"
+
+uint32_t gbfw_cportid = 0;
 
 static unsigned char manifest[] = {
     #include MANIFEST_HEADER
 };
 
-static int greybus_send_message(unsigned int cport,
+static int greybus_send_message(uint32_t cport,
                                 uint16_t id,
                                 uint8_t type,
                                 uint8_t status,
@@ -67,7 +69,7 @@ static int greybus_send_message(unsigned int cport,
     return chip_unipro_send(cport, msg, sizeof(msg));
 }
 
-int greybus_send_request(unsigned int cport,
+int greybus_send_request(uint32_t cport,
                          uint16_t id,
                          uint8_t type,
                          unsigned char *payload_data,
@@ -80,7 +82,7 @@ int greybus_send_request(unsigned int cport,
                                 payload_size);
 }
 
-int greybus_op_response(unsigned int cport,
+int greybus_op_response(uint32_t cport,
                         gb_operation_header *op_header,
                         uint8_t status,
                         unsigned char *payload_data,
@@ -93,7 +95,7 @@ int greybus_op_response(unsigned int cport,
                                 payload_size);
 }
 
-static int gbop_get_version(unsigned int cportid,
+static int gbctrl_get_version(uint32_t cportid,
                             gb_operation_header *op_header) {
     unsigned char payload[2] = {GREYBUS_MAJOR_VERSION,
                                 GREYBUS_MINOR_VERSION};
@@ -105,7 +107,7 @@ static int gbop_get_version(unsigned int cportid,
                                sizeof(payload));
 }
 
-static int gbop_probe_ap(unsigned int cportid,
+static int gbctrl_probe_ap(uint32_t cportid,
                          gb_operation_header *op_header) {
     uint16_t payload[1] = {0};
 
@@ -116,7 +118,7 @@ static int gbop_probe_ap(unsigned int cportid,
                                sizeof(payload));
 }
 
-static int gbop_get_manifest_size(unsigned int cportid,
+static int gbctrl_get_manifest_size(uint32_t cportid,
                                   gb_operation_header *op_header) {
     uint16_t payload[1] = {sizeof(manifest)};
 
@@ -127,7 +129,7 @@ static int gbop_get_manifest_size(unsigned int cportid,
                                sizeof(payload));
 }
 
-static int gbop_get_manifest(unsigned int cportid,
+static int gbctrl_get_manifest(uint32_t cportid,
                              gb_operation_header *op_header) {
     return greybus_op_response(cportid,
                                op_header,
@@ -136,13 +138,12 @@ static int gbop_get_manifest(unsigned int cportid,
                                sizeof(manifest));
 }
 
-static int gbop_connected(unsigned int cportid,
+static int gbctrl_connected(uint32_t cportid,
                           gb_operation_header *op_header) {
     int rc;
     uint16_t *payload = (uint16_t *)(op_header + 1);
 
-    if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload) ||
-        *payload != FW_OVER_UNIPRO_CPORT) {
+    if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload)) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_INVALID,
@@ -151,9 +152,8 @@ static int gbop_connected(unsigned int cportid,
         return -1;
     }
 
-    dbgprint("cport 0x");dbgprinthex32(*payload);dbgprint(" connected\r\n");
-    rc = fwou_cport_connected();
-    if (rc != 0) {
+    rc = greybus_cport_connect();
+    if (rc != 0 || *payload != gbfw_cportid) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_UNKNOWN_ERROR,
@@ -161,6 +161,7 @@ static int gbop_connected(unsigned int cportid,
                             0);
         return -1;
     }
+    dbgprintx32("cport 0x", gbfw_cportid, " connected\r\n");
     return greybus_op_response(cportid,
                                op_header,
                                GB_OP_SUCCESS,
@@ -168,13 +169,13 @@ static int gbop_connected(unsigned int cportid,
                                0);
 }
 
-static int gbop_disconnected(unsigned int cportid,
+static int gbctrl_disconnected(uint32_t cportid,
                              gb_operation_header *op_header) {
     int rc;
     uint16_t *payload = (uint16_t *)(op_header + 1);
 
     if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload) ||
-        *payload != FW_OVER_UNIPRO_CPORT) {
+        *payload != gbfw_cportid) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_INVALID,
@@ -183,7 +184,7 @@ static int gbop_disconnected(unsigned int cportid,
         return -1;
     }
 
-    rc = fwou_cport_disconnected();
+    rc = greybus_cport_disconnect();
     if (rc != 0) {
         greybus_op_response(cportid,
                             op_header,
@@ -199,7 +200,7 @@ static int gbop_disconnected(unsigned int cportid,
                                0);
 }
 
-int control_cport_handler(unsigned int cportid,
+int control_cport_handler(uint32_t cportid,
                           void *data,
                           size_t len)
 {
@@ -214,25 +215,27 @@ int control_cport_handler(unsigned int cportid,
     switch (op_header->type) {
     case GB_CTRL_OP_VERSION:
         dbgprint("get version\r\n");
-        rc = gbop_get_version(cportid, op_header);
+        rc = gbctrl_get_version(cportid, op_header);
         break;
     case GB_CTRL_OP_PROBE_AP:
         dbgprint("probe ap\r\n");
-        rc = gbop_probe_ap(cportid, op_header);
+        rc = gbctrl_probe_ap(cportid, op_header);
         break;
     case GB_CTRL_OP_GET_MANIFEST_SIZE:
         dbgprint("get manifest size\r\n");
-        rc = gbop_get_manifest_size(cportid, op_header);
+        rc = gbctrl_get_manifest_size(cportid, op_header);
         break;
     case GB_CTRL_OP_GET_MANIFEST:
         dbgprint("get manifest\r\n");
-        rc = gbop_get_manifest(cportid, op_header);
+        rc = gbctrl_get_manifest(cportid, op_header);
         break;
     case GB_CTRL_OP_CONNECTED:
-        rc = gbop_connected(cportid, op_header);
+        dbgprint("Greybus connected\r\n");
+        rc = gbctrl_connected(cportid, op_header);
         break;
     case GB_CTRL_OP_DISCONNECTED:
-        rc = gbop_disconnected(cportid, op_header);
+        dbgprint("Greybus disconnected\r\n");
+        rc = gbctrl_disconnected(cportid, op_header);
         break;
     default:
         break;

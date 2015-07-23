@@ -173,9 +173,10 @@ static int data_load_spi_read(void *dest, uint32_t addr, uint32_t length) {
     return data_load_spi_load(dest, length, false);
 }
 
-static void data_load_spi_finish(void) {
+static int data_load_spi_finish(bool valid, bool is_secure_image) {
     tsb_clk_disable(TSB_CLK_SPIP);
     tsb_clk_disable(TSB_CLK_SPIS);
+    return 0;
 }
 
 data_load_ops spi_ops = {

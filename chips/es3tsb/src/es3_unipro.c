@@ -191,7 +191,7 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
 }
 
 void chip_unipro_init(void) {
-    return;
+    dbgprint("Unipro enabled!\r\n");
 }
 
 int chip_unipro_init_cport(uint32_t cportid) {

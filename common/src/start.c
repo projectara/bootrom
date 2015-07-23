@@ -27,6 +27,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "chipapi.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
@@ -41,7 +42,7 @@
 #include "ffff.h"
 
 extern data_load_ops spi_ops;
-extern data_load_ops unipro_ops;
+extern data_load_ops greybus_ops;
 
 uint32_t br_errno;
 
@@ -121,7 +122,7 @@ void bootrom_main(void) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
             chip_advertise_boot_status(boot_status, &dme_write_result);
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
-                spi_ops.finish();
+                spi_ops.finish(true, is_secure_image);
                 if (is_secure_image) {
                     dbgprint("Trusted image\r\n");
                     boot_status = INIT_STATUS_TRUSTED_SPI_FLASH_BOOT_FINISHED;
@@ -142,7 +143,7 @@ void bootrom_main(void) {
             }
         }
         /*****/dbgprint("couldn't locate image\r\n");
-        spi_ops.finish();
+        spi_ops.finish(false, false);
 
 #ifdef BOOT_OVER_UNIPRO
         /* Fallback to UniPro boot */
@@ -167,15 +168,17 @@ void bootrom_main(void) {
         chip_advertise_boot_status(boot_status, &dme_write_result);
         advertise_ready();
         dbgprint("Ready-poked from switch: ready to download firmware.\r\n");
-        status = unipro_ops.init();
+        status = greybus_ops.init();
         if (status)
             goto halt_and_catch_fire;
-        if (!load_tftf_image(&unipro_ops, &is_secure_image)) {
-            unipro_ops.finish();
+        if (!load_tftf_image(&greybus_ops, &is_secure_image)) {
+            status = greybus_ops.finish(true, is_secure_image);
+            if (status)
+                goto halt_and_catch_fire;
             /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
             jump_to_image();
         }
-        unipro_ops.finish();
+        status = greybus_ops.finish(false, is_secure_image);
     }
 #endif
 
