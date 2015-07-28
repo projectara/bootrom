@@ -620,7 +620,8 @@ static inline struct cport *cport_handle(uint16_t cportid) {
     }
 }
 
-void tsb_unipro_init_cport(uint16_t cportid);
+int tsb_unipro_init_cport(uint32_t cportid);
+int tsb_unipro_recv_cport(uint32_t *cportid);
 
 uint32_t tsb_unipro_read(uint32_t offset);
 void tsb_unipro_write(uint32_t offset, uint32_t v);
@@ -635,5 +636,10 @@ void tsb_enable_e2efc(uint16_t cportid);
  * @brief Disable E2EFC on all CPorts
  */
 void tsb_disable_all_e2efc(void);
+
+/**
+ * @brief Chip-common parts of resetting before signalling readiness.
+ */
+void tsb_reset_before_ready(void);
 
 #endif /* __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H */

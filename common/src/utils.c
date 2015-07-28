@@ -101,3 +101,7 @@ bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte) {
      }
      return true;
 }
+
+void delay(uint32_t steps) {
+    while(steps--);
+}

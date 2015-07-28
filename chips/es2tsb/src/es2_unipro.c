@@ -300,7 +300,6 @@ void chip_unipro_init(void) {
     configure_transfer_mode(TRANSFER_MODE);
 
     tsb_unipro_write(UNIPRO_INT_EN, 0);
-    chip_unipro_init_cport(CONTROL_CPORT);
     tsb_unipro_write(UNIPRO_INT_EN, 1);
 
     dbgprint("Unipro enabled!\r\n");
@@ -422,6 +421,10 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
     return 0;
 }
 
-void chip_unipro_init_cport(uint16_t cportid) {
-    tsb_unipro_init_cport(cportid);
+int chip_unipro_init_cport(uint32_t cportid) {
+    return tsb_unipro_init_cport(cportid);
+}
+
+int chip_unipro_recv_cport(uint32_t *cportid) {
+    return tsb_unipro_recv_cport(cportid);
 }

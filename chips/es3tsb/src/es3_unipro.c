@@ -191,11 +191,15 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
 }
 
 void chip_unipro_init(void) {
-    chip_unipro_init_cport(CONTROL_CPORT);
+    return;
 }
 
-void chip_unipro_init_cport(uint16_t cportid) {
-    tsb_unipro_init_cport(cportid);
+int chip_unipro_init_cport(uint32_t cportid) {
+    return tsb_unipro_init_cport(cportid);
+}
+
+int chip_unipro_recv_cport(uint32_t *cportid) {
+    return tsb_unipro_recv_cport(cportid);
 }
 
 /* TA-11 Operate UniPro function with One CPORT and transfer mode */

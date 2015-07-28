@@ -44,7 +44,8 @@ int chip_validate_data_load_location(void *base, uint32_t length);
 void chip_jump_to_image(uint32_t start_address);
 
 void chip_unipro_init(void);
-void chip_unipro_init_cport(uint16_t cportid);
+int chip_unipro_init_cport(uint32_t cportid);
+int chip_unipro_recv_cport(uint32_t *cportid);
 
 #define ATTR_LOCAL 0
 #define ATTR_PEER  1
@@ -104,5 +105,25 @@ typedef int (*unipro_rx_handler)(unsigned int cportid,
  * @param handler rx handler callback, called before RX is restarted
  */
 int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler);
+
+/**
+ * @brief advertise the boot status to the switch
+ * @param boot_status
+ * @param result_code destination for advertisement result
+ * @return 0 on success, <0 on error
+ */
+int chip_advertise_boot_status(uint32_t boot_status, uint32_t *result_code);
+
+/**
+ * @brief advertise the boot type to the switch
+ * @param result_code destination for advertisement result
+ * @return 0 on success, <0 on error
+ */
+int chip_advertise_boot_type(uint32_t *result_code);
+
+/**
+ * @brief reset UniPro before signalling readiness to boot firmware to switch
+ */
+void chip_reset_before_ready(void);
 
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

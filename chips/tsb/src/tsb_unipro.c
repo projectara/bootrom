@@ -32,7 +32,6 @@
 #include "chipapi.h"
 #include "unipro.h"
 #include "tsb_unipro.h"
-#include "utils.h"
 #include "debug.h"
 
 struct cport cporttable[4] = {
@@ -40,21 +39,67 @@ struct cport cporttable[4] = {
 };
 
 /**
- * @brief Common code to initialize a CPort on ES2 + ES3.
+ * @brief Initialize a specific CPort
  */
-void tsb_unipro_init_cport(uint16_t cportid) {
+int tsb_unipro_init_cport(uint32_t cportid) {
     struct cport *cport;
+    int rc;
+    uint32_t mail = 0;
 
     if (cportid >= CPORT_MAX) {
-        return;
+        return -EINVAL;
     }
 
     cport = cport_handle(cportid);
     if (!cport) {
-        return;
+        return -EINVAL;
+    }
+
+    rc = read_mailbox(&mail, ATTR_LOCAL, NULL);
+    if (rc) {
+        return rc;
+    }
+    if (mail != cportid + 1) {
+        return -ENOSYS;
     }
 
     tsb_unipro_restart_rx(cport);
+    tsb_enable_e2efc(cportid);
+
+    rc = ack_mailbox(ATTR_LOCAL);
+
+    return rc;
+}
+
+/**
+ * @brief Receive a dynamically-assigned CPort identifier
+ */
+int tsb_unipro_recv_cport(uint32_t *cportid) {
+    struct cport *cport;
+    int rc;
+    uint32_t cport_recv = 0;
+
+    rc = read_mailbox(&cport_recv, ATTR_LOCAL, NULL);
+    if (rc) {
+        return rc;
+    }
+    *cportid = --cport_recv;
+
+    if (cport_recv >= CPORT_MAX) {
+        return -EINVAL;
+    }
+
+    cport = cport_handle(cport_recv);
+    if (!cport) {
+        return -EINVAL;
+    }
+
+    tsb_unipro_restart_rx(cport);
+    tsb_enable_e2efc(*cportid);
+
+    rc = ack_mailbox(ATTR_LOCAL);
+
+    return 0;
 }
 
 uint32_t tsb_unipro_read(uint32_t offset) {
@@ -96,4 +141,11 @@ void tsb_enable_e2efc(uint16_t cportid) {
 void tsb_disable_all_e2efc(void) {
     tsb_unipro_write(CPB_RX_E2EFC_EN_0, 0);
     tsb_unipro_write(CPB_RX_E2EFC_EN_1, 0);
+}
+
+/**
+ * @brief Chip-common parts of resetting before signalling readiness.
+ */
+void tsb_reset_before_ready(void) {
+    tsb_disable_all_e2efc();
 }

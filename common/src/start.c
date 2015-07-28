@@ -75,12 +75,10 @@ void bootrom_main(void) {
     chip_unipro_init();
 
     /* Advertise our boot status */
-    chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                           ATTR_LOCAL, &dme_write_result);
+    chip_advertise_boot_status(boot_status, &dme_write_result);
 
     /* Advertise our initialization type */
-    chip_unipro_attr_write(DME_DDBL2_INIT_TYPE, INIT_TYPE_TOSHIBA, 0,
-                               ATTR_LOCAL, &dme_write_result);
+    chip_advertise_boot_type(&dme_write_result);
 
     /* Validate and make available e-fuse information */
     status = efuse_init();
@@ -109,8 +107,7 @@ void bootrom_main(void) {
         spi_ops.init();
         if (locate_next_stage_firmware_on_storage(&spi_ops) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
-            chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                                   ATTR_LOCAL, &dme_write_result);
+            chip_advertise_boot_status(boot_status, &dme_write_result);
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
                 spi_ops.finish();
                 if (is_secure_image) {
@@ -127,8 +124,7 @@ void bootrom_main(void) {
                     efuse_rig_for_untrusted();
                 }
                 /* Log that we're starting the boot-from-SPIROM */
-                chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                                       ATTR_LOCAL, &dme_write_result);
+                chip_advertise_boot_status(boot_status, &dme_write_result);
                 /* TA-16 jump to SPI code (BOOTRET_o = 0 && SPIBOOT_N = 0) */
                 jump_to_image();
             }
@@ -156,9 +152,12 @@ void bootrom_main(void) {
         boot_status = fallback_boot_unipro?
                 INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED :
                 INIT_STATUS_UNIPRO_BOOT_STARTED;
-        chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                               ATTR_LOCAL, &dme_write_result);
-        unipro_ops.init();
+        chip_advertise_boot_status(boot_status, &dme_write_result);
+        advertise_ready();
+        dbgprint("Ready-poked from switch: ready to download firmware.\r\n");
+        status = unipro_ops.init();
+        if (status)
+            goto halt_and_catch_fire;
         if (!load_tftf_image(&unipro_ops, &is_secure_image)) {
             unipro_ops.finish();
             /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
@@ -172,8 +171,7 @@ void bootrom_main(void) {
     /* Failure */
 halt_and_catch_fire:
     boot_status |= INIT_STATUS_FAILED;
-    chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0, ATTR_LOCAL,
-                           &dme_write_result);
+    chip_advertise_boot_status(boot_status, &dme_write_result);
     dbgprint("failed to load image, entering infinite loop\r\n");
     while(1);
 }

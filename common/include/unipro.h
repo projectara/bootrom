@@ -328,7 +328,6 @@
 #define DME_FC1PROTECTIONTIMEOUTVAL 0xd044
 #define DME_TC1REPLAYTIMEOUTVAL     0xd045
 #define DME_AFC1REQTIMEOUTVAL       0xd046
-#define TSB_MAXSEGMENTCONFIG        0xd089
 
 /*
  * Mailbox attribute and the values we expect it to take on.
@@ -337,5 +336,27 @@
 #define TSB_MAIL_RESET              (0x00)
 #define TSB_MAIL_READY_AP           (0x01)
 #define TSB_MAIL_READY_OTHER        (0x02)
+
+/**
+ * @brief Synchronously read from a local or peer mailbox.
+ * @return 0 on success, <0 on error
+ */
+int read_mailbox(uint32_t *val, int peer, uint32_t *result_code);
+/**
+ * @brief Acknowledge that we've read a local or peer mailbox, clearing it.
+ * @return 0 on success, <0 on error
+ */
+int ack_mailbox(int peer);
+/**
+ * @brief Synchronously write to a local or peer mailbox, polling for it to be
+ * cleared once we've written it.
+ * @return 0 on success, <0 on error
+ */
+int write_mailbox(uint32_t val, int peer, uint32_t *result_code);
+
+/**
+ * @brief Abstract out the chip-common parts of advertising readiness.
+ */
+int advertise_ready(void);
 
 #endif /* __COMMON_INCLUDE_UNIPRO_H */

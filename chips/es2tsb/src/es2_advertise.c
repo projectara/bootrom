@@ -25,51 +25,39 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include <errno.h>
+#include "chip.h"
+#include "chipapi.h"
+#include "unipro.h"
+#include "tsb_unipro.h"
+#include "debug.h"
 
 /**
- * @brief Determine if a value is a power of 2
- *
- * @param x the value to check.
- *
- * @returns true if it is a power of 2, false otherwise
+ * @brief advertise the boot status
+ * @param boot_status
+ * @param result_code destination for advertisement result
+ * @return 0 on success, <0 on error
  */
-bool is_power_of_2(uint32_t x);
+int chip_advertise_boot_status(uint32_t boot_status, uint32_t *result_code) {
+    return chip_unipro_attr_write(T_TSTSRCINCREMENT,
+                                  ES2_INIT_STATUS(boot_status), 0, ATTR_LOCAL,
+                                  result_code);
+}
 
 /**
- * @brief Determine if an address is block-aligned
- *
- * @param location The address to check
- * @param block_size The size of a block (must be a power of 2)
- *
- * @returns true if it is block-aligned, false otherwise
+ * @brief advertise the boot type
+ * @param result_code destination for advertisement result
+ * @return 0 on success, <0 on error
  */
-bool block_aligned(uint32_t address, uint32_t block_size);
+int chip_advertise_boot_type(uint32_t *result_code) {
+    *result_code = 0;
+    return 0;
+}
 
 /**
- * @brief Round up an address to the next block boundary
- *
- * @param location The address to check
- * @param block_size The size of a block (must be a power of 2)
- *
- * @returns A block-aligned address
+ * @brief reset UniPro before signalling readiness to boot firmware to switch
  */
-uint32_t next_block_boundary(uint32_t address, uint32_t block_size);
-
-/**
- * @brief Check a range of bytes for a constant fill
- *
- * @param buf Points to the start of the region to check
- * @param len The number of bytes to check
- * @param fill_byte The constant byte to check against
- *
- * @returns True if the buffer is filled with a constan byte, false otherwise.
- */
-bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
-
-void delay(uint32_t steps);
-
-#define TIMING_BUG_DELAY_LENGTH (0xfffff)
+void chip_reset_before_ready(void) {
+    tsb_reset_before_ready();
+}
