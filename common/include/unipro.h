@@ -330,4 +330,12 @@
 #define DME_AFC1REQTIMEOUTVAL       0xd046
 #define TSB_MAXSEGMENTCONFIG        0xd089
 
+/*
+ * Mailbox attribute and the values we expect it to take on.
+ */
+#define TSB_MAILBOX                 0xa000
+#define TSB_MAIL_RESET              (0x00)
+#define TSB_MAIL_READY_AP           (0x01)
+#define TSB_MAIL_READY_OTHER        (0x02)
+
 #endif /* __COMMON_INCLUDE_UNIPRO_H */

@@ -44,7 +44,7 @@ int chip_validate_data_load_location(void *base, uint32_t length);
 void chip_jump_to_image(uint32_t start_address);
 
 void chip_unipro_init(void);
-void chip_unipro_init_cport(int16_t cportid);
+void chip_unipro_init_cport(uint16_t cportid);
 
 #define ATTR_LOCAL 0
 #define ATTR_PEER  1

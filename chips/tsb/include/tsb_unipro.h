@@ -30,6 +30,7 @@
 #define __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H
 
 #include "chip.h"
+#include "unipro.h"
 
 #define CPORT_STATUS_0                         0x00000000
     #define CPORT_STATUS_CONNECTED                  (0x0)
@@ -578,5 +579,61 @@
 #define RX_SW_RESET_41                         0x000015A4
 #define RX_SW_RESET_42                         0x000015A8
 #define RX_SW_RESET_43                         0x000015AC
+
+#define TSB_MAXSEGMENTCONFIG        0xd089
+
+#define CPORT_BUF_SIZE            (0x2000U)
+#define CPORT_RX_BUF_BASE         (0x20000000U)
+#define CPORT_RX_BUF_SIZE         (CPORT_BUF_SIZE)
+#define CPORT_RX_BUF(cport)       (void*)(CPORT_RX_BUF_BASE + \
+                                      (CPORT_RX_BUF_SIZE * cport))
+#define CPORT_TX_BUF_BASE         (0x50000000U)
+#define CPORT_TX_BUF_SIZE         (0x20000U)
+#define CPORT_TX_BUF(cport)       (uint8_t*)(CPORT_TX_BUF_BASE + \
+                                      (CPORT_TX_BUF_SIZE * cport))
+#define CPORT_EOM_BIT(cport)      (cport->tx_buf + (CPORT_TX_BUF_SIZE - 1))
+
+/*
+ * Common UniPro structures and functions
+ */
+
+#define DECLARE_CPORT(id) {            \
+    .tx_buf      = CPORT_TX_BUF(id),   \
+    .rx_buf      = CPORT_RX_BUF(id),   \
+    .cportid     = id,                 \
+}
+
+struct cport {
+    uint8_t *tx_buf;                /* TX region for this CPort */
+    uint8_t *rx_buf;                /* RX region for this CPort */
+    uint16_t cportid;
+};
+
+extern struct cport cporttable[4];
+#define CPORT_MAX  (sizeof(cporttable)/sizeof(struct cport))
+
+static inline struct cport *cport_handle(uint16_t cportid) {
+    if (cportid >= CPORT_MAX) {
+        return NULL;
+    } else {
+        return &cporttable[cportid];
+    }
+}
+
+void tsb_unipro_init_cport(uint16_t cportid);
+
+uint32_t tsb_unipro_read(uint32_t offset);
+void tsb_unipro_write(uint32_t offset, uint32_t v);
+void tsb_unipro_restart_rx(struct cport *cport);
+
+/**
+ * @brief Enable E2EFC on a specific CPort
+ * @param cportid cport on which to enable End-to-End Flow Control
+ */
+void tsb_enable_e2efc(uint16_t cportid);
+/**
+ * @brief Disable E2EFC on all CPorts
+ */
+void tsb_disable_all_e2efc(void);
 
 #endif /* __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H */

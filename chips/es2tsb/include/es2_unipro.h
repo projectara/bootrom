@@ -32,9 +32,6 @@
 static int unipro_attr_access(uint16_t attr, uint32_t *val, uint16_t selector,
                        int peer, int write, uint32_t *result_code);
 
-static uint32_t unipro_read(uint32_t offset);
-static void unipro_write(uint32_t offset, uint32_t v);
-
 static inline int unipro_attr_local_write(uint16_t attr,
                                           uint32_t val,
                                           uint16_t selector,

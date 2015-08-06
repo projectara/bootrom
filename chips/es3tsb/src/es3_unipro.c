@@ -33,50 +33,6 @@
 #include "data_loading.h"
 #include "greybus.h"
 
-struct cport {
-    uint8_t *tx_buf;                /* TX region for this CPort */
-    uint8_t *rx_buf;                /* RX region for this CPort */
-    uint16_t cportid;
-};
-
-#define CPORT_BUF_SIZE            (0x2000U)
-#define CPORT_RX_BUF_BASE         (0x20000000U)
-#define CPORT_RX_BUF_SIZE         (CPORT_BUF_SIZE)
-#define CPORT_RX_BUF(cport)       (void*)(CPORT_RX_BUF_BASE + \
-                                      (CPORT_RX_BUF_SIZE * cport))
-#define CPORT_TX_BUF_BASE         (0x50000000U)
-#define CPORT_TX_BUF_SIZE         (0x20000U)
-#define CPORT_TX_BUF(cport)       (uint8_t*)(CPORT_TX_BUF_BASE + \
-                                      (CPORT_TX_BUF_SIZE * cport))
-#define CPORT_EOM_BIT(cport)      (cport->tx_buf + (CPORT_TX_BUF_SIZE - 1))
-
-#define DECLARE_CPORT(id) {            \
-    .tx_buf      = CPORT_TX_BUF(id),   \
-    .rx_buf      = CPORT_RX_BUF(id),   \
-    .cportid     = id,                 \
-}
-
-static struct cport cporttable[] = {
-    DECLARE_CPORT(0),  DECLARE_CPORT(1),  DECLARE_CPORT(2),  DECLARE_CPORT(3),
-};
-#define CPORT_MAX  (sizeof(cporttable)/sizeof(struct cport))
-
-static inline struct cport *cport_handle(uint16_t cportid) {
-    if (cportid >= CPORT_MAX) {
-        return NULL;
-    } else {
-        return &cporttable[cportid];
-    }
-}
-
-static uint32_t unipro_read(uint32_t offset) {
-    return getreg32((volatile unsigned int*)(AIO_UNIPRO_BASE + offset));
-}
-
-static void unipro_write(uint32_t offset, uint32_t v) {
-    putreg32(v, (volatile unsigned int*)(AIO_UNIPRO_BASE + offset));
-}
-
 /**
  * @brief perform a DME access
  * @param attr attribute to access
@@ -97,27 +53,27 @@ static int unipro_attr_access(uint16_t attr,
                      REG_ATTRACS_CTRL_WRITE(write) |
                      attr);
 
-    unipro_write(A2D_ATTRACS_CTRL_00, ctrl);
+    tsb_unipro_write(A2D_ATTRACS_CTRL_00, ctrl);
     if (write) {
-        unipro_write(A2D_ATTRACS_DATA_CTRL_00, *val);
+        tsb_unipro_write(A2D_ATTRACS_DATA_CTRL_00, *val);
     }
 
     /* Start the access */
-    unipro_write(A2D_ATTRACS_MSTR_CTRL,
-                 REG_ATTRACS_CNT(1) | REG_ATTRACS_UPD);
+    tsb_unipro_write(A2D_ATTRACS_MSTR_CTRL,
+                      REG_ATTRACS_CNT(1) | REG_ATTRACS_UPD);
 
-    while (!unipro_read(A2D_ATTRACS_INT_BEF))
+    while (!tsb_unipro_read(A2D_ATTRACS_INT_BEF))
         ;
 
     /* Clear status bit */
-    unipro_write(A2D_ATTRACS_INT_BEF, 0x1);
+    tsb_unipro_write(A2D_ATTRACS_INT_BEF, 0x1);
 
     if (result_code) {
-        *result_code = unipro_read(A2D_ATTRACS_STS_00);
+        *result_code = tsb_unipro_read(A2D_ATTRACS_STS_00);
     }
 
     if (!write) {
-        *val = unipro_read(A2D_ATTRACS_DATA_STS_00);
+        *val = tsb_unipro_read(A2D_ATTRACS_DATA_STS_00);
     }
 
     return 0;
@@ -177,14 +133,6 @@ int chip_unipro_send(unsigned int cportid, const void *buf, size_t len) {
     return 0;
 }
 
-static void chip_unipro_restart_rx(struct cport *cport) {
-    unsigned int cportid = cport->cportid;
-
-    unipro_write(AHM_ADDRESS_00 + (cportid << 2), (uint32_t)cport->rx_buf);
-    unipro_write(REG_RX_PAUSE_SIZE_00 + (cportid << 2),
-                 RX_PAUSE_RESTART | CPORT_RX_BUF_SIZE);
-}
-
 int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
     uint32_t bytes_received;
     struct cport *cport;
@@ -202,8 +150,8 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
     }
 
     while(1) {
-        eom = unipro_read(AHM_RX_EOM_INT_BEF_0);
-        eot = unipro_read(AHM_RX_EOT_INT_BEF_0);
+        eom = tsb_unipro_read(AHM_RX_EOM_INT_BEF_0);
+        eot = tsb_unipro_read(AHM_RX_EOT_INT_BEF_0);
 
         eom_nom_bit = (0x01 << (cportid << 1));
         eom_err_bit = (0x10 << (cportid << 1));
@@ -218,14 +166,14 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
             return -1;
         }
         if ((eom & eom_nom_bit) != 0) {
-            bytes_received = unipro_read(CPB_RX_TRANSFERRED_DATA_SIZE_00 +
-                                         (cportid << 2));
+            bytes_received = tsb_unipro_read(CPB_RX_TRANSFERRED_DATA_SIZE_00 +
+                                             (cportid << 2));
             dbgprint("cport ");
             dbgprinthex8(cportid);
             dbgprint(" received ");
             dbgprinthex32(bytes_received);
             dbgprint(" bytes of data\r\n");
-            unipro_write(AHM_RX_EOM_INT_BEF_0, eom_nom_bit);
+            tsb_unipro_write(AHM_RX_EOM_INT_BEF_0, eom_nom_bit);
 
             if (handler != NULL) {
                 if(0 != handler(cportid,
@@ -235,29 +183,19 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
                     return -1;
                 }
             }
-            chip_unipro_restart_rx(cport);
+            tsb_unipro_restart_rx(cport);
             return 0;
         }
     }
     return 0;
 }
 
-void chip_unipro_init_cport(int16_t cportid) {
-    struct cport *cport;
-
-    if (cportid >= CPORT_MAX) {
-        return;
-    }
-
-    cport = cport_handle(cportid);
-    if (!cport) {
-        return;
-    }
-
-    chip_unipro_restart_rx(cport);
-}
-
-/* TA-11 Operate UniPro function with One CPORT and transfer mode */
 void chip_unipro_init(void) {
     chip_unipro_init_cport(CONTROL_CPORT);
 }
+
+void chip_unipro_init_cport(uint16_t cportid) {
+    tsb_unipro_init_cport(cportid);
+}
+
+/* TA-11 Operate UniPro function with One CPORT and transfer mode */
