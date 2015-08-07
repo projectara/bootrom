@@ -79,11 +79,13 @@ static int load_tftf_header(data_load_ops *ops) {
      *
      * Note: a 0-valued image VID/PID acts as a wild card and no comparison
      * takes place for that VID/PID.
+     * TA-12 Read  DME attribute (DDBL1)
      */
     chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_vid, 0,
                           ATTR_LOCAL, &read_stat);
     chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
                           ATTR_LOCAL, &read_stat);
+    /* TA-14 Write/Read  DME attribute (New area of 16 words) */
     chip_unipro_attr_read(DME_DDBL2_VID, &ara_vid, 0, ATTR_LOCAL, &read_stat);
     chip_unipro_attr_read(DME_DDBL2_PID, &ara_pid, 0, ATTR_LOCAL, &read_stat);
     if (((tftf.header.unipro_vid != 0) &&

@@ -93,6 +93,7 @@ _bootstrap_vectors:
 .globl __start
 .type __start, %function
 __start:
+# TA-01 The Boot ROM begins executing at address 0x00000000...
 #if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
     ldr r1, =BOOTRET_O
     ldr r0, [r1]
@@ -101,6 +102,7 @@ __start:
 
     /*
      * "Resume" path
+     * TA-06 Write/Read registers to resume standby
      */
     ldr r2, =RETSRAMRET
     ldr r0, =0
@@ -178,6 +180,7 @@ cold_boot:
     mov r5, r0
     mov r6, r0
     mov r7, r0
+    /* TA-10 Write/Read data in workRAM */
 #ifdef _SIMULATION
     /* Just clear the BootRom .data, .bss, stack and communication region*/
     ldr r8, =_bootrom_data_area

@@ -75,6 +75,7 @@ static int data_load_spi_init(void) {
     return 0;
 }
 
+/* TA-15 CM3 perform read data transfer from SPI memory to data transfer... */
 static int data_load_spi_load(void *dest, uint32_t length, bool hash) {
     uint32_t c;
     uint32_t sr, dr;

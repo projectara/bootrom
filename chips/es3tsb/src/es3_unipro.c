@@ -257,6 +257,7 @@ void chip_unipro_init_cport(int16_t cportid) {
     chip_unipro_restart_rx(cport);
 }
 
+/* TA-11 Operate UniPro function with One CPORT and transfer mode */
 void chip_unipro_init(void) {
     chip_unipro_init_cport(CONTROL_CPORT);
 }

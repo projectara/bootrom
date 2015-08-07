@@ -57,6 +57,7 @@
 void chip_dbginit(void) {
     int i;
 
+    /* TA-18 Operate UART RX and TX at 115200Hz */
     /* enable UART RX/TX pins */
     tsb_set_pinshare(TSB_PIN_UART_RXTX);
 

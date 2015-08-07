@@ -181,6 +181,7 @@ void tsb_disable_ims_access(void) {
 }
 
 
+/* TA-09 Lock function of eFuse (CMS) */
 void tsb_disable_cms_access(void) {
     isaa_write(TSB_ISAA_DISABLE_CMS_ACCESS, TSB_DISABLE_CMS_ACCESS);
 }

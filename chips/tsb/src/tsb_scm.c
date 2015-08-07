@@ -58,19 +58,23 @@ uint32_t tsb_get_debug_reg(uint32_t offset)
     return scm_read(offset);
 }
 
+/* TA-07 Read/Write registers to control clocks */
 void tsb_clk_init(void) {
     scm_write(TSB_SCM_CLOCKGATING0, INIT_PERIPHERAL_CLOCK_BITS);
 }
 
+/* TA-07 Read/Write registers to control clocks */
 void tsb_clk_enable(uint32_t clk) {
     scm_write(TSB_SCM_CLOCKENABLE0 + CLK_OFFSET(clk), CLK_MASK(clk));
 }
 
+/* TA-07 Read/Write registers to control clocks */
 void tsb_clk_disable(uint32_t clk)
 {
     scm_write(TSB_SCM_CLOCKGATING0 + CLK_OFFSET(clk), CLK_MASK(clk));
 }
 
+/* TA-08 Read/Write registers to control resets */
 void tsb_reset(uint32_t rst) {
     scm_write(TSB_SCM_SOFTRESET0 + CLK_OFFSET(rst), CLK_MASK(rst));
     scm_write(TSB_SCM_SOFTRESETRELEASE0 + CLK_OFFSET(rst), CLK_MASK(rst));
