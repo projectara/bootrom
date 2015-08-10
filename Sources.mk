@@ -48,12 +48,14 @@ CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 
 CMN_CSRC =  $(CMN_SRCDIR)/start.c
+ifneq ($(BOOT_STAGE),3)
 CMN_CSRC += $(CMN_SRCDIR)/tftf.c
 CMN_CSRC += $(CMN_SRCDIR)/ffff.c
 CMN_CSRC += $(CMN_SRCDIR)/crypto.c
 CMN_CSRC += $(CMN_SRCDIR)/utils.c
 CMN_CSRC += $(CMN_SRCDIR)/unipro.c
 CMN_CSRC += $(CMN_SRCDIR)/gbcore.c
+endif
 CMN_CSRC += $(CMN_SRCDIR)/debug.c
 
 CMN_ASRC =

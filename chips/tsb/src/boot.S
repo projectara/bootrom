@@ -44,15 +44,16 @@ Reset_Handler:
     ldr sp, =_stack_top
     b bootrom_main
 
-.type exception_common_handler, %function
-exception_common_handler:
-	b exception_common_handler
-
 .globl chip_jump_to_image
 .type chip_jump_to_image, %function
 chip_jump_to_image:
     orr r0, #1    /* set Thumb mode for bx */
     bx r0
+
+#if BOOT_STAGE == 1
+.type exception_common_handler, %function
+exception_common_handler:
+	b exception_common_handler
 
 .section .vectors
 .globl _vectors
@@ -232,3 +233,4 @@ done_bootstrap_copy:
     ldr r2, =_stext
     b copy_to_ram
 #endif
+#endif /* BOOT_STAGE == 1 */

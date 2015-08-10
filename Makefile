@@ -38,6 +38,11 @@ else
 export Q := @
 endif
 
+ifeq ($(BOOT_STAGE),)
+# default build for the boot ROM, which is the first stage in booting sequence
+BOOT_STAGE = 1
+endif
+
 #
 # "ES3 Bridge ASIC Boot ROM High Level Design" specifies 2 compile-time
 # switches:
@@ -90,6 +95,9 @@ MANIFEST_OUTDIR = $(OUTROOT)/$(MANIFEST_SRCDIR)
 CFLAGS += -DMANIFEST=$(MANIFEST) -DMANIFEST_HEADER="<$(MANIFEST).h>"
 CFLAGS += -I$(MANIFEST_OUTDIR)
 
+CFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
+AFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
+
 all: $(HEX)
 
 $(MANIFEST_OUTDIR)/$(MANIFEST).h: $(MANIFEST_OUTDIR)/$(MANIFEST).mnfb
@@ -132,3 +140,11 @@ clean:
 
 distclean: clean
 	$(Q) -rm -rf .config
+
+second_stage:
+	@ echo "Building for second stage boot loader"
+	$(Q) VERBOSE=$(VERBOSE) BOOT_STAGE=2 make --no-print-directory
+
+third_stage:
+	@ echo "Building for third stage boot firmware"
+	$(Q) VERBOSE=$(VERBOSE) BOOT_STAGE=3 make --no-print-directory

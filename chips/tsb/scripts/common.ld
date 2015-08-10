@@ -11,15 +11,17 @@ _stack_top = _communication_area;
 
 /* The high 12kB is used for boot ROM .data, .bss, stack and communication.
    May need to revisit the number later. */
-_bootrom_data_area = _workram_end - 12k;
+_bootrom_data_area = DEFINED(_bootrom_data_area) ?
+                     _bootrom_data_area :
+                     _workram_end - 12k;
 
 OUTPUT_ARCH(arm)
 EXTERN(_vectors)
 SECTIONS
 {
 
-   /* 
-    * bootstrap sections are meant to contain input sections only when building 
+   /*
+    * bootstrap sections are meant to contain input sections only when building
     * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
     * circumstances, such as when building for ES3's actual ROM, they must be
     * empty.
@@ -51,7 +53,7 @@ SECTIONS
 
 	_data_in_rom = LOADADDR(.data);
 
-   /* 
+   /*
     * bootstrap sections are meant to contain input sections only when building
     * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
     * circumstances, such as when building for ES3's actual ROM, they must be

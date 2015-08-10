@@ -239,7 +239,13 @@ static int locate_ffff_table(data_load_ops *ops)
     return 0;
 }
 
-static int locate_second_stage_firmware(data_load_ops *ops) {
+#if BOOT_STAGE == 1
+#define NEXT_STAGE_FW FFFF_ELEMENT_STAGE_2_FW
+#elif BOOT_STAGE == 2
+#define NEXT_STAGE_FW FFFF_ELEMENT_STAGE_3_FW
+#endif
+
+static int locate_next_stage_firmware(data_load_ops *ops) {
     uint32_t last_possible_element = (uint32_t)ffff.cur_header +
                                      ffff.cur_header->header_size -
                                      FFFF_SENTINEL_SIZE -
@@ -254,7 +260,7 @@ static int locate_second_stage_firmware(data_load_ops *ops) {
             break;
         }
 
-        if (element->element_type == FFFF_ELEMENT_STAGE_2_FW) {
+        if (element->element_type == NEXT_STAGE_FW) {
             if (ffff.cur_element == NULL ||
                 ffff.cur_element->element_generation <
                 element->element_generation) {
@@ -265,7 +271,7 @@ static int locate_second_stage_firmware(data_load_ops *ops) {
     }
 
     if (ffff.cur_element == NULL) {
-        dbgprint("failed to find the second stage firmware\r\n");
+        dbgprint("failed to find the next stage firmware\r\n");
         return -1;
     }
 
@@ -276,7 +282,7 @@ static int locate_second_stage_firmware(data_load_ops *ops) {
     }
     if (ffff.cur_element->element_location + ffff.cur_element->element_length >
         ffff.cur_header->flash_image_length) {
-        dbgprint("Second-stage firmware element's location + length exceed \
+        dbgprint("Next-stage firmware element's location + length exceed \
                   flash-image size.\r\n");
         return -1;
     }
@@ -284,7 +290,7 @@ static int locate_second_stage_firmware(data_load_ops *ops) {
     return 0;
 }
 
-int locate_second_stage_firmware_on_storage(data_load_ops *ops) {
+int locate_next_stage_firmware_on_storage(data_load_ops *ops) {
     if (ops->read == NULL) {
         return -1;
     }
@@ -293,7 +299,7 @@ int locate_second_stage_firmware_on_storage(data_load_ops *ops) {
         return -1;
     }
 
-    if (locate_second_stage_firmware(ops)) {
+    if (locate_next_stage_firmware(ops)) {
         return -1;
     }
 

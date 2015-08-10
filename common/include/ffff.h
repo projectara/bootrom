@@ -79,5 +79,5 @@ typedef //union {
 //    };
 } __attribute__ ((packed)) ffff_header;
 
-int locate_second_stage_firmware_on_storage(data_load_ops *ops);
+int locate_next_stage_firmware_on_storage(data_load_ops *ops);
 #endif /* __COMMON_INCLUDE_FFFF_H */

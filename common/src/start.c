@@ -63,7 +63,14 @@ void bootrom_main(void) {
     chip_init();
 
     dbginit();
-    dbgprint("Hello world!\r\n");
+#if BOOT_STAGE == 1
+    dbgprint("Hello world from boot ROM!\r\n");
+#elif BOOT_STAGE == 2
+    dbgprint("Hello world from second stage loader!\r\n");
+#elif BOOT_STAGE == 3
+    dbgprint("Hello world from third stage firmware!\r\n");
+    while(1);
+#endif
 
     chip_unipro_init();
 
@@ -99,7 +106,7 @@ void bootrom_main(void) {
         dbgprint("bootrom_main: Boot from SPIROM\r\n");
 
         spi_ops.init();
-        if (locate_second_stage_firmware_on_storage(&spi_ops) == 0) {
+        if (locate_next_stage_firmware_on_storage(&spi_ops) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
             chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                                    ATTR_LOCAL, &dme_write_result);

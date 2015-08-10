@@ -1,0 +1,22 @@
+MEMORY
+{
+    rom  (rx)  : ORIGIN = 0x0,        LENGTH = 16K
+
+    /* WARNING!!!: Assumption is that workram will always be
+       a multiple of 32 bytes. If this become not true for some interesting
+       reason, we have to modify the code boot.S. */
+    sram (rwx) : ORIGIN = 0x10000000, LENGTH = 192K
+}
+
+ENTRY(Reset_Handler)
+
+REGION_ALIAS("REGION_TEXT", sram);
+
+/**
+ * put data section below the data section of boot ROM, again, the number 24k
+ * needs to be revised later when we have the code feature complete.
+ */
+_bootrom_data_area = _workram_end - 24k;
+_bootrom_text_area = _bootrom_data_area - _text_size;
+
+INCLUDE chips/tsb/scripts/common.ld
