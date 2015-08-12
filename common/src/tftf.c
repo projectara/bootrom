@@ -318,7 +318,8 @@ bool valid_tftf_section(tftf_section_descriptor * section,
 
     /* Does the section contain the entry point? */
     if ((header->start_location >= section_start) &&
-       (header->start_location < section_end)) {
+        (header->start_location < section_end) &&
+        (section->section_type == TFTF_SECTION_RAW_CODE)) {
         /*****/dbgprint("TFTF section contains start\r\n");
         *section_contains_start = true;
     }
@@ -350,7 +351,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
  *
  * @param header The TFTF header to validate
  *
- * @returns True if valid section, false otherwise
+ * @returns True if valid TFTF header, false otherwise
  */
 bool valid_tftf_header(tftf_header * header) {
     tftf_section_descriptor * section;
@@ -393,6 +394,12 @@ bool valid_tftf_header(tftf_header * header) {
             set_last_error(BRE_TFTF_NO_TABLE_END);
             return false;
         }
+    }
+
+    /* Verify that, if this TFTF has a start address, it falls in one of our code sections. */
+    if ((header->start_location != 0) && !section_contains_start) {
+        dbgprint("Start address does not fall in any code section\r\n");
+        return false;
     }
 
     /*
