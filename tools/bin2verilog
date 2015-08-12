@@ -168,7 +168,7 @@ def main():
 
     parser.add_argument("--size",
                         type=auto_int,
-                        default=DEFAULT_ROM_SIZE,
+                        required=True,
                         help="Set the size of the output ROM")
 
     parser.add_argument("--version",
