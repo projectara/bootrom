@@ -95,6 +95,7 @@ void bootrom_main(void) {
     dbgprint("Boot-Over-Unipro disabled, force force boot-from-SPI\r\n");
     register_val = 0;
 #endif
+   /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
    if ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0) {
         dbgprint("BOOTSELECTOR 0\r\n");
         boot_from_spi = true;
@@ -128,6 +129,7 @@ void bootrom_main(void) {
                 /* Log that we're starting the boot-from-SPIROM */
                 chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                                        ATTR_LOCAL, &dme_write_result);
+                /* TA-16 jump to SPI code (BOOTRET_o = 0 && SPIBOOT_N = 0) */
                 jump_to_image();
             }
         }
@@ -159,6 +161,7 @@ void bootrom_main(void) {
         unipro_ops.init();
         if (!load_tftf_image(&unipro_ops, &is_secure_image)) {
             unipro_ops.finish();
+            /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
             jump_to_image();
         }
         unipro_ops.finish();

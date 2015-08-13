@@ -89,6 +89,7 @@ int efuse_init(void) {
 
     /* Check for e­-Fuse CRC error
      * See ARA_ESx_APBridge_RegisterMap_revxxx.pdf
+     * TA-04 Read eFuse status (result ECC)
      */
     register_val = tsb_get_eccerror();
     /*****/dbgprintx32("efuse_init: EccError = ", register_val, "\r\n");
@@ -102,6 +103,7 @@ int efuse_init(void) {
      * These have 2 valid values:
      *      Unset:  0
      *      Set:    Must have equal number of 1's and 0's
+     * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
     ara_vid = tsb_get_vid();
     /*****/dbgprint("efuse_init: VID = ");dbgprinthex32(ara_vid);dbgprint("\r\n");
@@ -142,6 +144,7 @@ int efuse_init(void) {
      *
      * NB. The UniPro Mfgr's ID and PID are hard-wired into their DME
      * attributes, so there is no need to fetch/store them in this function.
+     * TA-13 Write/Read  DME attribute (New area of 16 words)
      */
     chip_unipro_attr_write(DME_DDBL2_VID, ara_vid, 0,
                            ATTR_LOCAL, &dme_write_result);
@@ -164,6 +167,7 @@ void efuse_rig_for_untrusted(void) {
 #ifdef ALLOW_JTAG_FOR_UNTRUSTED_IMAGES
     tsb_jtag_disable();
 #endif
+    /* TA-21 Lock function with register (IMS, CMS) */
     tsb_disable_ims_access();
     tsb_disable_cms_access();
 }
