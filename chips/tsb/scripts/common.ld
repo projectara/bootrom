@@ -7,13 +7,15 @@ _communication_area_size = 200; /* except for resume address */
 
 _resume_address = _workram_end - _resume_address_size;
 _communication_area = _resume_address - _communication_area_size;
-_stack_top = _communication_area;
+_stack_top = ORIGIN(bufram3) + LENGTH(bufram3);
 
-/* The high 12kB is used for boot ROM .data, .bss, stack and communication.
-   May need to revisit the number later. */
+/**
+ * & 0xFFFFFFE0 to make sure it is aligned with 32 bytes
+ * so code in boot.S for _SIMULATION can work correctly
+ */
 _bootrom_data_area = DEFINED(_bootrom_data_area) ?
                      _bootrom_data_area :
-                     _workram_end - 12k;
+                     (_communication_area - _total_data_size) & 0xFFFFFFE0;
 
 OUTPUT_ARCH(arm)
 EXTERN(_vectors)
@@ -74,4 +76,6 @@ SECTIONS
 		*(COMMON)
 		_ebss = ABSOLUTE(.);
 	} > sram
+
+	_total_data_size = SIZEOF(.data) + _bootstrap_size + SIZEOF(.bss);
 }

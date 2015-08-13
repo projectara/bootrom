@@ -6,6 +6,11 @@ MEMORY
        a multiple of 32 bytes. If this become not true for some interesting
        reason, we have to modify the code boot.S. */
     sram (rwx) : ORIGIN = 0x10000000, LENGTH = 192K
+
+    bufram0 (rwx) : ORIGIN = 0x20000000, LENGTH = 48K /* for ES2 */
+    bufram1 (rwx) : ORIGIN = 0x2000C000, LENGTH = 48K
+    bufram2 (rwx) : ORIGIN = 0x20018000, LENGTH = 48K
+    bufram3 (rwx) : ORIGIN = 0x20024000, LENGTH = 48K
 }
 
 ENTRY(__start)
