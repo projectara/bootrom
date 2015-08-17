@@ -253,17 +253,17 @@ static int locate_ffff_table(data_load_ops *ops)
     return 0;
 }
 
-#if BOOT_STAGE == 1
-#define NEXT_STAGE_FW FFFF_ELEMENT_STAGE_2_FW
-#elif BOOT_STAGE == 2
-#define NEXT_STAGE_FW FFFF_ELEMENT_STAGE_3_FW
-#endif
-
-static int locate_next_stage_firmware(data_load_ops *ops) {
+static int locate_element(data_load_ops *ops,
+                          uint32_t type,
+                          uint32_t *length) {
     uint32_t last_possible_element = (uint32_t)ffff.cur_header +
                                      ffff.cur_header->header_size -
                                      FFFF_SENTINEL_SIZE -
                                      sizeof(ffff_element_descriptor);
+
+    if (length != NULL) {
+        *length = 0;
+    }
 
     ffff_element_descriptor *element = &ffff.cur_header->elements[0];
 
@@ -274,7 +274,7 @@ static int locate_next_stage_firmware(data_load_ops *ops) {
             break;
         }
 
-        if (element->element_type == NEXT_STAGE_FW) {
+        if (element->element_type == type) {
             if (ffff.cur_element == NULL ||
                 ffff.cur_element->element_generation <
                 element->element_generation) {
@@ -304,10 +304,15 @@ static int locate_next_stage_firmware(data_load_ops *ops) {
         return -1;
     }
 
+    if (length != NULL) {
+        *length = ffff.cur_element->element_length;
+    }
     return 0;
 }
 
-int locate_next_stage_firmware_on_storage(data_load_ops *ops) {
+int locate_ffff_element_on_storage(data_load_ops *ops,
+                                   uint32_t type,
+                                   uint32_t *length) {
     if (ops->read == NULL) {
         set_last_error(BRE_FFFF_NO_FIRMWARE);
         return -1;
@@ -318,7 +323,7 @@ int locate_next_stage_firmware_on_storage(data_load_ops *ops) {
         return -1;
     }
 
-    if (locate_next_stage_firmware(ops)) {
+    if (locate_element(ops, type, length)) {
         /* (locate_next_stage_firmware took care of error reporting) */
         return -1;
     }

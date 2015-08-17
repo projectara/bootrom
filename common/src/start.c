@@ -117,7 +117,14 @@ void bootrom_main(void) {
         dbgprint("bootrom_main: Boot from SPIROM\r\n");
 
         spi_ops.init();
-        if (locate_next_stage_firmware_on_storage(&spi_ops) == 0) {
+
+        /**
+         * Call locate_ffff_element_on_stage to locate next stage FW.
+         * Do not care about the image length here so pass NULL.
+         * The element type of next stage FW defined in FFFF happens to be
+         * the same as BOOT_STAGE
+         */
+        if (locate_ffff_element_on_storage(&spi_ops, BOOT_STAGE, NULL) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
             chip_advertise_boot_status(boot_status, &dme_write_result);
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
