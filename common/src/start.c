@@ -69,6 +69,10 @@ void bootrom_main(void) {
     dbgprint("Hello world from second stage loader!\r\n");
 #elif BOOT_STAGE == 3
     dbgprint("Hello world from third stage firmware!\r\n");
+#ifdef _SIMULATION
+    chip_handshake_with_test_controller();
+    dbgprint("Finished handshake with test controller\r\n");
+#endif
     while(1);
 #endif
 

@@ -33,6 +33,10 @@ CHIP_CSRC += $(CHIP_SRCDIR)/tsb_scm.c
 ifeq ($(CONFIG_DEBUG),y)
 CHIP_CSRC +=  $(CHIP_SRCDIR)/tsb_dbguart.c
 endif
+ifeq ($(CONFIG_GPIO),y)
+CHIPDEFINES += -DCONFIG_GPIO
+CHIP_CSRC +=  $(CHIP_SRCDIR)/tsb_gpio.c
+endif
 CHIP_CSRC += $(CHIP_SRCDIR)/tsb_isaa.c
 CHIP_CSRC += $(CHIP_SRCDIR)/tsb_unipro.c
 

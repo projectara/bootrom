@@ -85,6 +85,11 @@ void tsb_set_pinshare(uint32_t bits) {
     scm_write(TSB_SCM_PINSHARE, r | bits);
 }
 
+void tsb_clr_pinshare(uint32_t bits) {
+    uint32_t r = scm_read(TSB_SCM_PINSHARE);
+    scm_write(TSB_SCM_PINSHARE, r & ~bits);
+
+}
 uint32_t tsb_get_bootselector(void) {
     return scm_read(TSB_SCM_BOOTSELECTOR);
 }

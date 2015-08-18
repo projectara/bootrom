@@ -39,6 +39,25 @@ void chip_dbginit(void);
 void chip_dbgputc(int);
 void chip_dbgflush(void);
 
+/* Used when CONFIG_GPIO=y */
+#ifdef CONFIG_GPIO
+void chip_gpio_init(void);
+uint8_t chip_gpio_get_value(uint8_t which);
+void chip_gpio_set_value(uint8_t which, uint8_t value);
+void chip_gpio_direction_in(uint8_t which);
+void chip_gpio_direction_out(uint8_t which, uint8_t value);
+#else
+static inline void chip_gpio_init(void) {}
+static inline uint8_t chip_gpio_get_value(uint8_t which) {return 0;}
+static inline void chip_gpio_set_value(uint8_t which, uint8_t value) {}
+static inline void chip_gpio_direction_in(uint8_t which) {}
+static inline void chip_gpio_direction_out(uint8_t which, uint8_t value) {}
+#endif
+
+#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+void chip_handshake_with_test_controller(void);
+#endif
+
 int chip_validate_data_load_location(void *base, uint32_t length);
 
 void chip_jump_to_image(uint32_t start_address);

@@ -80,6 +80,12 @@ ifeq ($(CONFIG_DEBUG),y)
   DEBUGFLAGS := -ggdb -D_DEBUG
 endif
 
+ifeq ($(_SIMULATION),1)
+ifeq ($(BOOT_STAGE),3)
+CONFIG_GPIO = y
+endif
+endif
+
 EXTRADEFINES :=
 ifeq ($(CONFIG_GPIO),y)
 	EXTRADEFINES += -DCONFIG_GPIO

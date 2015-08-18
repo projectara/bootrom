@@ -31,6 +31,13 @@
 #include "debug.h"
 #include "tsb_scm.h"
 
+#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+#define GPIO_REQ 6
+#define GPIO_RESP 7
+#define HANDSHAKE_GPIO_CLR_BITS ((1 << 2) | (1 << 20))
+#define HANDSHAKE_GPIO_SET_BITS 0
+#endif
+
 void chip_init(void) {
 #ifdef BOOT_FROM_SLOW_ROM
 
@@ -44,6 +51,15 @@ void chip_init(void) {
 #endif
     /* Configure clocks */
     tsb_clk_init();
+#ifdef CONFIG_GPIO
+    chip_gpio_init();
+#endif
+#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+    tsb_clr_pinshare(HANDSHAKE_GPIO_CLR_BITS);
+    tsb_set_pinshare(HANDSHAKE_GPIO_SET_BITS);
+    chip_gpio_direction_in(GPIO_RESP);
+    chip_gpio_direction_out(GPIO_REQ, 0);
+#endif
 }
 
 extern char _workram_start;
@@ -61,3 +77,13 @@ int chip_validate_data_load_location(void *base, uint32_t length) {
     }
     return 0;
 }
+
+#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+void chip_handshake_with_test_controller(void) {
+    while (chip_gpio_get_value(GPIO_RESP) != 0);
+    chip_gpio_set_value(GPIO_REQ, 1);
+    while (chip_gpio_get_value(GPIO_RESP) == 0);
+    chip_gpio_set_value(GPIO_REQ, 0);
+    while (chip_gpio_get_value(GPIO_RESP) != 0);
+}
+#endif
