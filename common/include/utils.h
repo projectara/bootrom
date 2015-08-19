@@ -70,6 +70,6 @@ uint32_t next_block_boundary(uint32_t address, uint32_t block_size);
  */
 bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
 
-void delay(uint32_t steps);
+void delay(volatile uint32_t steps);
 
 #define TIMING_BUG_DELAY_LENGTH (0xfffff)
