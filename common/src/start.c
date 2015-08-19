@@ -31,6 +31,7 @@
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
 #include "common.h"
+#include "error.h"
 #include "efuse.h"
 #include "unipro.h"
 #include "chipdef.h"
@@ -42,6 +43,8 @@
 extern data_load_ops spi_ops;
 extern data_load_ops unipro_ops;
 
+uint32_t br_errno;
+
 /**
  * @brief Bootloader "C" entry point
  *
@@ -51,6 +54,7 @@ extern data_load_ops unipro_ops;
  */
 void bootrom_main(void) {
     uint32_t    dme_write_result;
+    /* TA-20 R/W data in bufRAM */
     uint32_t    boot_status = INIT_STATUS_OPERATING;
     uint32_t    register_val;
     int         status = 0;
@@ -59,6 +63,9 @@ void bootrom_main(void) {
     bool        fallback_boot_unipro = false;
 #endif
     uint32_t is_secure_image;
+
+    /* Ensure that we start each boot with an assumption of success */
+    init_last_error();
 
     chip_init();
 
@@ -84,11 +91,12 @@ void bootrom_main(void) {
     /* Advertise our initialization type */
     chip_advertise_boot_type(&dme_write_result);
 
-    /* Validate and make available e-fuse information */
-    status = efuse_init();
-    if (0 != status) {
+    /*
+     * Validate and make available e-fuse information (it handles error
+     * reporting)
+     */
+    if (0 != efuse_init()) {
         dbgprint("bootrom_main: eFuse failure\r\n");
-        boot_status |= status & INIT_STATUS_ERROR_CODE_MASK;
         goto halt_and_catch_fire;
     }
 
@@ -174,8 +182,16 @@ void bootrom_main(void) {
 
     /* Failure */
 halt_and_catch_fire:
-    boot_status |= INIT_STATUS_FAILED;
+    /* Since the boot has failed, add in the "boot failed" bit and the
+     * global bootrom "errno", containing the details of the failure to
+     * whatever boot status we've reached thus far, publish it via DME
+     * and stop.
+     */
+    boot_status = (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
+                   (get_last_error() & INIT_STATUS_ERROR_CODE_MASK) |
+                   INIT_STATUS_FAILED;
     chip_advertise_boot_status(boot_status, &dme_write_result);
+    /* TODO: Change from while(1); to WFI? */
     dbgprint("failed to load image, entering infinite loop\r\n");
     while(1);
 }

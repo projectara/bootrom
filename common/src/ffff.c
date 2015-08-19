@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "data_loading.h"
+#include "error.h"
 
 typedef struct {
     ffff_header header1;
@@ -135,33 +136,39 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->sentinel_value[i] != ffff_sentinel_value[i]) {
             dbgprint("FFFF Bad sentinel\r\n");
+            set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }
     }
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->trailing_sentinel_value[i] != ffff_sentinel_value[i]) {
             dbgprint("FFFF Bad sentinel\r\n");
+            set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }
     }
 
     if (header->erase_block_size > FFFF_ERASE_BLOCK_SIZE_MAX) {
         dbgprint("FFFF Bad erase block size\r\n");
+        set_last_error(BRE_FFFF_BLOCK_SIZE);
         return -1;
     }
 
     if (header->flash_capacity < (header->erase_block_size << 1)) {
         dbgprint("FFFF Bad flash capacity\r\n");
+        set_last_error(BRE_FFFF_FLASH_CAPACITY);
        return -1;
     }
 
     if (header->flash_image_length > header->flash_capacity) {
         dbgprint("FFFF image length > flash capacity\r\n");
+        set_last_error(BRE_FFFF_IMAGE_LENGTH);
         return -1;
     }
 
     if (header->header_size != FFFF_HEADER_SIZE) {
         dbgprint("FFFF Bad header size\r\n");
+        set_last_error(BRE_FFFF_HEADER_SIZE);
        return -1;
     }
 
@@ -170,12 +177,14 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
          (element < &header->elements[FFFF_MAX_ELEMENTS]) && !end_of_elements;
          element++) {
         if (!valid_ffff_element(element, header, address, &end_of_elements)) {
-            /* valid_ffff_element will have already printed the error */
-            return false;
+            /* (valid_ffff_element took care of error reporting) */
+            return -1;
         }
     }
     if (!end_of_elements) {
         dbgprint("FFFF no-end-of-elements marker");
+        set_last_error(BRE_FFFF_NO_TABLE_END);
+        return -1;
     }
 
     /*
@@ -187,6 +196,7 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
                               (uint32_t)&header->trailing_sentinel_value,
                           0x00)) {
         dbgprint("FFFF non-zero padding\r\n");
+        set_last_error(BRE_FFFF_NON_ZERO_PAD);
         return -1;
     }
 
@@ -202,6 +212,7 @@ static int locate_ffff_table(data_load_ops *ops)
 
     /* First look for header at beginning of the storage */
     if (ops->read(&ffff.header1, address, sizeof(ffff_header))) {
+        set_last_error(BRE_FFFF_LOAD_HEADER);
         return -1;
     } else if (validate_ffff_header(&ffff.header1, address)) {
         /* There is no valid FFFF table at address 0, this means the first
@@ -209,6 +220,7 @@ static int locate_ffff_table(data_load_ops *ops)
         address = FFFF_HEADER_SIZE;
         while(address < FFFF_ERASE_BLOCK_SIZE_MAX * 2) {
             if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
+                set_last_error(BRE_FFFF_LOAD_HEADER);
                 return -1;
             } else if(!validate_ffff_header(&ffff.header2, address)) {
                 ffff.cur_header = &ffff.header2;
@@ -217,6 +229,7 @@ static int locate_ffff_table(data_load_ops *ops)
             address <<= 1;
         }
         dbgprint("Failed to locate FFFF table\r\n");
+        set_last_error(BRE_FFFF_HEADER_NOT_FOUND);
         return -1;
     }
 
@@ -226,6 +239,7 @@ static int locate_ffff_table(data_load_ops *ops)
         address = ffff.header1.header_size;
     }
     if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
+        set_last_error(BRE_FFFF_LOAD_HEADER);
         return -1;
     } else if(validate_ffff_header(&ffff.header2, address)) {
         /* Did not find the second copy, so use the first one */
@@ -272,18 +286,21 @@ static int locate_next_stage_firmware(data_load_ops *ops) {
 
     if (ffff.cur_element == NULL) {
         dbgprint("failed to find the next stage firmware\r\n");
+        set_last_error(BRE_FFFF_NO_FIRMWARE);
         return -1;
     }
 
     /* validate the element */
     if (ffff.cur_element->element_location <
         (ffff.cur_header->header_size << 1)) {
+        set_last_error(BRE_FFFF_MEMORY_RANGE);
         return -1;
     }
     if (ffff.cur_element->element_location + ffff.cur_element->element_length >
         ffff.cur_header->flash_image_length) {
         dbgprint("Next-stage firmware element's location + length exceed \
                   flash-image size.\r\n");
+        set_last_error(BRE_FFFF_MEMORY_RANGE);
         return -1;
     }
 
@@ -292,14 +309,17 @@ static int locate_next_stage_firmware(data_load_ops *ops) {
 
 int locate_next_stage_firmware_on_storage(data_load_ops *ops) {
     if (ops->read == NULL) {
+        set_last_error(BRE_FFFF_NO_FIRMWARE);
         return -1;
     }
 
     if (locate_ffff_table(ops)) {
+        /* (locate_ffff_table took care of error reporting) */
         return -1;
     }
 
     if (locate_next_stage_firmware(ops)) {
+        /* (locate_next_stage_firmware took care of error reporting) */
         return -1;
     }
 

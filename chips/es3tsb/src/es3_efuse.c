@@ -41,6 +41,7 @@
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
 #include "common.h"
+#include "error.h"
 #include "unipro.h"
 #include "efuse.h"
 
@@ -79,7 +80,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id);
  * @param none
  *
  * @returns 0 on success
- *          errno on failure
+ *          -1 on failure
  */
 int efuse_init(void) {
     uint32_t    register_val;
@@ -94,26 +95,40 @@ int efuse_init(void) {
     register_val = tsb_get_eccerror();
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
         dbgprint("efuse_init Efuse ECC error\r\n");
-        return EHOSTDOWN;
+        set_last_error(BRE_EFUSE_ECC);
+        return -1;
     }
 
 
-    /* obtain and verify VID/PID/SN (in e­-Fuse) have proper Hamming weight
+    /* Obtain and verify VID/PID/SN (in e­-Fuse) have proper Hamming weight
+     * and advertise various these via DME attribute registers
      * These have 2 valid values:
      *      Unset:  0
      *      Set:    Must have equal number of 1's and 0's
+     *
+     * NB. The UniPro Mfgr's ID and PID are hard-wired into their DME
+     * attributes, so there is no need to fetch/store them in this function.
+     * TA-13 Write/Read  DME attribute (New area of 16 words)
      * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
     ara_vid = tsb_get_vid();
     if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
         dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\r\n");
-        return EFAULT;
+        set_last_error(BRE_EFUSE_BAD_ARA_VID);
+        return -1;
+    } else {
+        chip_unipro_attr_write(DME_DDBL2_VID, ara_vid, 0,
+                               ATTR_LOCAL, &dme_write_result);
     }
 
     ara_pid = tsb_get_pid();
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
         dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\r\n");
-        return EFAULT;
+        set_last_error(BRE_EFUSE_BAD_ARA_PID);
+        return -1;
+    } else {
+        chip_unipro_attr_write(DME_DDBL2_PID, ara_pid, 0,
+                               ATTR_LOCAL, &dme_write_result);
     }
 
     serial_number.quad = tsb_get_serial_no();
@@ -121,29 +136,20 @@ int efuse_init(void) {
                               sizeof(serial_number))) {
         dbgprintx64("efuse_init: Invalid serial number: ",
                     serial_number.quad, "\r\n");
-        return EFAULT;
+        set_last_error(BRE_EFUSE_BAD_SERIAL_NO);
+        return -1;
+    } else {
+        chip_unipro_attr_write(DME_DDBL2_SERIALNO_L, serial_number.low, 0,
+                               ATTR_LOCAL, &dme_write_result);
+        chip_unipro_attr_write(DME_DDBL2_SERIALNO_H, serial_number.high, 0,
+                               ATTR_LOCAL, &dme_write_result);
     }
 
     /* Extract Internal Master Secret (IMS) from e­-Fuse, and if it is
      * non-zero, compute the Endpoint Unique ID
      */
     (void)get_endpoint_id(&endpoint_id);
-
-    /*
-     *  Advertise various values via DME attribute registers
-     *
-     * NB. The UniPro Mfgr's ID and PID are hard-wired into their DME
-     * attributes, so there is no need to fetch/store them in this function.
-     * TA-13 Write/Read  DME attribute (New area of 16 words)
-     */
-    chip_unipro_attr_write(DME_DDBL2_VID, ara_vid, 0,
-                           ATTR_LOCAL, &dme_write_result);
-    chip_unipro_attr_write(DME_DDBL2_PID, ara_pid, 0,
-                           ATTR_LOCAL, &dme_write_result);
-    chip_unipro_attr_write(DME_DDBL2_SERIALNO_L, serial_number.low, 0,
-                           ATTR_LOCAL, &dme_write_result);
-    chip_unipro_attr_write(DME_DDBL2_SERIALNO_H, serial_number.high, 0,
-                           ATTR_LOCAL, &dme_write_result);
+    /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
     chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
                            ATTR_LOCAL, &dme_write_result);
     chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
@@ -256,13 +262,14 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
     bool have_endpoint_id = false;
     endpoint_id->quad = 0;
 
-    /* Get the IMS and determine the course of action */
+    /* Get the IMS and determine the course of action if non-zero */
     tsb_get_ims(ims_value, sizeof(ims_value));
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
 
         if (!valid_hamming_weight((uint8_t *)ims_value, IMS_LENGTH)) {
             dbgprint("efuse_init: Invalid IMS\r\n");
+            set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
             /***** THIS IS TBD UNTIL WE GET THE *REAL* IMS->EID ALGORITHM! *****/
             /* Compute a fake IMS */

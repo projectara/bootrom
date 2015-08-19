@@ -35,6 +35,7 @@
 #include "crypto.h"
 #include "unipro.h"
 #include "utils.h"
+#include "error.h"
 
 #define NEW_VALIDATION
 
@@ -65,11 +66,12 @@ static int load_tftf_header(data_load_ops *ops) {
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
     if (ops->load(&tftf.header, TFTF_HEADER_SIZE, false)) {
+        set_last_error(BRE_TFTF_LOAD_HEADER);
         return -1;
     }
 
     if (!valid_tftf_header(&tftf.header)) {
-        dbgprint("invalid TFTF header\r\n");
+        /* (valid_tftf_header took care of error reporting) */
         return -1;
     }
 
@@ -97,6 +99,7 @@ static int load_tftf_header(data_load_ops *ops) {
         ((tftf.header.ara_pid != 0) &&
          (tftf.header.ara_pid != ara_pid))) {
         dbgprint("Image does not match our VID/PID\r\n");
+        set_last_error(BRE_TFTF_VIDPID_MISMATCH);
 #ifndef _PRODUCTION
         dbgprint("        __chip__ __tftf__\r\n");
         dbgprintx32("U-MID = ", unipro_vid, " ");
@@ -119,6 +122,7 @@ static int load_tftf_header(data_load_ops *ops) {
     while(1) {
         if ((uint32_t)section - (uint32_t)&tftf.header >= TFTF_HEADER_SIZE) {
             dbgprint("too many tftf sections?\r\n");
+            set_last_error(BRE_TFTF_HEADER_SIZE);
             return -1;
         }
 
@@ -140,12 +144,14 @@ static int load_tftf_header(data_load_ops *ops) {
             if (section->section_type == TFTF_SECTION_COMPRESSED_CODE ||
                 section->section_type == TFTF_SECTION_COMPRESSED_DATA) {
                 dbgprint("compressed section not supported in boot ROM\r\n");
+                set_last_error(BRE_TFTF_COMPRESSION_UNSUPPORTED);
                 return -1;
             }
 
             if (tftf.crypto_state == CRYPTO_STATE_HASHING &&
                 section->section_type != TFTF_SECTION_CERTIFICATE) {
-                dbgprint("ilegal section after first signature\r\n");
+                dbgprint("illegal section after first signature\r\n");
+                set_last_error(BRE_TFTF_SECTION_AFTER_SIGNATURE);
                 return -1;
             }
 
@@ -153,6 +159,7 @@ static int load_tftf_header(data_load_ops *ops) {
             if (section->expanded_length < section->section_length ||
                 sec_top > tftf.header.expanded_length) {
                 dbgprint("section out of memory range\r\n");
+                set_last_error(BRE_TFTF_MEMORY_RANGE);
                 return -1;
             }
         }
@@ -172,6 +179,7 @@ static int process_tftf_section(data_load_ops *ops,
         dbgprint("WARNING: signature verification not implemented yet\r\n");
         if (ops->load(&tftf.signature, sizeof(tftf.signature), false)) {
             dbgprint("error loading signature\r\n");
+            set_last_error(BRE_TFTF_LOAD_SIGNATURE);
             return -1;
         }
         switch (tftf.crypto_state) {
@@ -199,6 +207,7 @@ static int process_tftf_section(data_load_ops *ops,
 
     if (ops->load(dest, section->section_length, hash_loaded_data)) {
         dbgprint("invalid tftf header size\r\n");
+        set_last_error(BRE_TFTF_HEADER_SIZE);
         return -1;
     }
 
@@ -212,12 +221,15 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
     *is_secure_image = 0;
 
     if (load_tftf_header(ops)) {
+        /* (load_tftf_header took care of error reporting) */
         return -1;
     }
 
     section = &tftf.header.sections[0];
     while(section->section_type != TFTF_SECTION_END) {
         if (process_tftf_section(ops, section)) {
+            /* (process_tftf_section took care of error reporting)
+             */
             return -1;
         }
         section++;
@@ -279,6 +291,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
 
     if (!valid_tftf_type(section->section_type)) {
         dbgprint("Invalid section type found\r\n");
+        set_last_error(BRE_TFTF_HEADER_TYPE);
         return false;
     }
 
@@ -299,6 +312,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
     /* Does the section fall outside the overall TFTF span? */
     if ((section_start < header->load_base) || (section_end > tftf_end)) {
         dbgprint("TFTF section outside of TFTF\r\n");
+        set_last_error(BRE_TFTF_MEMORY_RANGE);
         return false;
     }
 
@@ -323,6 +337,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
             (other_section->expanded_length >= section->copy_offset) &&
             (other_section->copy_offset <= section->expanded_length)) {
             dbgprint("TFTF sections collide\r\n");
+            set_last_error(BRE_TFTF_COLLISION);
             return false;
         }
     }
@@ -345,12 +360,14 @@ bool valid_tftf_header(tftf_header * header) {
     /* Verify the sentinel */
     if (header->sentinel_value != TFTF_SENTINEL) {
         dbgprintx32("TFTF invalid sentinel: ", header->sentinel_value, "\r\n");
+        set_last_error(BRE_TFTF_SENTINEL);
         return false;
     }
 
     /* Verify the expanded/compressed lengths are sane */
     if (header->expanded_length < header->load_length) {
-        dbgprintx32("TFTF comperssed > raw: ", header->sentinel_value, "\r\n");
+        dbgprintx32("TFTF compressed > raw: ", header->sentinel_value, "\r\n");
+        set_last_error(BRE_TFTF_COMPRESSION_BAD);
         return false;
     }
 
@@ -358,6 +375,7 @@ bool valid_tftf_header(tftf_header * header) {
     if (chip_validate_data_load_location((void *)header->load_base,
                                          header->expanded_length)) {
         dbgprintx32("TFTF length: ", header->sentinel_value, "\r\n");
+        set_last_error(BRE_TFTF_MEMORY_RANGE);
         return false;
     }
 
@@ -367,7 +385,12 @@ bool valid_tftf_header(tftf_header * header) {
          section++) {
         if (!valid_tftf_section(section, header, &section_contains_start,
                                 &end_of_sections)) {
-            /* valid_tftf_section will have already printed the error */
+            /* (valid_tftf_section took care of error reporting) */
+            return false;
+        }
+        if (!end_of_sections) {
+            dbgprint("TFTF no-end-of-sections marker");
+            set_last_error(BRE_TFTF_NO_TABLE_END);
             return false;
         }
     }
@@ -380,6 +403,7 @@ bool valid_tftf_header(tftf_header * header) {
                           (uint32_t)&header[1] - (uint32_t)section,
                           0x00)) {
         dbgprint("TFTF non-zero fill\r\n");
+        set_last_error(BRE_TFTF_NON_ZERO_PAD);
         return false;
     }
 
