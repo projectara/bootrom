@@ -80,8 +80,10 @@ typedef union {
 } __attribute__ ((packed)) tftf_header;
 
 typedef struct {
-    /* TBD */
-    unsigned char signature[64];
+    uint32_t length;
+    uint32_t type;
+    char key_name[96];
+    unsigned char signature[256];
 } __attribute__ ((packed)) tftf_signature;
 
 typedef void (*image_entry_func)(void);

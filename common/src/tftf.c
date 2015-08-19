@@ -245,6 +245,18 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
            tftf.header.build_timestamp,
            sizeof(p->stage_2_firmware_description));
 
+    if (tftf.crypto_state != CRYPTO_STATE_VERIFIED &&
+        tftf.crypto_state != CRYPTO_STATE_INIT) {
+        /**
+         * this image contains signature blocks
+         * but none of them were able to verify the data
+         * so this image is corrupted
+         */
+        dbgprint("TFTF image corrupted\r\n");
+        *is_secure_image = 0;
+        return -1;
+    }
+
     return 0;
 }
 
@@ -332,11 +344,12 @@ bool valid_tftf_section(tftf_section_descriptor * section,
      */
     for (other_section = section + 1;
          ((other_section < &header->sections[TFTF_MAX_SECTIONS]) &&
+          (other_section->section_type != TFTF_SECTION_SIGNATURE) &&
           (other_section->section_type != TFTF_SECTION_END));
          other_section++) {
         if ((other_section->section_type != TFTF_SECTION_END) &&
             (other_section->expanded_length >= section->copy_offset) &&
-            (other_section->copy_offset <= section->expanded_length)) {
+            (other_section->copy_offset < section->expanded_length)) {
             dbgprint("TFTF sections collide\r\n");
             set_last_error(BRE_TFTF_COLLISION);
             return false;

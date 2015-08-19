@@ -85,6 +85,12 @@ void hash_final(unsigned char *digest) {
  */
 int verify_signature(unsigned char *digest, tftf_signature *signature) {
 #ifdef _SIMULATION
+/* little ending 32bit word for "FAIL" */
+#define _SIM_KEYNAME_FAILURE_SENTINEL 0x4C494146
+    uint32_t *p = (uint32_t *)(signature->key_name);
+    if (*p == _SIM_KEYNAME_FAILURE_SENTINEL) {
+        return -1;
+    }
     return 0;
 #endif
     /* TODO: Add signature verification code once license is signed */
