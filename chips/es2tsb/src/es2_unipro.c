@@ -399,11 +399,6 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
         if ((eom & eom_nom_bit) != 0) {
             bytes_received = tsb_unipro_read(CPB_RX_TRANSFERRED_DATA_SIZE_00 +
                                              (cportid << 2));
-            dbgprint("cport ");
-            dbgprinthex8(cportid);
-            dbgprint(" received ");
-            dbgprinthex32(bytes_received);
-            dbgprint(" bytes of data\r\n");
             tsb_unipro_write(AHM_RX_EOM_INT_BEF_0, eom_nom_bit);
 
             if (handler != NULL) {

@@ -186,19 +186,15 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
     len -= sizeof(gb_operation_header);
     switch (op_header->type) {
     case GB_FW_OP_PROTOCOL_VERSION:
-        dbgprint("get version request\r\n");
         rc = gbfw_get_version(cportid, op_header);
         break;
     case GB_FW_OP_FIRMWARE_SIZE | GB_TYPE_RESPONSE:
-        dbgprint("receive firmware size response\r\n");
         rc = gbfw_firmware_size_response(op_header, data, len);
         break;
     case GB_FW_OP_GET_FIRMWARE | GB_TYPE_RESPONSE:
-        dbgprint("receive gotten firmware response\r\n");
         rc = gbfw_get_firmware_response(op_header, data, len);
         break;
     case GB_FW_OP_READY_TO_BOOT | GB_TYPE_RESPONSE:
-        dbgprint("receive ready to boot response\r\n");
         rc = gbfw_ready_to_boot_response(op_header, data, len);
         break;
     default:
@@ -246,7 +242,6 @@ static int data_load_greybus_init(void) {
     if (rc) {
         return rc;
     }
-    dbgprintx32("Initialized Greybus Control CPort ", CONTROL_CPORT, "\r\n");
 
     /* poll until data cport connected */
     while (cport_connected == 0) {
@@ -267,6 +262,8 @@ static int data_load_greybus_init(void) {
             goto protocol_error;
         }
     }
+
+    dbgprint("Beginning Greybus Firmware download.\r\n");
 
     /* Fetch the firmware size. */
     rc = gbfw_firmware_size(NEXT_BOOT_STAGE, &firmware_size);
@@ -328,6 +325,8 @@ static int data_load_greybus_finish(bool valid, bool is_secure_image) {
     }
 
     rc = gbfw_ready_to_boot(status);
+
+    dbgprint("Finished Greybus Firmware download.\r\n");
 
     firmware_size = offset = -1;
     cport_connected = 0;

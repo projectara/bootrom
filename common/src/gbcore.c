@@ -161,7 +161,6 @@ static int gbctrl_connected(uint32_t cportid,
                             0);
         return -1;
     }
-    dbgprintx32("cport 0x", gbfw_cportid, " connected\r\n");
     return greybus_op_response(cportid,
                                op_header,
                                GB_OP_SUCCESS,
@@ -214,27 +213,21 @@ int control_cport_handler(uint32_t cportid,
 
     switch (op_header->type) {
     case GB_CTRL_OP_VERSION:
-        dbgprint("get version\r\n");
         rc = gbctrl_get_version(cportid, op_header);
         break;
     case GB_CTRL_OP_PROBE_AP:
-        dbgprint("probe ap\r\n");
         rc = gbctrl_probe_ap(cportid, op_header);
         break;
     case GB_CTRL_OP_GET_MANIFEST_SIZE:
-        dbgprint("get manifest size\r\n");
         rc = gbctrl_get_manifest_size(cportid, op_header);
         break;
     case GB_CTRL_OP_GET_MANIFEST:
-        dbgprint("get manifest\r\n");
         rc = gbctrl_get_manifest(cportid, op_header);
         break;
     case GB_CTRL_OP_CONNECTED:
-        dbgprint("Greybus connected\r\n");
         rc = gbctrl_connected(cportid, op_header);
         break;
     case GB_CTRL_OP_DISCONNECTED:
-        dbgprint("Greybus disconnected\r\n");
         rc = gbctrl_disconnected(cportid, op_header);
         break;
     default:
