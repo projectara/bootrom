@@ -92,7 +92,6 @@ int efuse_init(void) {
      * TA-04 Read eFuse status (result ECC)
      */
     register_val = tsb_get_eccerror();
-    /*****/dbgprintx32("efuse_init: EccError = ", register_val, "\r\n");
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
         dbgprint("efuse_init Efuse ECC error\r\n");
         return EHOSTDOWN;
@@ -106,30 +105,22 @@ int efuse_init(void) {
      * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
     ara_vid = tsb_get_vid();
-    /*****/dbgprint("efuse_init: VID = ");dbgprinthex32(ara_vid);dbgprint("\r\n");
     if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
-        dbgprint("efuse_init: Invalid Ara VID: ");
-        dbgprinthex32(ara_vid);
-        dbgprint("\r\n");
+        dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\r\n");
         return EFAULT;
     }
 
     ara_pid = tsb_get_pid();
-    /*****/dbgprintx32("efuse_init: PID = ", ara_pid, "\r\n");
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
-        dbgprint("efuse_init: Invalid Ara PID: ");
-        dbgprinthex32(ara_pid);
-        dbgprint("\r\n");
+        dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\r\n");
         return EFAULT;
     }
 
     serial_number.quad = tsb_get_serial_no();
-    /*****/dbgprintx64("efuse_init: SN =  ", serial_number.quad, "\r\n");
     if (!valid_hamming_weight((uint8_t *)&serial_number,
                               sizeof(serial_number))) {
-        dbgprint("efuse_init: Invalid serial number: ");
-        dbgprinthex64(serial_number.quad);
-        dbgprint("\r\n");
+        dbgprintx64("efuse_init: Invalid serial number: ",
+                    serial_number.quad, "\r\n");
         return EFAULT;
     }
 
@@ -137,7 +128,6 @@ int efuse_init(void) {
      * non-zero, compute the Endpoint Unique ID
      */
     (void)get_endpoint_id(&endpoint_id);
-    /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
 
     /*
      *  Advertise various values via DME attribute registers
@@ -268,8 +258,6 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
 
     /* Get the IMS and determine the course of action */
     tsb_get_ims(ims_value, sizeof(ims_value));
-    /*****/dbgprintxbuf("efuse_init: IMS =\r\n", (uint8_t *)&ims_value[0],
-    /*****/             IMS_LENGTH, "\r\n");
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
 
