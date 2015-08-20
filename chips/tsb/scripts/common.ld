@@ -24,7 +24,7 @@ SECTIONS
 
    /*
     * bootstrap sections are meant to contain input sections only when building
-    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
+    * with SPIROM+JTAG dual-image targets such as es2tsb.  In all other
     * circumstances, such as when building for ES3's actual ROM, they must be
     * empty.
     */
@@ -57,7 +57,7 @@ SECTIONS
 
    /*
     * bootstrap sections are meant to contain input sections only when building
-    * with SPIROM+JTAG dual-image targets such as es1tsb.  In all other
+    * with SPIROM+JTAG dual-image targets such as es2tsb.  In all other
     * circumstances, such as when building for ES3's actual ROM, they must be
     * empty.
     */

@@ -18,7 +18,6 @@ The <chip_name> defaults to "es3tsb" if not specified. This is for the official
 ES3 Toshiba UniPro Bridge chips (both APBridge and GPBridge).
 
 Other available configurations include:
-    es1tsb  - to build image to run on ES1 chip (in workram)
     es2tsb  - to build image to run on ES2 chip (in workram)
     fpgatsb - to build image to run on HAPS board, with ES3 FPGA bits
 

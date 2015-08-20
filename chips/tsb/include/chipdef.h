@@ -40,9 +40,7 @@
 /* AP/GP Bridge peripherals memory map */
 
 /* Include chip-specific elements of the memory map */
-#if CONFIG_CHIP_REVISION == CHIP_REVISION_ES1
-#include "es1_chipdef.h"
-#elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES2
+#if CONFIG_CHIP_REVISION == CHIP_REVISION_ES2
 #include "es2_chipdef.h"
 #elif CONFIG_CHIP_REVISION == CHIP_REVISION_ES3
 #include "es3_chipdef.h"
