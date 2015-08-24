@@ -402,11 +402,11 @@ bool valid_tftf_header(tftf_header * header) {
             /* (valid_tftf_section took care of error reporting) */
             return false;
         }
-        if (!end_of_sections) {
-            dbgprint("TFTF no-end-of-sections marker");
-            set_last_error(BRE_TFTF_NO_TABLE_END);
-            return false;
-        }
+    }
+    if (!end_of_sections) {
+        dbgprint("TFTF no-end-of-sections marker");
+        set_last_error(BRE_TFTF_NO_TABLE_END);
+        return false;
     }
 
     /* Verify that, if this TFTF has a start address, it falls in one of our code sections. */
