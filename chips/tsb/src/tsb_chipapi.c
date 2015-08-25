@@ -32,10 +32,10 @@
 #include "tsb_scm.h"
 
 #if defined(_SIMULATION) && (BOOT_STAGE == 3)
-#define GPIO_REQ 6
-#define GPIO_RESP 7
-#define HANDSHAKE_GPIO_CLR_BITS ((1 << 2) | (1 << 20))
-#define HANDSHAKE_GPIO_SET_BITS 0
+#define GPIO_REQ 16
+#define GPIO_RESP 17
+#define HANDSHAKE_GPIO_CLR_BITS (1 << 4)
+#define HANDSHAKE_GPIO_SET_BITS (1 << 10)
 #endif
 
 void chip_init(void) {
