@@ -28,8 +28,60 @@
 
 #include <stddef.h>
 #include "debug.h"
+#include "bootrom.h"
 
 #ifdef _DEBUG
+
+char * dbgprint_buf;
+char * dbgprint_insert_point;
+
+
+/**
+ * @brief Initialize the debug subsystem
+ *
+ * @returns Nothing
+ */
+void dbginit(void) {
+    /* Call the chip-specific code to set up the debug serial UART */
+    chip_dbginit();
+#ifdef _SIMULATION
+    /*
+     * For simulation, we also have a 1-line buffer in the communication_area
+     */
+    communication_area *p = (communication_area *)&_communication_area;
+    dbgprint_buf = &p->dbgprint_buf[0];
+    dbgprint_insert_point = dbgprint_buf;
+#endif
+}
+
+
+/**
+ * @brief Print out a character
+ *
+ * @param x The character to print
+ *
+ * @returns Nothing
+ */
+void dbgputc(int x) {
+    /*
+     * Call the chip-specific code to write the char to the debug serial UART
+     */
+    chip_dbgputc(x);
+#ifdef _SIMULATION
+    if ((x == '\r') || (x == '\n')) {
+        /*
+         * Start a new line by resetting back to the beginning of the buffer.
+         */
+        dbgprint_insert_point = dbgprint_buf;
+    }
+    else if (dbgprint_insert_point < &dbgprint_buf[DBGPRINT_BUF_LENGTH-1]) {
+        /* Append the character and keep the string null-terminated */
+        *dbgprint_insert_point++ = (char)x;
+        *dbgprint_insert_point = '\0';
+    }
+#endif
+}
+
 
 /**
  * @brief Print out a string

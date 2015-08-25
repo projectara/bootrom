@@ -6,6 +6,7 @@ _resume_address_size = 8;
 /**
  * NOTE: _communication_area_size must match COMMUNICATION_AREA_LENGTH in
  * bootrom.h
+ * bootrom.h!
  */
 _communication_area_size = 1024; /* includes resume address */
 

@@ -55,8 +55,30 @@ typedef struct {
  * Area of memory used to communicate between boot ROM and second stage FW.
  * This area is located at the highest end of the RAM. So any addition to the
  * area needs to happen BEFORE the existing fields.
+ *
+ * NOTE: COMMUNICATION_AREA_LENGTH must match _communication_area_size in
+ * common.ld!
  */
+#define COMMUNICATION_AREA_LENGTH   1024
+#ifdef _SIMULATION
+  #define DBGPRINT_BUF_LENGTH   128
+#else
+  #define DBGPRINT_BUF_LENGTH   0
+#endif
+#define EUID_LENGTH         8
+#define S2_FW_ID_LENGTH     32
+#define S2_KEY_NAMELENGTH   96
+#define S2_FW_DESC_LENGTH   64
+#define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
+#define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
+                    (DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
+                     S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
+                     RESUME_ADDR_LENGTH))
+
 typedef struct {
+#ifdef _SIMULATION
+    char dbgprint_buf[DBGPRINT_BUF_LENGTH];
+#endif
     unsigned char padding[PAD_LENGTH];
     unsigned char endpoint_unique_id[EUID_LENGTH];
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH];

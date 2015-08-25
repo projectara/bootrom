@@ -32,8 +32,8 @@
 #include "chipapi.h"
 
 #ifdef _DEBUG
-    #define dbginit() chip_dbginit()
-    #define dbgputc(x) chip_dbgputc(x)
+    void dbginit(void);
+    void dbgputc(int x);
     void dbgprint(char *str);
     void dbgprintbool(uint8_t flag);
     void dbgprinthex8(uint8_t num);
