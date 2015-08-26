@@ -94,7 +94,7 @@ void bootrom_main(void) {
 
     /*
      * Validate and make available e-fuse information (it handles error
-     * reporting)
+     * reporting). Note that an error here is unrecoverable.
      */
     if (0 != efuse_init()) {
         goto halt_and_catch_fire;
@@ -200,7 +200,16 @@ halt_and_catch_fire:
                    (get_last_error() & INIT_STATUS_ERROR_CODE_MASK) |
                    INIT_STATUS_FAILED;
     chip_advertise_boot_status(boot_status, &dme_write_result);
-    /* TODO: Change from while(1); to WFI? */
     dbgprintx32("Boot failed (status ", boot_status, "), halting\r\n");
+
+#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+    /*
+     * Indicate failure with GPIO 18 showing a '1' and execute a handshake
+     * cycle on GPIO 16,17
+     */
+    dbgprint("chip_signal_boot_status...\r\n");
+    chip_signal_boot_status(boot_status);
+#endif
+    /* TODO: Change from while(1); to WFI? */
     while(1);
 }

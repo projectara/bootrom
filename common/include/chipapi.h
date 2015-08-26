@@ -54,8 +54,9 @@ static inline void chip_gpio_direction_in(uint8_t which) {}
 static inline void chip_gpio_direction_out(uint8_t which, uint8_t value) {}
 #endif
 
-#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
 void chip_handshake_with_test_controller(void);
+void chip_signal_boot_status(uint32_t status);
 #endif
 
 int chip_validate_data_load_location(void *base, uint32_t length);

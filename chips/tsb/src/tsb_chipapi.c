@@ -31,11 +31,15 @@
 #include "debug.h"
 #include "tsb_scm.h"
 
-#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+/* See: T6WU0XBG-0001 APBridge Functional Specification for pinshare bits */
 #define GPIO_REQ 16
 #define GPIO_RESP 17
+#define GPIO_TEST_STATUS 18
+#define GPIO_TEST_STATUS_OK 0
+#define GPIO_TEST_STATUS_FAIL 1
 #define HANDSHAKE_GPIO_CLR_BITS (1 << 4)
-#define HANDSHAKE_GPIO_SET_BITS (1 << 10)
+#define HANDSHAKE_GPIO_SET_BITS (1 << 10) | (1 << 11)
 #endif
 
 void chip_init(void) {
@@ -54,11 +58,12 @@ void chip_init(void) {
 #ifdef CONFIG_GPIO
     chip_gpio_init();
 #endif
-#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
     tsb_clr_pinshare(HANDSHAKE_GPIO_CLR_BITS);
     tsb_set_pinshare(HANDSHAKE_GPIO_SET_BITS);
     chip_gpio_direction_in(GPIO_RESP);
     chip_gpio_direction_out(GPIO_REQ, 0);
+    chip_gpio_direction_out(GPIO_TEST_STATUS, GPIO_TEST_STATUS_OK);
 #endif
 }
 
@@ -78,12 +83,37 @@ int chip_validate_data_load_location(void *base, uint32_t length) {
     return 0;
 }
 
-#if defined(_SIMULATION) && (BOOT_STAGE == 3)
+#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+ /**
+  * @brief Perform a handshake with the external simulation controller
+  *
+  * @param none
+  *
+  * @returns Nothing.
+  */
 void chip_handshake_with_test_controller(void) {
     while (chip_gpio_get_value(GPIO_RESP) != 0);
     chip_gpio_set_value(GPIO_REQ, 1);
     while (chip_gpio_get_value(GPIO_RESP) == 0);
     chip_gpio_set_value(GPIO_REQ, 0);
     while (chip_gpio_get_value(GPIO_RESP) != 0);
+}
+
+/**
+ * @brief Indicate success/failure to external simulation controller
+ *
+ * Indicate test pass/continue or fail/halt by setting GPIO18 to
+ * 0 or 1 (respectively) and execute the handshake on GPIO16,17.
+ *
+ * @param status Indicate if the test was successful and/or should continue
+ *               if the status is zero. Non-zero status indicates a failure
+ *               and the test should stop.
+ *
+ * @returns Nothing.
+ */
+void chip_signal_boot_status(uint32_t status) {
+    chip_gpio_set_value(GPIO_TEST_STATUS, status?
+            GPIO_TEST_STATUS_FAIL : GPIO_TEST_STATUS_OK);
+    chip_handshake_with_test_controller();
 }
 #endif
