@@ -55,7 +55,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
         return -EINVAL;
     }
 
-    rc = read_mailbox(&mail, ATTR_LOCAL, NULL);
+    rc = read_mailbox(&mail, NULL);
     if (rc) {
         return rc;
     }
@@ -66,7 +66,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
     tsb_unipro_restart_rx(cport);
     tsb_enable_e2efc(cportid);
 
-    rc = ack_mailbox(ATTR_LOCAL);
+    rc = ack_mailbox();
 
     return rc;
 }
@@ -79,7 +79,7 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     int rc;
     uint32_t cport_recv = 0;
 
-    rc = read_mailbox(&cport_recv, ATTR_LOCAL, NULL);
+    rc = read_mailbox(&cport_recv, NULL);
     if (rc) {
         return rc;
     }
@@ -97,7 +97,7 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     tsb_unipro_restart_rx(cport);
     tsb_enable_e2efc(*cportid);
 
-    rc = ack_mailbox(ATTR_LOCAL);
+    rc = ack_mailbox();
 
     return 0;
 }

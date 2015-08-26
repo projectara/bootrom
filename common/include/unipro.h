@@ -330,29 +330,39 @@
 #define DME_AFC1REQTIMEOUTVAL       0xd046
 
 /*
- * Mailbox attribute and the values we expect it to take on.
+ * Switch attributes and related values
  */
-#define TSB_MAILBOX                 0xa000
+#define TSB_INTERRUPTSTATUS        0xd081
+#define TSB_MAILBOX                0xa000
+
+/*
+ * Mailbox attribute values
+ */
 #define TSB_MAIL_RESET              (0x00)
 #define TSB_MAIL_READY_AP           (0x01)
 #define TSB_MAIL_READY_OTHER        (0x02)
 
+/*
+ * Interrupt Status attribute values
+ */
+#define TSB_INTERRUPTSTATUS_MAILBOX (1 << 15)
+
 /**
- * @brief Synchronously read from a local or peer mailbox.
+ * @brief Synchronously read from local mailbox.
  * @return 0 on success, <0 on error
  */
-int read_mailbox(uint32_t *val, int peer, uint32_t *result_code);
+int read_mailbox(uint32_t *val, uint32_t *result_code);
 /**
- * @brief Acknowledge that we've read a local or peer mailbox, clearing it.
+ * @brief Acknowledge that we've read local mailbox, clearing it.
  * @return 0 on success, <0 on error
  */
-int ack_mailbox(int peer);
+int ack_mailbox(void);
 /**
- * @brief Synchronously write to a local or peer mailbox, polling for it to be
- * cleared once we've written it.
+ * @brief Synchronously write to the peer mailbox, polling for it to be cleared
+ * once we've written it.
  * @return 0 on success, <0 on error
  */
-int write_mailbox(uint32_t val, int peer, uint32_t *result_code);
+int write_mailbox(uint32_t val, uint32_t *result_code);
 
 /**
  * @brief Abstract out the chip-common parts of advertising readiness.
