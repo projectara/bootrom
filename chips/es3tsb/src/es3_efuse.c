@@ -148,12 +148,23 @@ int efuse_init(void) {
     /* Extract Internal Master Secret (IMS) from e­-Fuse, and if it is
      * non-zero, compute the Endpoint Unique ID
      */
-    (void)get_endpoint_id(&endpoint_id);
-    /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
-    chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
-                           ATTR_LOCAL, &dme_write_result);
-    chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
-                           ATTR_LOCAL, &dme_write_result);
+    if (!get_endpoint_id(&endpoint_id)) {
+        /*
+         * Note that we get false returned if there was a bad IMS or if there
+         * was no IMS from which to calculate a Unique Endpoint ID. Since
+         * get_endpoint_id sets last error if it was a bad IMS, we use that
+         * to differentiate between a benign omission and an error.
+         */
+        if (get_last_error() != BRE_OK) {
+            return -1;
+        }
+    } else {
+        /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
+        chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
+                               ATTR_LOCAL, &dme_write_result);
+        chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
+                               ATTR_LOCAL, &dme_write_result);
+    }
 
     return 0;
 }
@@ -255,7 +266,8 @@ static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val) {
  * @param endpoint_id Pointer to a 64-bit field, into which will go the
  * calculated endpoint ID
  * @returns True if it calculated an endpoint ID, false if there was no IMS
- * from which to calculate it, or if the IMS was deemed invalid.
+ * from which to calculate it (get_last_error will return BRE_OK), or if
+ * the IMS was deemed invalid (get_last_error will return BRE_EFUSE_BAD_IMS).
  */
 static bool get_endpoint_id(union large_uint * endpoint_id) {
     /* Establish the default (i.e., no endpoint ID) */
@@ -266,7 +278,6 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
     tsb_get_ims(ims_value, sizeof(ims_value));
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
-
         if (!valid_hamming_weight((uint8_t *)ims_value, IMS_LENGTH)) {
             dbgprint("efuse_init: Invalid IMS\r\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
