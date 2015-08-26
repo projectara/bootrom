@@ -97,13 +97,12 @@ void bootrom_main(void) {
      * reporting)
      */
     if (0 != efuse_init()) {
-        dbgprint("bootrom_main: eFuse failure\r\n");
         goto halt_and_catch_fire;
     }
 
     register_val = tsb_get_bootselector();
 #ifndef BOOT_OVER_UNIPRO
-    dbgprint("Boot-Over-Unipro disabled, force force boot-from-SPI\r\n");
+    dbgprint("Boot-Over-Unipro disabled, force boot-from-SPI\r\n");
     register_val = 0;
 #endif
    /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
@@ -195,6 +194,6 @@ halt_and_catch_fire:
                    INIT_STATUS_FAILED;
     chip_advertise_boot_status(boot_status, &dme_write_result);
     /* TODO: Change from while(1); to WFI? */
-    dbgprint("failed to load image, entering infinite loop\r\n");
+    dbgprintx32("Boot failed (status ", boot_status, "), halting\r\n");
     while(1);
 }
