@@ -54,6 +54,10 @@ static int gbfw_get_version(uint32_t cportid, gb_operation_header *header) {
                                sizeof(payload));
 }
 
+static int gbfw_ap_ready(uint32_t cportid, gb_operation_header *header) {
+    return greybus_op_response(cportid, header, GB_OP_SUCCESS, NULL, 0);
+}
+
 static struct gbfw_firmware_size_response firmware_size_response;
 
 static int gbfw_firmware_size(uint8_t stage, uint32_t *size) {
@@ -197,6 +201,9 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
     case GB_FW_OP_READY_TO_BOOT | GB_TYPE_RESPONSE:
         rc = gbfw_ready_to_boot_response(op_header, data, len);
         break;
+    case GB_FW_OP_AP_READY:
+        rc = gbfw_ap_ready(cportid, op_header);
+        break;
     default:
         responded_op = GB_FW_OP_INVALID;
         break;
@@ -255,7 +262,7 @@ static int data_load_greybus_init(void) {
     }
 
     /* Spin until the AP asks for our protocol version. */
-    while(responded_op != GB_FW_OP_PROTOCOL_VERSION) {
+    while(responded_op != GB_FW_OP_AP_READY) {
         rc = chip_unipro_receive(gbfw_cportid, fw_cport_handler);
         if (rc) {
             dbgprint("Greybus Firmware CPort handler failed\r\n");

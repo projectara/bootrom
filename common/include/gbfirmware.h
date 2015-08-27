@@ -37,6 +37,7 @@ extern uint32_t gbfw_cportid;
 #define GB_FW_OP_FIRMWARE_SIZE      0x02
 #define GB_FW_OP_GET_FIRMWARE       0x03
 #define GB_FW_OP_READY_TO_BOOT      0x04
+#define GB_FW_OP_AP_READY           0x05 /* Unidirectional request with no-payload */
 
 /* Greybus FirmWare boot statuses */
 #define GB_FW_BOOT_STATUS_INVALID   0x00
