@@ -38,6 +38,68 @@ struct cport cporttable[4] = {
     DECLARE_CPORT(0),  DECLARE_CPORT(1),  DECLARE_CPORT(2),  DECLARE_CPORT(3),
 };
 
+#define CPORT_SW_RESET_BITS 3
+static int tsb_unipro_reset_cport(uint32_t cportid) {
+    int rc;
+    uint32_t result;
+    uint32_t tx_reset_offset, rx_reset_offset;
+
+    if (cportid >= CPORT_MAX) {
+        return -EINVAL;
+    }
+
+    tx_reset_offset = TX_SW_RESET_00 + (cportid << 2);
+    rx_reset_offset = RX_SW_RESET_00 + (cportid << 2);
+
+    putreg32(CPORT_SW_RESET_BITS,
+             (volatile unsigned int*)(AIO_UNIPRO_BASE + tx_reset_offset));
+
+    rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, 0, &result);
+    if (rc || result) {
+        dbgprint("error resetting T_CONNECTIONSTATE\r\n");
+        return -EIO;
+    }
+
+    rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, 0, &result);
+    if (rc || result) {
+        dbgprint("error resetting T_LOCALBUFFERSPACE\r\n");
+        return -EIO;
+    }
+
+    rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, 0, &result);
+    if (rc || result) {
+        dbgprint("error resetting T_PEERBUFFERSPACE\r\n");
+        return -EIO;
+    }
+
+    rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, 0, &result);
+    if (rc || result) {
+        dbgprint("error resetting T_CREDITSTOSEND\r\n");
+        return -EIO;
+    }
+
+    putreg32(CPORT_SW_RESET_BITS,
+             (volatile unsigned int*)(AIO_UNIPRO_BASE + rx_reset_offset));
+    putreg32(0, (volatile unsigned int*)(AIO_UNIPRO_BASE + tx_reset_offset));
+    putreg32(0, (volatile unsigned int*)(AIO_UNIPRO_BASE + rx_reset_offset));
+    return 0;
+}
+
+int tsb_reset_all_cports(void) {
+    uint32_t i;
+    int rc;
+
+    for (i = 0; i < CPORT_MAX; i++) {
+        rc = tsb_unipro_reset_cport(i);
+        if (rc) {
+            dbgprintx32("Failed to reset cport 0x", i, "\r\n");
+            return rc;
+        }
+    }
+
+    return 0;
+}
+
 /**
  * @brief Initialize a specific CPort
  */

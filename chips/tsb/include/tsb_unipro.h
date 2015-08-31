@@ -620,6 +620,8 @@ static inline struct cport *cport_handle(uint16_t cportid) {
     }
 }
 
+int tsb_reset_all_cports(void);
+
 int tsb_unipro_init_cport(uint32_t cportid);
 int tsb_unipro_recv_cport(uint32_t *cportid);
 

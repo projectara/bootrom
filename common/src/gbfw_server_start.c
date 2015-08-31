@@ -63,9 +63,6 @@ void bootrom_main(void) {
 
     dbgprint("GBFW Server\r\n");
 
-    chip_unipro_init();
-
-    switch_set_local_dev_id(NULL, SWITCH_PORT_ID, LOCAL_DEV_ID);
     while(1) {
         server_loop();
     }
@@ -298,6 +295,10 @@ static int gbfw_process(void) {
 
 static void server_loop(void) {
     int rc;
+
+    chip_unipro_init();
+
+    switch_set_local_dev_id(NULL, SWITCH_PORT_ID, LOCAL_DEV_ID);
 
     dbgprint("Waiting for peer...\r\n");
     chip_reset_before_ready();

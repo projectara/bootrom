@@ -302,6 +302,7 @@ void chip_unipro_init(void) {
     tsb_unipro_write(UNIPRO_INT_EN, 0);
     tsb_unipro_write(UNIPRO_INT_EN, 1);
 
+    tsb_reset_all_cports();
     dbgprint("Unipro enabled!\r\n");
 }
 
