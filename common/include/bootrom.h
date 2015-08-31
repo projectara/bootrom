@@ -36,16 +36,32 @@ typedef struct {
     uint32_t resume_address_complement;
 } __attribute__ ((packed)) resume_address_communication_area;
 
+/**
+ * NOTE: COMMUNICATION_AREA_LENGTH must match _communication_area_size in
+ * common.ld
+ */
+#define COMMUNICATION_AREA_LENGTH   1024    /* coordinate with common.ld! */
+#define EUID_LENGTH         8
+#define S2_FW_ID_LENGTH     32
+#define S2_KEY_NAMELENGTH   96
+#define S2_FW_DESC_LENGTH   64
+#define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
+#define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
+                    (EUID_LENGTH + S2_FW_ID_LENGTH + \
+                     S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
+                     RESUME_ADDR_LENGTH))
+
 /*
  * Area of memory used to communicate between boot ROM and second stage FW.
  * This area is located at the highest end of the RAM. So any addition to the
  * area needs to happen BEFORE the existing fields.
  */
 typedef struct {
-    unsigned char endpoint_unique_id[8];
-    unsigned char stage_2_firmware_identity[32];
-    char stage_2_validation_key_name[96];
-    char stage_2_firmware_description[64];
+    unsigned char padding[PAD_LENGTH];
+    unsigned char endpoint_unique_id[EUID_LENGTH];
+    unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH];
+    char stage_2_validation_key_name[S2_KEY_NAMELENGTH];
+    char stage_2_firmware_description[S2_FW_DESC_LENGTH];
     resume_address_communication_area resume_address;
 } __attribute__ ((packed)) communication_area;
 

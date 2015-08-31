@@ -3,10 +3,14 @@ _workram_start = ORIGIN(sram);
 _workram_end = ORIGIN(sram) + LENGTH(sram);
 
 _resume_address_size = 8;
-_communication_area_size = 200; /* except for resume address */
+/**
+ * NOTE: _communication_area_size must match COMMUNICATION_AREA_LENGTH in
+ * bootrom.h
+ */
+_communication_area_size = 1024; /* includes resume address */
 
 _resume_address = _workram_end - _resume_address_size;
-_communication_area = _resume_address - _communication_area_size;
+_communication_area = _workram_end - _communication_area_size;
 _stack_top = ORIGIN(bufram3) + LENGTH(bufram3);
 
 /**
