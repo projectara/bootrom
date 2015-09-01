@@ -81,9 +81,7 @@ ifeq ($(CONFIG_DEBUG),y)
 endif
 
 ifeq ($(_SIMULATION),1)
-ifeq ($(BOOT_STAGE),3)
 CONFIG_GPIO = y
-endif
 endif
 
 EXTRADEFINES :=
