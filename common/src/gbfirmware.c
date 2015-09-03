@@ -136,7 +136,7 @@ static int gbfw_get_firmware_response(gb_operation_header *header, void *data,
 
 static int gbfw_ready_to_boot(uint8_t status) {
     int rc;
-    struct gbfw_ready_to_boot_request req = {NEXT_BOOT_STAGE, status};
+    struct gbfw_ready_to_boot_request req = {status};
     rc = greybus_send_request(gbfw_cportid, 1, GB_FW_OP_READY_TO_BOOT,
                               (uint8_t*)&req, sizeof(req));
     if (rc) {
