@@ -27,10 +27,23 @@
  */
 
 #include <stddef.h>
+#include <string.h>
+#include "bootrom.h"
 #include "tftf.h"
 #include "debug.h"
 #include "crypto.h"
+#include "public_keys.h"
 
+#include "../vendors/MIRACL/bootrom.c"
+
+void (*sha256_init_func)(sha256 *sh);
+void (*sha256_process_func)(sha256 *sh,int byte);
+void (*sha256_hash_func)(sha256 *sh,char hash[32]);
+int (*rsa2048_verify_func)(char digest[], char signature[], char public_key[]);
+
+#ifndef _SIMULATION
+static sha256 shctx;
+#endif
 
 /**
  * @brief Initialize the SHA hash
@@ -41,7 +54,7 @@
  */
 void hash_start(void) {
 #ifndef _SIMULATION
-    /* TODO: Add hash initialization code once license is signed */
+    sha256_init_func(&shctx);
 #endif
 }
 
@@ -56,7 +69,10 @@ void hash_start(void) {
  */
 void hash_update(unsigned char *data, uint32_t datalen) {
 #ifndef _SIMULATION
-    /* TODO: Add hash update code once license is signed */
+    uint32_t i;
+    for (i = 0; i < datalen; i++) {
+        sha256_process_func(&shctx, data[i]);
+    }
 #endif
 }
 
@@ -70,10 +86,40 @@ void hash_update(unsigned char *data, uint32_t datalen) {
  */
 void hash_final(unsigned char *digest) {
 #ifndef _SIMULATION
-    /* TODO: Add hash finalization code once license is signed */
+    sha256_hash_func(&shctx,(char*)digest);
 #endif
 }
 
+static int find_public_key(tftf_signature *signature, const unsigned char **key) {
+    uint32_t *ps, *pk;
+    int i, k;
+    uint32_t size = (sizeof(public_keys[0]) -
+                     sizeof(public_keys[0].key)) /
+                    sizeof(uint32_t);
+
+    ps = (uint32_t *)&(signature->type);
+
+    for (k = 0; k < NUMBER_OF_PUBLIC_KEYS; k++) {
+        if (chip_is_key_revoked(k)) {
+            dbgprintx32("key ", k, " is revoked\r\n");
+            continue;
+        }
+        pk = (uint32_t *)&public_keys[k];
+        for (i = 0; i < size; i++) {
+            if (ps[i] != pk[i]) {
+                break;
+            }
+        }
+        if (i >= size) {
+            dbgprint("found the public key for this signature\r\n");
+            *key = public_keys[k].key;
+            return 0;
+        }
+    }
+
+    dbgprint("failed to find the public key used for this signature\r\n");
+    return -1;
+}
 
 /**
  * @brief Verify a SHA digest against a signature
@@ -93,6 +139,44 @@ int verify_signature(unsigned char *digest, tftf_signature *signature) {
     }
     return 0;
 #endif
-    /* TODO: Add signature verification code once license is signed */
-    return 0;
+    int ret;
+    const unsigned char *public_key;
+
+    if (find_public_key(signature, &public_key)) {
+        return -1;
+    }
+
+    ret = rsa2048_verify_func((char *)digest,
+                              (char *)public_key,
+                              (char *)signature->signature) ? 0 : -1;
+
+    if (ret) {
+        dbgprint("Signature verification failed\r\n");
+    } else {
+        dbgprint("Signature verified\r\n");
+#if BOOT_STAGE == 1
+        communication_area *p = (communication_area *)&_communication_area;
+        memcpy(p->stage_2_firmware_identity,
+               digest,
+               sizeof(p->stage_2_firmware_identity));
+        memcpy(p->stage_2_validation_key_name,
+               signature->key_name,
+               sizeof(p->stage_2_validation_key_name));
+#endif
+    }
+
+    return ret;
+}
+
+void crypto_init(void) {
+#if BOOT_STAGE == 1
+    set_shared_function(SHARED_FUNCTION_SHA256_INIT, shs256_init);
+    set_shared_function(SHARED_FUNCTION_SHA256_PROCESS, shs256_process);
+    set_shared_function(SHARED_FUNCTION_SHA256_HASH, shs256_hash);
+    set_shared_function(SHARED_FUNCTION_RSA2048_VERIFY, rsa_verify);
+#endif
+    sha256_init_func = get_shared_function(SHARED_FUNCTION_SHA256_INIT);
+    sha256_process_func = get_shared_function(SHARED_FUNCTION_SHA256_PROCESS);
+    sha256_hash_func = get_shared_function(SHARED_FUNCTION_SHA256_HASH);
+    rsa2048_verify_func = get_shared_function(SHARED_FUNCTION_RSA2048_VERIFY);
 }

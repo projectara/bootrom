@@ -40,6 +40,7 @@
 #include "data_loading.h"
 #include "tftf.h"
 #include "ffff.h"
+#include "crypto.h"
 
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
@@ -71,6 +72,9 @@ void bootrom_main(void) {
     chip_init();
 
     dbginit();
+
+    crypto_init();
+
 #if BOOT_STAGE == 1
     dbgprint("Hello world from boot ROM!\r\n");
 #elif BOOT_STAGE == 2

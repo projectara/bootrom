@@ -32,7 +32,10 @@
 #include <stdint.h>
 #include <tftf.h>
 
-#define HASH_DIGEST_SIZE 64
+#define HASH_DIGEST_SIZE 32
+#define PUBLIC_KEY_SIZE 256
+
+#define ALGORITHM_TYPE_RSA2048_SHA256 0x01
 
 typedef enum {
     CRYPTO_STATE_INIT,
@@ -40,6 +43,14 @@ typedef enum {
     CRYPTO_STATE_HASHED,
     CRYPTO_STATE_VERIFIED
 } crypto_processing_state;
+
+typedef struct {
+    uint32_t type;
+    char key_name[96];
+    unsigned char key[PUBLIC_KEY_SIZE];
+} __attribute__ ((packed)) crypto_public_key;
+
+void crypto_init(void);
 
 void hash_start(void);
 void hash_update(unsigned char *data, uint32_t datalen);

@@ -172,7 +172,6 @@ static int process_tftf_section(data_load_ops *ops,
     bool hash_loaded_data = false;
 
     if (section->section_type == TFTF_SECTION_SIGNATURE) {
-        dbgprint("WARNING: signature verification not implemented yet\r\n");
         if (ops->load(&tftf.signature, sizeof(tftf.signature), false)) {
             dbgprint("error loading signature\r\n");
             set_last_error(BRE_TFTF_LOAD_SIGNATURE);

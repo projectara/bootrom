@@ -146,4 +146,12 @@ int chip_advertise_boot_type(uint32_t *result_code);
  */
 void chip_reset_before_ready(void);
 
+/**
+ * @brief check if a crypto key has been revoked
+ * @param index of the key in public_keys array
+ * @return 0 indicates the key is NOT revoked
+ *         1 indicates the key has been revoked so should not be used.
+ */
+int chip_is_key_revoked(int index);
+
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

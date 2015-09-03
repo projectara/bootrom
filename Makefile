@@ -117,7 +117,7 @@ $(MANIFEST_OUTDIR)/$(MANIFEST): $(MANIFEST_SRCDIR)/$(MANIFEST)
 
 $(ELF): $(MANIFEST_OUTDIR)/$(MANIFEST).h $(AOBJS) $(COBJS)
 	@ echo Linking $@
-	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS)
+	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS)
 
 $(BIN): $(ELF)
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@

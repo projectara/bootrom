@@ -96,3 +96,9 @@ CFLAGS += $(CHIPCPUFLAGS) $(INCLUDES) $(CHIPDEFINES) $(EXTRADEFINES) -pipe
 AFLAGS = $(CFLAGS) -D__ASSEMBLY__
 
 LINKFLAGS = -Map=$(OUTROOT)/System.map $(CHIPLINKFLAGS)
+
+# Ideally a -lgcc should be able to link libgcc.a. However there is a known
+# issue for the GNU ARM linker to find the correct libgcc for the specific
+# target core, and it would cause the linking fail.
+LIBGCC_FILENAME = $(shell $(CC) $(CHIPCFLAGS) -print-libgcc-file-name)
+EXTRALIBS = $(LIBGCC_FILENAME)

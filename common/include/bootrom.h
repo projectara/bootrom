@@ -30,6 +30,7 @@
 #define __COMMON_INCLUDE_BOOTROM_H
 
 #include <stdint.h>
+#include "debug.h"
 
 typedef struct {
     uint32_t resume_address;
@@ -57,11 +58,21 @@ typedef struct {
 #define S2_KEY_NAMELENGTH   96
 #define S2_FW_DESC_LENGTH   64
 #define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
+
+typedef enum {
+    SHARED_FUNCTION_SHA256_INIT,
+    SHARED_FUNCTION_SHA256_PROCESS,
+    SHARED_FUNCTION_SHA256_HASH,
+    SHARED_FUNCTION_RSA2048_VERIFY,
+    NUMBER_OF_SHARED_FUNCTIONS
+} shared_function_index;
+
 #define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
                     (ARA_VID_LENGTH + ARA_PID_LENGTH + \
                      DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
                      S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
-                     RESUME_ADDR_LENGTH))
+                     RESUME_ADDR_LENGTH + \
+                     sizeof(void *) * NUMBER_OF_SHARED_FUNCTIONS))
 
 typedef struct {
 #ifdef _SIMULATION
@@ -71,6 +82,7 @@ typedef struct {
     /***** ADD NEW VARIABLES BELOW THIS LINE AND UPDATE "PAD_LENGTH" *****/
     uint32_t ara_vid;
     uint32_t ara_pid;
+    void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS];
     unsigned char endpoint_unique_id[EUID_LENGTH];
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH];
     char stage_2_validation_key_name[S2_KEY_NAMELENGTH];
@@ -79,5 +91,26 @@ typedef struct {
 } __attribute__ ((packed)) communication_area;
 
 extern unsigned char _communication_area;
+
+static inline void *get_shared_function(shared_function_index index) {
+    if (index >= NUMBER_OF_SHARED_FUNCTIONS) {
+        dbgprint("index exceeded NUMBER_OF_SHARED_FUNCTIONS\r\n");
+        return NULL;
+    }
+
+    communication_area *p = (communication_area *)&_communication_area;
+    return p->shared_functions[index];
+}
+
+static inline void set_shared_function(shared_function_index index,
+                                        void *func) {
+    if (index >= NUMBER_OF_SHARED_FUNCTIONS) {
+        dbgprint("index exceeded NUMBER_OF_SHARED_FUNCTIONS\r\n");
+        return;
+    }
+
+    communication_area *p = (communication_area *)&_communication_area;
+    p->shared_functions[index] = func;
+}
 
 #endif /* __COMMON_INCLUDE_BOOTROM_H */

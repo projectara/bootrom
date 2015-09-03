@@ -191,6 +191,17 @@ void tsb_jtag_disable(void) {
     isaa_write(TSB_ISAA_JTAG_DISABLE, TSB_JTAG_DISABLE);
 }
 
+int chip_is_key_revoked(int index) {
+#if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
+    uint32_t scr = isaa_read(TSB_ISAA_SCR);
+
+    if ((scr & (1 << index)) != 0) {
+        return 1;
+    }
+#endif
+    return 0;
+}
+
 /* TODO: Remove after bootloader completion if not used */
 uint32_t tsb_get_scr(void) {
     return isaa_read(TSB_ISAA_SCR);
