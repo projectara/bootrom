@@ -44,7 +44,7 @@
  */
 int read_mailbox(uint32_t *val, uint32_t *result_code) {
     int rc;
-    uint32_t result = 0, tempval = TSB_MAIL_RESET;
+    uint32_t result = 0, tempval = TSB_MAIL_RESET, irq_status;
 
     if (!val) {
         return -EINVAL;
@@ -54,6 +54,12 @@ int read_mailbox(uint32_t *val, uint32_t *result_code) {
         rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
                                    &result);
     } while (!rc && tempval == TSB_MAIL_RESET);
+    if (rc) {
+        return rc;
+    }
+
+    rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0, ATTR_LOCAL,
+                               NULL);
     if (rc) {
         return rc;
     }
