@@ -128,9 +128,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
     tsb_unipro_restart_rx(cport);
     tsb_enable_e2efc(cportid);
 
-    rc = ack_mailbox();
-
-    return rc;
+    return ack_mailbox();
 }
 
 /**
@@ -159,9 +157,7 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     tsb_unipro_restart_rx(cport);
     tsb_enable_e2efc(*cportid);
 
-    rc = ack_mailbox();
-
-    return 0;
+    return ack_mailbox();
 }
 
 uint32_t tsb_unipro_read(uint32_t offset) {
