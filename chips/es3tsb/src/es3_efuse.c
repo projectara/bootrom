@@ -96,7 +96,7 @@ int efuse_init(void) {
      */
     register_val = tsb_get_eccerror();
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
-        dbgprint("efuse_init Efuse ECC error\r\n");
+        dbgprint("efuse_init: Efuse ECC error\r\n");
         set_last_error(BRE_EFUSE_ECC);
         return -1;
     }
@@ -172,6 +172,7 @@ int efuse_init(void) {
                                ATTR_LOCAL, &dme_write_result);
     }
 
+    dbgprint("efuse_init: OK\r\n");
     return 0;
 }
 
