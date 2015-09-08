@@ -50,13 +50,16 @@ typedef struct {
 #else
   #define DBGPRINT_BUF_LENGTH   0
 #endif
+#define ARA_VID_LENGTH      (sizeof(uint32_t))
+#define ARA_POID_LENGTH      (sizeof(uint32_t))
 #define EUID_LENGTH         8
 #define S2_FW_ID_LENGTH     32
 #define S2_KEY_NAMELENGTH   96
 #define S2_FW_DESC_LENGTH   64
 #define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
 #define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
-                    (DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
+                    (ARA_VID_LENGTH + ARA_PID_LENGTH + \
+                     DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
                      S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
                      RESUME_ADDR_LENGTH))
 
@@ -65,6 +68,9 @@ typedef struct {
     char dbgprint_buf[DBGPRINT_BUF_LENGTH];
 #endif
     unsigned char padding[PAD_LENGTH];
+    /***** ADD NEW VARIABLES BELOW THIS LINE AND UPDATE "PAD_LENGTH" *****/
+    uint32_t ara_vid;
+    uint32_t ara_pid;
     unsigned char endpoint_unique_id[EUID_LENGTH];
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH];
     char stage_2_validation_key_name[S2_KEY_NAMELENGTH];

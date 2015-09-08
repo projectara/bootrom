@@ -79,7 +79,6 @@ void bootrom_main(void) {
     dbgprint("Hello world from third stage firmware!\r\n");
 #ifdef _SIMULATION
     chip_handshake_with_test_controller();
-    dbgprint("Finished handshake with test controller\r\n");
 #endif
     while(1);
 #endif
@@ -199,15 +198,14 @@ halt_and_catch_fire:
     boot_status = (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
                    (get_last_error() & INIT_STATUS_ERROR_CODE_MASK) |
                    INIT_STATUS_FAILED;
-    chip_advertise_boot_status(boot_status, &dme_write_result);
     dbgprintx32("Boot failed (status ", boot_status, "), halting\r\n");
+    chip_advertise_boot_status(boot_status, &dme_write_result);
 
 #if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
     /*
      * Indicate failure with GPIO 18 showing a '1' and execute a handshake
      * cycle on GPIO 16,17
      */
-    dbgprint("chip_signal_boot_status...\r\n");
     chip_signal_boot_status(boot_status);
 #endif
     /* TODO: Change from while(1); to WFI? */

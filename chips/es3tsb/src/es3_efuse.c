@@ -41,6 +41,7 @@
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
 #include "common.h"
+#include "bootrom.h"
 #include "error.h"
 #include "unipro.h"
 #include "efuse.h"
@@ -86,6 +87,7 @@ int efuse_init(void) {
     uint32_t    register_val;
     uint32_t    dme_write_result;
     union large_uint endpoint_id;
+    communication_area *p = (communication_area *)&_communication_area;
 
 
     /* Check for e­-Fuse CRC error
@@ -108,6 +110,12 @@ int efuse_init(void) {
      *
      * NB. The UniPro Mfgr's ID and PID are hard-wired into their DME
      * attributes, so there is no need to fetch/store them in this function.
+     * However, ARA VID and PID are required by load_tftf_header(), and while
+     * hardwired on real hardware, are not on the HAPS-62 or simulator. Rather
+     * than write to read-only registers, so they can be retrieved in
+     * load_tftf_header(), we validate them and cache them in the communication
+     * area at the top of memory
+     *
      * TA-13 Write/Read  DME attribute (New area of 16 words)
      * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
@@ -117,8 +125,7 @@ int efuse_init(void) {
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
     } else {
-        chip_unipro_attr_write(DME_DDBL2_VID, ara_vid, 0,
-                               ATTR_LOCAL, &dme_write_result);
+        p->ara_vid = ara_vid;
     }
 
     ara_pid = tsb_get_pid();
@@ -127,8 +134,7 @@ int efuse_init(void) {
         set_last_error(BRE_EFUSE_BAD_ARA_PID);
         return -1;
     } else {
-        chip_unipro_attr_write(DME_DDBL2_PID, ara_pid, 0,
-                               ATTR_LOCAL, &dme_write_result);
+        p->ara_pid = ara_pid;
     }
 
     serial_number.quad = tsb_get_serial_no();

@@ -59,9 +59,8 @@ static int load_tftf_header(data_load_ops *ops) {
     tftf_section_descriptor *section;
     uint32_t unipro_vid = 0;
     uint32_t unipro_pid = 0;
-    uint32_t ara_vid = 0;
-    uint32_t ara_pid = 0;
     uint32_t read_stat;
+    communication_area *p = (communication_area *)&_communication_area;
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
@@ -87,17 +86,14 @@ static int load_tftf_header(data_load_ops *ops) {
                           ATTR_LOCAL, &read_stat);
     chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
                           ATTR_LOCAL, &read_stat);
-    /* TA-14 Write/Read  DME attribute (New area of 16 words) */
-    chip_unipro_attr_read(DME_DDBL2_VID, &ara_vid, 0, ATTR_LOCAL, &read_stat);
-    chip_unipro_attr_read(DME_DDBL2_PID, &ara_pid, 0, ATTR_LOCAL, &read_stat);
     if (((tftf.header.unipro_vid != 0) &&
          (tftf.header.unipro_vid != unipro_vid)) ||
         ((tftf.header.unipro_pid != 0) &&
          (tftf.header.unipro_pid != unipro_pid)) ||
         ((tftf.header.ara_vid != 0) &&
-         (tftf.header.ara_vid != ara_vid)) ||
+         (tftf.header.ara_vid != p->ara_vid)) ||
         ((tftf.header.ara_pid != 0) &&
-         (tftf.header.ara_pid != ara_pid))) {
+         (tftf.header.ara_pid != p->ara_pid))) {
         dbgprint("Image does not match our VID/PID\r\n");
         set_last_error(BRE_TFTF_VIDPID_MISMATCH);
 #ifndef _PRODUCTION
@@ -106,9 +102,9 @@ static int load_tftf_header(data_load_ops *ops) {
         dbgprintx32(NULL, tftf.header.unipro_vid, "\r\n");
         dbgprintx32("U-PID = ", unipro_pid, " ");
         dbgprintx32(NULL, tftf.header.unipro_pid, "\r\n");
-        dbgprintx32("A-MID = ", ara_vid, " ");
+        dbgprintx32("A-MID = ", p->ara_vid, " ");
         dbgprintx32(NULL, tftf.header.ara_vid, "\r\n");
-        dbgprintx32("A-PID = ", ara_pid, " ");
+        dbgprintx32("A-PID = ", p->ara_pid, " ");
         dbgprintx32(NULL, tftf.header.ara_pid, "\r\n");
 #endif
         return -1;
