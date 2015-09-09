@@ -29,6 +29,9 @@
 #ifndef __COMMON_INCLUDE_GREYBUS_H
 #define __COMMON_INCLUDE_GREYBUS_H
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #define GREYBUS_MAJOR_VERSION        0
 #define GREYBUS_MINOR_VERSION        1
 
@@ -72,5 +75,7 @@ int greybus_send_request(uint32_t cport,
                          uint8_t type,
                          unsigned char *payload_data,
                          uint16_t payload_size);
+
+bool manifest_fetched_by_ap(void);
 
 #endif /* __COMMON_INCLUDE_GREYBUS_H */

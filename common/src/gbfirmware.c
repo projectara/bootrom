@@ -44,6 +44,8 @@
 #define GB_FIRMWARE_VERSION_MAJOR   0x00
 #define GB_FIRMWARE_VERSION_MINOR   0x01
 
+#define CPORT_POLLING_TIMEOUT       512
+
 static uint8_t responded_op = GB_FW_OP_INVALID;
 
 int fw_cport_handler(uint32_t cportid, void *data, size_t len);
@@ -219,15 +221,9 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
 static int cport_connected = 0, offset = -1;
 static uint32_t firmware_size = 0;
 int greybus_cport_connect(void) {
-    int rc;
-
     if (cport_connected == 1) {
         /* Don't know what to do if it is already connected */
         return GB_FW_ERR_INVALID;
-    }
-    rc = chip_unipro_recv_cport(&gbfw_cportid);
-    if (rc) {
-        return rc;
     }
 
     offset = 0;
@@ -242,8 +238,10 @@ int greybus_cport_disconnect(void) {
     return 0;
 }
 
+
 static int data_load_greybus_init(void) {
     int rc;
+    uint32_t retries = CPORT_POLLING_TIMEOUT;
 
     rc = chip_unipro_init_cport(CONTROL_CPORT);
     if (rc) {
@@ -251,7 +249,7 @@ static int data_load_greybus_init(void) {
     }
 
     /* poll until data cport connected */
-    while (cport_connected == 0) {
+    while (!manifest_fetched_by_ap() && retries-- > 0) {
         rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
         if (rc == GB_FW_ERR_INVALID) {
             dbgprint("Greybus init failed\r\n");
@@ -260,14 +258,43 @@ static int data_load_greybus_init(void) {
             goto protocol_error;
         }
     }
+    if (!manifest_fetched_by_ap()) {
+        dbgprint("Greybus Control CPort timed out\r\n");
+        return -ETIMEDOUT;
+    }
 
+    rc = chip_unipro_recv_cport(&gbfw_cportid);
+    if (rc) {
+        return rc;
+    }
+
+    retries = CPORT_POLLING_TIMEOUT;
+    while (cport_connected == 0 && retries-- > 0) {
+        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
+        if (rc == GB_FW_ERR_INVALID) {
+            dbgprint("Greybus init failed\r\n");
+        }
+        if (rc) {
+            goto protocol_error;
+        }
+    }
+    if (!cport_connected) {
+        dbgprint("Greybus Control CPort timed out\r\n");
+        return -ETIMEDOUT;
+    }
+
+    retries = CPORT_POLLING_TIMEOUT;
     /* Spin until the AP asks for our protocol version. */
-    while(responded_op != GB_FW_OP_AP_READY) {
+    while(responded_op != GB_FW_OP_AP_READY && retries-- > 0) {
         rc = chip_unipro_receive(gbfw_cportid, fw_cport_handler);
         if (rc) {
             dbgprint("Greybus Firmware CPort handler failed\r\n");
             goto protocol_error;
         }
+    }
+    if(responded_op != GB_FW_OP_AP_READY) {
+        dbgprint("Greybus Firmware CPort timed out\r\n");
+        return -ETIMEDOUT;
     }
 
     dbgprint("Beginning Greybus Firmware download.\r\n");

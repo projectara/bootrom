@@ -129,13 +129,27 @@ static int gbctrl_get_manifest_size(uint32_t cportid,
                                sizeof(payload));
 }
 
+static bool manifest_fetched = false;
+
+bool manifest_fetched_by_ap(void) {
+    return manifest_fetched;
+}
+
 static int gbctrl_get_manifest(uint32_t cportid,
                              gb_operation_header *op_header) {
-    return greybus_op_response(cportid,
-                               op_header,
-                               GB_OP_SUCCESS,
-                               manifest,
-                               sizeof(manifest));
+    int rc;
+
+    rc = greybus_op_response(cportid,
+                             op_header,
+                             GB_OP_SUCCESS,
+                             manifest,
+                             sizeof(manifest));
+    if (rc) {
+        return rc;
+    }
+
+    manifest_fetched = true;
+    return 0;
 }
 
 static int gbctrl_connected(uint32_t cportid,
