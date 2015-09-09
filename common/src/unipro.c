@@ -43,23 +43,30 @@
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
 int read_mailbox(uint32_t *val) {
-    int rc, unipro_rc;
-    uint32_t tempval = TSB_MAIL_RESET, irq_status;
+    int rc;
+    uint32_t tempval = TSB_MAIL_RESET, irq_status, unipro_rc;
 
     if (!val) {
         return -EINVAL;
     }
 
+    /**
+     * The following loop does not have a time-out built in, and can fail to
+     * terminate if it never sees the mailbox interrupt pend.  This is because
+     * mailbox reading and writing are synchronous barrier operations: the code
+     * is meant to arrive to the point of reading/writing the mailbox and wait
+     * for a notification from the SVC (supervisory controller).
+     */
     do {
-        rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
-                                   (uint32_t*)&unipro_rc);
-    } while (!rc && !unipro_rc && tempval == TSB_MAIL_RESET);
+        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+                                   ATTR_LOCAL, &unipro_rc);
+    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
     }
 
-    rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0, ATTR_LOCAL,
-                               (uint32_t*)&unipro_rc);
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
+                               &unipro_rc);
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
     }
@@ -75,10 +82,29 @@ int read_mailbox(uint32_t *val) {
  */
 int ack_mailbox(void) {
     int rc;
-    uint32_t unipro_rc;
+    uint32_t val, irq_status, unipro_rc;
 
     rc = chip_unipro_attr_write(TSB_MAILBOX, TSB_MAIL_RESET, 0, ATTR_LOCAL,
                                 &unipro_rc);
+    if (DISJOINT_OR(rc, unipro_rc)) {
+        return DISJOINT_OR(rc, unipro_rc);
+    }
+
+    /**
+     * The following loop does not have a time-out built in, and can fail to
+     * terminate if it never sees the mailbox interrupt pend.  Since the bootrom
+     * is writing to its own mailbox, the interrupt should always pend.  Should.
+     */
+    do {
+        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+                                   ATTR_LOCAL, &unipro_rc);
+    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    if (DISJOINT_OR(rc, unipro_rc)) {
+        return DISJOINT_OR(rc, unipro_rc);
+    }
+
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_LOCAL, &unipro_rc);
+
     return DISJOINT_OR(rc, unipro_rc);
 }
 
@@ -88,21 +114,22 @@ int ack_mailbox(void) {
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
 int write_mailbox(uint32_t val) {
-    int rc, unipro_rc;
-    uint32_t irq_status = 0;
+    int rc;
+    uint32_t irq_status = 0, unipro_rc;
 
     rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER,
-                                (uint32_t*)&unipro_rc);
+                                &unipro_rc);
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
     }
     /**
      * Poll the interrupt-assert line on the switch until we know the SVC has
-     * picked up our mail.
+     * picked up our mail.  This is a synchronous barrier operation, so no
+     * timeout has been included.
      */
     do {
         rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                                   ATTR_PEER, (uint32_t*)&unipro_rc);
+                                   ATTR_PEER, &unipro_rc);
     } while (!rc && !unipro_rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
@@ -113,7 +140,7 @@ int write_mailbox(uint32_t val) {
      */
     do {
         rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_PEER,
-                                   (uint32_t*)&unipro_rc);
+                                   &unipro_rc);
     } while (!rc && !unipro_rc && val != TSB_MAIL_RESET);
 
     return DISJOINT_OR(rc, unipro_rc);
