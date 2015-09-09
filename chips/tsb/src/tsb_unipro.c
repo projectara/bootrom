@@ -117,7 +117,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
         return -EINVAL;
     }
 
-    rc = read_mailbox(&mail, NULL);
+    rc = read_mailbox(&mail);
     if (rc) {
         return rc;
     }
@@ -139,7 +139,7 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     int rc;
     uint32_t cport_recv = 0;
 
-    rc = read_mailbox(&cport_recv, NULL);
+    rc = read_mailbox(&cport_recv);
     if (rc) {
         return rc;
     }

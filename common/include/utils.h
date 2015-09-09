@@ -73,3 +73,5 @@ bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
 void delay(volatile uint32_t steps);
 
 #define TIMING_BUG_DELAY_LENGTH (0xfffff)
+
+#define DISJOINT_OR(x, y)   (!x ? y : x)
