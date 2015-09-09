@@ -51,7 +51,7 @@ typedef struct {
   #define DBGPRINT_BUF_LENGTH   0
 #endif
 #define ARA_VID_LENGTH      (sizeof(uint32_t))
-#define ARA_POID_LENGTH      (sizeof(uint32_t))
+#define ARA_PID_LENGTH      (sizeof(uint32_t))
 #define EUID_LENGTH         8
 #define S2_FW_ID_LENGTH     32
 #define S2_KEY_NAMELENGTH   96
