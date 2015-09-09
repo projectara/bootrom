@@ -78,8 +78,10 @@ void bootrom_main(void) {
 #elif BOOT_STAGE == 3
     dbgprint("Hello world from third stage firmware!\r\n");
 #ifdef _SIMULATION
-    chip_handshake_with_test_controller();
+    /* Handshake with the controller, indicating success */
+    chip_signal_boot_status(0);
 #endif
+    /* Our work is done */
     while(1);
 #endif
 
