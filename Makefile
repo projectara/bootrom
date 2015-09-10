@@ -65,6 +65,13 @@ XCFLAGS += -D_SIMULATION
 XAFLAGS += -D_SIMULATION
 endif
 
+#  _NOBOU==1:  Suppress Boot-Over-Unipro code 
+#  _NOBOU!=1:  Enable Boot-Over-Unipro code
+ifeq ($(_NOBOU),1)
+XCFLAGS += -D_NO_BOOT_OVER_UNIPRO
+XAFLAGS += -D_NO_BOOT_OVER_UNIPRO
+endif
+
 ifeq ($(BUILD_FOR_GBFW_SERVER),1)
 XCFLAGS += -DBUILD_FOR_GBFW_SERVER
 XAFLAGS += -DBUILD_FOR_GBFW_SERVER
