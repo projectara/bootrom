@@ -59,7 +59,6 @@ void bootrom_main(void) {
     /* TA-20 R/W data in bufRAM */
     uint32_t    boot_status = INIT_STATUS_OPERATING;
     uint32_t    register_val;
-    int         status = 0;
     bool        boot_from_spi = true;
 #ifdef BOOT_OVER_UNIPRO
     bool        fallback_boot_unipro = false;
@@ -168,8 +167,10 @@ void bootrom_main(void) {
      * SPIROM boot.
      */
     if (!boot_from_spi) {
-        dbgprint("Boot over UniPro\n");
+        int         status = 0;
+
         /* Boot over Uniprom */
+        dbgprint("Boot over UniPro\n");
         boot_status = fallback_boot_unipro?
                 INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED :
                 INIT_STATUS_UNIPRO_BOOT_STARTED;
