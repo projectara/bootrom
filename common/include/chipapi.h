@@ -155,4 +155,11 @@ void chip_reset_before_ready(void);
  */
 int chip_is_key_revoked(int index);
 
+/*
+ * @brief wait for unipro link up sequence to finish
+ * This is called when boot ROM needs the link to be ready
+ * so never return if the link is not ready
+ */
+void chip_wait_for_link_up(void);
+
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

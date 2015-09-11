@@ -63,6 +63,7 @@ void bootrom_main(void) {
 
     dbgprint("GBFW Server\r\n");
 
+    chip_wait_for_link_up();
     while(1) {
         server_loop();
     }

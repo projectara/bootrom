@@ -152,6 +152,12 @@ int write_mailbox(uint32_t val) {
 int advertise_ready(void) {
     int rc;
 
+    /**
+     * This should be the first time need to talk to the peer,
+     * so need to wait for link up
+     */
+    chip_wait_for_link_up();
+
     chip_reset_before_ready();
 
     /**

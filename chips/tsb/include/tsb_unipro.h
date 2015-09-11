@@ -87,6 +87,7 @@
 #define CPB_RX_MSGST_ERR_INT_BEF_0             0x0000032C
 #define CPB_RX_MSGST_ERR_INT_BEF_1             0x00000330
 #define LUP_INT_BEF                            0x00000334
+    #define LUP_DONE_INT_BEF                   (0x01)
 #define A2D_ATTRACS_INT_BEF                    0x00000338
 #define AHM_RX_EOM_INT_BEF_0                   0x0000033C
 #define AHM_RX_EOM_INT_BEF_1                   0x00000340

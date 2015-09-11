@@ -224,3 +224,20 @@ void tsb_reset_before_ready(void) {
 void tsb_reset_before_jump(void) {
     tsb_reset_all_cports();
 }
+
+/**
+ * ES2/ES3 has the same definition for LUP_DONE_INT_BEF,
+ * so let's have this function shared between ES2 and ES3 here
+ */
+void chip_wait_for_link_up(void) {
+#if BOOT_STAGE == 1
+    uint32_t lup_int = 0;
+
+    dbgprint("Wait for UniPro link up...\r\n");
+    while (!(lup_int & LUP_DONE_INT_BEF)) {
+        lup_int = tsb_unipro_read(LUP_INT_BEF);
+    }
+    tsb_unipro_write(LUP_INT_BEF, LUP_DONE_INT_BEF);
+    dbgprint("UniPro link ready\r\n");
+#endif
+}
