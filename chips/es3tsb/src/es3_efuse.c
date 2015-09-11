@@ -144,11 +144,6 @@ int efuse_init(void) {
                     serial_number.quad, "\r\n");
         set_last_error(BRE_EFUSE_BAD_SERIAL_NO);
         return -1;
-    } else {
-        chip_unipro_attr_write(DME_DDBL2_SERIALNO_L, serial_number.low, 0,
-                               ATTR_LOCAL, &dme_write_result);
-        chip_unipro_attr_write(DME_DDBL2_SERIALNO_H, serial_number.high, 0,
-                               ATTR_LOCAL, &dme_write_result);
     }
 
     /* Extract Internal Master Secret (IMS) from e­-Fuse, and if it is
