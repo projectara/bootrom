@@ -43,9 +43,17 @@ static int tsb_unipro_reset_cport(uint32_t cportid) {
     int rc;
     uint32_t result;
     uint32_t tx_reset_offset, rx_reset_offset;
+    uint32_t tx_queue_empty_offset, tx_queue_empty_bit;
 
     if (cportid >= CPORT_MAX) {
         return -EINVAL;
+    }
+
+    tx_queue_empty_offset = CPB_TXQUEUEEMPTY_0 + ((cportid >> 5) << 2);
+    tx_queue_empty_bit = (1 << (cportid & 31));
+
+    while (!(getreg32(AIO_UNIPRO_BASE + tx_queue_empty_offset) &
+                tx_queue_empty_bit)) {
     }
 
     tx_reset_offset = TX_SW_RESET_00 + (cportid << 2);
@@ -54,25 +62,29 @@ static int tsb_unipro_reset_cport(uint32_t cportid) {
     putreg32(CPORT_SW_RESET_BITS,
              (volatile unsigned int*)(AIO_UNIPRO_BASE + tx_reset_offset));
 
-    rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, 0, &result);
+    rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, ATTR_LOCAL,
+                                &result);
     if (rc || result) {
         dbgprint("error resetting T_CONNECTIONSTATE\r\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, 0, &result);
+    rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, ATTR_LOCAL,
+                                &result);
     if (rc || result) {
         dbgprint("error resetting T_LOCALBUFFERSPACE\r\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, 0, &result);
+    rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, ATTR_LOCAL,
+                                &result);
     if (rc || result) {
         dbgprint("error resetting T_PEERBUFFERSPACE\r\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, 0, &result);
+    rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, ATTR_LOCAL,
+                                &result);
     if (rc || result) {
         dbgprint("error resetting T_CREDITSTOSEND\r\n");
         return -EIO;
@@ -96,6 +108,7 @@ int tsb_reset_all_cports(void) {
             return rc;
         }
     }
+    dbgprint("Reset all cports.\r\n");
 
     return 0;
 }
@@ -206,4 +219,8 @@ void tsb_disable_all_e2efc(void) {
  */
 void tsb_reset_before_ready(void) {
     tsb_disable_all_e2efc();
+}
+
+void tsb_reset_before_jump(void) {
+    tsb_reset_all_cports();
 }

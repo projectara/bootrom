@@ -644,4 +644,6 @@ void tsb_disable_all_e2efc(void);
  */
 void tsb_reset_before_ready(void);
 
+void tsb_reset_before_jump(void);
+
 #endif /* __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H */

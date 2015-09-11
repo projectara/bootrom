@@ -199,3 +199,7 @@ int chip_unipro_recv_cport(uint32_t *cportid) {
 }
 
 /* TA-11 Operate UniPro function with One CPORT and transfer mode */
+
+void chip_reset_before_jump(void) {
+    tsb_reset_before_jump();
+}

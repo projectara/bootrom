@@ -61,6 +61,7 @@ void chip_signal_boot_status(uint32_t status);
 
 int chip_validate_data_load_location(void *base, uint32_t length);
 
+void chip_reset_before_jump(void);
 void chip_jump_to_image(uint32_t start_address);
 
 void chip_unipro_init(void);

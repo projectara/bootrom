@@ -256,6 +256,7 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
 }
 
 void jump_to_image(void) {
+    chip_reset_before_jump();
     dbgflush();
     chip_jump_to_image(tftf.header.start_location);
 }

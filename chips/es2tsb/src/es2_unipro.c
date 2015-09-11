@@ -424,3 +424,7 @@ int chip_unipro_init_cport(uint32_t cportid) {
 int chip_unipro_recv_cport(uint32_t *cportid) {
     return tsb_unipro_recv_cport(cportid);
 }
+
+void chip_reset_before_jump(void) {
+    tsb_reset_before_jump();
+}
