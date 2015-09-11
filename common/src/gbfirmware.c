@@ -182,6 +182,11 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
         dbgprint("fw_cport_handler: nonsense message received.\r\n");
         return GB_FW_ERR_INVALID;
     }
+    if (op_header->type & GB_TYPE_RESPONSE && op_header->status) {
+        dbgprintx32("fw_cport_handler: Greybus response received with status 0x",
+                   op_header->status, "\r\n");
+        return GB_FW_ERR_FAILURE;
+    }
     /*
      * This works here because we're actually calling this handler
      * synchronously.  We set the constant and return to the recipient rather
