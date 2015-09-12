@@ -135,14 +135,14 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
     /* Check for leading and trailing sentinels */
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->sentinel_value[i] != ffff_sentinel_value[i]) {
-            dbgprint("FFFF Bad sentinel\r\n");
+            dbgprint("FFFF Bad head sentinel\r\n");
             set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }
     }
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->trailing_sentinel_value[i] != ffff_sentinel_value[i]) {
-            dbgprint("FFFF Bad sentinel\r\n");
+            dbgprint("FFFF Bad tail sentinel\r\n");
             set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }
@@ -192,8 +192,8 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
      * descriptors and the padding) is zero-filled
      */
     if (!is_constant_fill((uint8_t *)element,
-                          (uint32_t)&header[1] -
-                              (uint32_t)&header->trailing_sentinel_value,
+                          (uint32_t)&header->trailing_sentinel_value -
+                              (uint32_t)element,
                           0x00)) {
         dbgprint("FFFF non-zero padding\r\n");
         set_last_error(BRE_FFFF_NON_ZERO_PAD);
@@ -217,6 +217,7 @@ static int locate_ffff_table(data_load_ops *ops)
     } else if (validate_ffff_header(&ffff.header1, address)) {
         /* There is no valid FFFF table at address 0, this means the first
            copy of FFFF table is corrupted. So look for the second copy only */
+        dbgprint("No 1st FFFF table\r\n");
         address = FFFF_HEADER_SIZE;
         while(address < FFFF_ERASE_BLOCK_SIZE_MAX * 2) {
             if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
@@ -228,7 +229,7 @@ static int locate_ffff_table(data_load_ops *ops)
             }
             address <<= 1;
         }
-        dbgprint("Failed to locate FFFF table\r\n");
+        dbgprint("No FFFF tables\r\n");
         set_last_error(BRE_FFFF_HEADER_NOT_FOUND);
         return -1;
     }
@@ -243,7 +244,7 @@ static int locate_ffff_table(data_load_ops *ops)
         return -1;
     } else if(validate_ffff_header(&ffff.header2, address)) {
         /* Did not find the second copy, so use the first one */
-        dbgprint("failed to find the second FFFF table\r\n");
+        dbgprint("No 2nd FFFF table\r\n");
         return 0;
     }
 
