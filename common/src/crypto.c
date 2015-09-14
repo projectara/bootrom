@@ -101,7 +101,7 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
 
     for (k = 0; k < NUMBER_OF_PUBLIC_KEYS; k++) {
         if (chip_is_key_revoked(k)) {
-            dbgprintx32("key ", k, " is revoked\r\n");
+            dbgprintx32("Key ", k, " revoked\n");
             continue;
         }
         pk = (uint32_t *)&public_keys[k];
@@ -111,13 +111,13 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
             }
         }
         if (i >= size) {
-            dbgprint("found the public key for this signature\r\n");
+            dbgprint("Found pub. key for this sig.\n");
             *key = public_keys[k].key;
             return 0;
         }
     }
 
-    dbgprint("failed to find the public key used for this signature\r\n");
+    dbgprint("Failed to find pub. key for this sig.\n");
     return -1;
 }
 
@@ -151,9 +151,9 @@ int verify_signature(unsigned char *digest, tftf_signature *signature) {
                               (char *)signature->signature) ? 0 : -1;
 
     if (ret) {
-        dbgprint("Signature verification failed\r\n");
+        dbgprint("Signature failed\n");
     } else {
-        dbgprint("Signature verified\r\n");
+        dbgprint("Signature verified\n");
 #if BOOT_STAGE == 1
         communication_area *p = (communication_area *)&_communication_area;
         memcpy(p->stage_2_firmware_identity,

@@ -76,11 +76,11 @@ void bootrom_main(void) {
     crypto_init();
 
 #if BOOT_STAGE == 1
-    dbgprint("Hello world from boot ROM!\r\n");
+    dbgprint("Hello world from s1fw\n");
 #elif BOOT_STAGE == 2
-    dbgprint("Hello world from second stage loader!\r\n");
+    dbgprint("Hello world from s2fw\n");
 #elif BOOT_STAGE == 3
-    dbgprint("Hello world from third stage firmware!\r\n");
+    dbgprint("Hello world from s3fw\n");
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating success */
     chip_signal_boot_status(0);
@@ -107,19 +107,16 @@ void bootrom_main(void) {
 
     register_val = tsb_get_bootselector();
 #ifndef BOOT_OVER_UNIPRO
-    dbgprint("Boot-Over-Unipro disabled, force boot-from-SPI\r\n");
     register_val = 0;
 #endif
    /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
    if ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0) {
-        dbgprint("BOOTSELECTOR 0\r\n");
         boot_from_spi = true;
     } else {
-        dbgprint("BOOTSELECTOR 1\r\n");
         boot_from_spi = false;
     }
     if (boot_from_spi) {
-        dbgprint("bootrom_main: Boot from SPIROM\r\n");
+        dbgprint("Boot from SPIROM\n");
 
         spi_ops.init();
 
@@ -135,10 +132,10 @@ void bootrom_main(void) {
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
                 spi_ops.finish(true, is_secure_image);
                 if (is_secure_image) {
-                    dbgprint("Trusted image\r\n");
+                    dbgprint("Trusted image\n");
                     boot_status = INIT_STATUS_TRUSTED_SPI_FLASH_BOOT_FINISHED;
                 } else {
-                    dbgprint("Untrusted image\r\n");
+                    dbgprint("Untrusted image\n");
                     boot_status = INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED;
 
                     /*
@@ -153,7 +150,7 @@ void bootrom_main(void) {
                 jump_to_image();
             }
         }
-        /*****/dbgprint("couldn't locate image\r\n");
+        /*****/dbgprint("No image\n");
         spi_ops.finish(false, false);
 
 #ifdef BOOT_OVER_UNIPRO
@@ -171,14 +168,14 @@ void bootrom_main(void) {
      * SPIROM boot.
      */
     if (!boot_from_spi) {
-        dbgprint("bootrom_main: Boot over UniPro\r\n");
+        dbgprint("Boot over UniPro\n");
         /* Boot over Uniprom */
         boot_status = fallback_boot_unipro?
                 INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED :
                 INIT_STATUS_UNIPRO_BOOT_STARTED;
         chip_advertise_boot_status(boot_status, &dme_write_result);
         advertise_ready();
-        dbgprint("Ready-poked from switch: ready to download firmware.\r\n");
+        dbgprint("Ready-poked; download-ready\n");
         status = greybus_ops.init();
         if (status)
             goto halt_and_catch_fire;
@@ -204,7 +201,7 @@ halt_and_catch_fire:
     boot_status = (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
                    (get_last_error() & INIT_STATUS_ERROR_CODE_MASK) |
                    INIT_STATUS_FAILED;
-    dbgprintx32("Boot failed (status ", boot_status, "), halting\r\n");
+    dbgprintx32("Boot failed (", boot_status, ") halt\n");
     chip_advertise_boot_status(boot_status, &dme_write_result);
 
 #if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
@@ -216,4 +213,27 @@ halt_and_catch_fire:
 #endif
     /* TODO: Change from while(1); to WFI? */
     while(1);
+}
+
+
+/**
+ * @brief Wrapper to set the bootloader-specific "errno" value
+ *
+ * Note: The first error is sticky (subsequent settings are ignored)
+ *
+ * @param errno A BRE_xxx error code to save
+ */
+void set_last_error(uint32_t err) {
+    if (br_errno == BRE_OK) {
+        uint32_t    err_group = err & BRE_GROUP_MASK;
+
+        /* Save the error */
+        br_errno = err;
+        /* Print out the error */
+        dbgprintx32((err_group == BRE_EFUSE_BASE)? "e-Fuse err: ":
+                    (err_group == BRE_TFTF_BASE)? "TFTF err: ":
+                    (err_group == BRE_FFFF_BASE)? "FFFF err: " :
+                    (err_group == BRE_CRYPTO_BASE)? "Crypto err: " : "error: ",
+                    err, "\n");
+    }
 }

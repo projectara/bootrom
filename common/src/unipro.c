@@ -169,6 +169,6 @@ int advertise_ready(void) {
         return rc;
     }
 
-    dbgprint("Module ready advertised.\r\n");
+    dbgprint("Module ready advertised.\n");
     return 0;
 }

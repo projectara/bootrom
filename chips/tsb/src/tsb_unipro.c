@@ -65,28 +65,28 @@ static int tsb_unipro_reset_cport(uint32_t cportid) {
     rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, ATTR_LOCAL,
                                 &result);
     if (rc || result) {
-        dbgprint("error resetting T_CONNECTIONSTATE\r\n");
+        dbgprint("error resetting T_CONNECTIONSTATE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, ATTR_LOCAL,
                                 &result);
     if (rc || result) {
-        dbgprint("error resetting T_LOCALBUFFERSPACE\r\n");
+        dbgprint("error resetting T_LOCALBUFFERSPACE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, ATTR_LOCAL,
                                 &result);
     if (rc || result) {
-        dbgprint("error resetting T_PEERBUFFERSPACE\r\n");
+        dbgprint("error resetting T_PEERBUFFERSPACE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, ATTR_LOCAL,
                                 &result);
     if (rc || result) {
-        dbgprint("error resetting T_CREDITSTOSEND\r\n");
+        dbgprint("error resetting T_CREDITSTOSEND\n");
         return -EIO;
     }
 
@@ -104,11 +104,11 @@ int tsb_reset_all_cports(void) {
     for (i = 0; i < CPORT_MAX; i++) {
         rc = tsb_unipro_reset_cport(i);
         if (rc) {
-            dbgprintx32("Failed to reset cport 0x", i, "\r\n");
+            dbgprintx32("Failed to reset cport 0x", i, "\n");
             return rc;
         }
     }
-    dbgprint("Reset all cports.\r\n");
+    dbgprint("Reset all cports.\n");
 
     return 0;
 }
@@ -233,11 +233,11 @@ void chip_wait_for_link_up(void) {
 #if BOOT_STAGE == 1
     uint32_t lup_int = 0;
 
-    dbgprint("Wait for UniPro link up...\r\n");
+    dbgprint("Wait for UniPro link up...\n");
     while (!(lup_int & LUP_DONE_INT_BEF)) {
         lup_int = tsb_unipro_read(LUP_INT_BEF);
     }
     tsb_unipro_write(LUP_INT_BEF, LUP_DONE_INT_BEF);
-    dbgprint("UniPro link ready\r\n");
+    dbgprint("UniPro link ready\n");
 #endif
 }

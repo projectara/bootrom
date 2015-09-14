@@ -61,7 +61,7 @@ void bootrom_main(void) {
 
     dbginit();
 
-    dbgprint("GBFW Server\r\n");
+    dbgprint("GBFW Server\n");
 
     chip_wait_for_link_up();
     while(1) {
@@ -93,14 +93,14 @@ struct unipro_connection conn[] = {
 static int server_control_cport_handler(uint32_t cportid,
                                         void *data,
                                         size_t len) {
-    dbgprint("server ctrl cport recv:");
+    dbgprint("server ctrl cport Rx:");
     unsigned char *p = (unsigned char *)data;
     int i;
     for(i = 0; i < len; i++) {
-        if ((i & 0xF) == 0) dbgprint("\r\n    ");
+        if ((i & 0xF) == 0) dbgprint("\n    ");
         dbgprinthex8(p[i]);dbgprint(" ");
     }
-    dbgprint("\r\n");
+    dbgprint("\n");
 
     return 0;
 }
@@ -146,9 +146,9 @@ int create_connection(struct unipro_connection *c) {
 
     write_mailbox(c->cport_id1 + 1, &result);
     if (result) {
-        dbgprintx32("Failed to poke mailbox for connecting cport ",
+        dbgprintx32("Couldn't poke mailbox for connecting cport ",
                     c->cport_id1 + 1,
-                    "\r\n");
+                    "\n");
             return -1;
     }
     return 0;
@@ -202,7 +202,7 @@ static int gbfw_get_firmware_size(uint32_t cportid,
     spi_ops.init();
     rc = locate_ffff_element_on_storage(&spi_ops, *payload - 1, &size);
 
-    dbgprintx32("image size: ", size, "\r\n");
+    dbgprintx32("image size: ", size, "\n");
     return greybus_op_response(cportid,
                                op_header,
                                (rc == 0) ? GB_OP_SUCCESS : GB_OP_UNKNOWN_ERROR,
@@ -232,7 +232,7 @@ static int gbfw_get_firmware(uint32_t cportid,
 static int gbfw_ready_to_boot(uint32_t cportid,
                               gb_operation_header *op_header) {
     uint8_t *payload = (uint8_t *)op_header + sizeof(*op_header);
-    dbgprintx32("got ready to boot request, status: ", *payload, "\r\n");
+    dbgprintx32("ready-to-boot, status: ", *payload, "\n");
 
     image_download_finished = true;
     return greybus_op_response(cportid,
@@ -245,18 +245,18 @@ static int gbfw_ready_to_boot(uint32_t cportid,
 static int gbfw_cport_handler(uint32_t cportid,
                               void *data,
                               size_t len) {
-    dbgprint("GBFW cport recv:");
+    dbgprint("GBFW cport Rx:");
     unsigned char *p = (unsigned char *)data;
     int i;
     for(i = 0; i < len; i++) {
-        if ((i & 0xF) == 0) dbgprint("\r\n    ");
+        if ((i & 0xF) == 0) dbgprint("\n    ");
         dbgprinthex8(p[i]);dbgprint(" ");
     }
-    dbgprint("\r\n");
+    dbgprint("\n");
 
     int rc = 0;
     if (len < sizeof(gb_operation_header)) {
-        dbgprint("control_cport_handler: RX data length error\r\n");
+        dbgprint("control_cport_handler: RX data length err\n");
         return -1;
     }
 
@@ -301,7 +301,7 @@ static void server_loop(void) {
 
     switch_set_local_dev_id(NULL, SWITCH_PORT_ID, LOCAL_DEV_ID);
 
-    dbgprint("Waiting for peer...\r\n");
+    dbgprint("Wait for peer...\n");
     chip_reset_before_ready();
 
     rc = svc_wait_for_peer_ready();
@@ -312,7 +312,7 @@ static void server_loop(void) {
     switch_if_dev_id_set(NULL, PEER_PORT_ID, PEER_DEV_ID);
 
     create_connection(&conn[0]);
-    dbgprint("Control port connected\r\n");
+    dbgprint("Control port connected\n");
 
     gb_control();
     gbfw_process();

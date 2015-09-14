@@ -46,11 +46,6 @@ typedef struct {
  * common.ld!
  */
 #define COMMUNICATION_AREA_LENGTH   1024
-#ifdef _SIMULATION
-  #define DBGPRINT_BUF_LENGTH   128
-#else
-  #define DBGPRINT_BUF_LENGTH   0
-#endif
 #define ARA_VID_LENGTH      (sizeof(uint32_t))
 #define ARA_PID_LENGTH      (sizeof(uint32_t))
 #define EUID_LENGTH         8
@@ -69,15 +64,12 @@ typedef enum {
 
 #define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
                     (ARA_VID_LENGTH + ARA_PID_LENGTH + \
-                     DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
+                     EUID_LENGTH + S2_FW_ID_LENGTH + \
                      S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
                      RESUME_ADDR_LENGTH + \
                      sizeof(void *) * NUMBER_OF_SHARED_FUNCTIONS))
 
 typedef struct {
-#ifdef _SIMULATION
-    char dbgprint_buf[DBGPRINT_BUF_LENGTH];
-#endif
     unsigned char padding[PAD_LENGTH];
     /***** ADD NEW VARIABLES BELOW THIS LINE AND UPDATE "PAD_LENGTH" *****/
     uint32_t ara_vid;
@@ -94,7 +86,7 @@ extern unsigned char _communication_area;
 
 static inline void *get_shared_function(shared_function_index index) {
     if (index >= NUMBER_OF_SHARED_FUNCTIONS) {
-        dbgprint("index exceeded NUMBER_OF_SHARED_FUNCTIONS\r\n");
+        dbgprint("shared-fn index too big\n");
         return NULL;
     }
 
@@ -105,7 +97,7 @@ static inline void *get_shared_function(shared_function_index index) {
 static inline void set_shared_function(shared_function_index index,
                                         void *func) {
     if (index >= NUMBER_OF_SHARED_FUNCTIONS) {
-        dbgprint("index exceeded NUMBER_OF_SHARED_FUNCTIONS\r\n");
+        dbgprint("shared-fn index too big\n");
         return;
     }
 

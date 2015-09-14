@@ -32,9 +32,6 @@
 
 #ifdef _DEBUG
 
-char * dbgprint_buf;
-char * dbgprint_insert_point;
-
 
 /**
  * @brief Initialize the debug subsystem
@@ -44,14 +41,6 @@ char * dbgprint_insert_point;
 void dbginit(void) {
     /* Call the chip-specific code to set up the debug serial UART */
     chip_dbginit();
-#ifdef _SIMULATION
-    /*
-     * For simulation, we also have a 1-line buffer in the communication_area
-     */
-    communication_area *p = (communication_area *)&_communication_area;
-    dbgprint_buf = &p->dbgprint_buf[0];
-    dbgprint_insert_point = dbgprint_buf;
-#endif
 }
 
 
@@ -67,19 +56,6 @@ void dbgputc(int x) {
      * Call the chip-specific code to write the char to the debug serial UART
      */
     chip_dbgputc(x);
-#ifdef _SIMULATION
-    if ((x == '\r') || (x == '\n')) {
-        /*
-         * Start a new line by resetting back to the beginning of the buffer.
-         */
-        dbgprint_insert_point = dbgprint_buf;
-    }
-    else if (dbgprint_insert_point < &dbgprint_buf[DBGPRINT_BUF_LENGTH-1]) {
-        /* Append the character and keep the string null-terminated */
-        *dbgprint_insert_point++ = (char)x;
-        *dbgprint_insert_point = '\0';
-    }
-#endif
 }
 
 
@@ -97,17 +73,6 @@ void dbgprint(char *str) {
             str++;
         }
     }
-}
-
-/**
- * @brief Print out a boolean as a T/F flag
- *
- * @param flag The boolean to display
- *
- * @returns Nothing
- */
-void dbgprintbool(uint8_t flag) {
-    dbgputc(flag? 'T' : 'F');
 }
 
 /**
@@ -166,29 +131,6 @@ void dbgprinthex64(uint64_t num) {
 }
 
 /**
- * @brief Print out a byte array
- *
- * @param buf Pointer to the memory to display
- * @param len The length in bytes of the buffer
- *
- * @returns Nothing
- */
-void dbgprinthexbuf(uint8_t * buf, int len) {
-    int count_on_line = 16;
-    while (len > 0) {
-        dbgprinthex8(*buf++);
-        count_on_line--;
-        if (count_on_line == 0) {
-            dbgprint("\r\n");
-            count_on_line = 16;
-        } else {
-            dbgputc(' ');
-        }
-        len--;
-    }
-}
-
-/**
  * @brief Print out a message containing a 32-bit unsigned integer
  *
  * @param s1 The optional string to issue before the number.
@@ -215,22 +157,6 @@ void dbgprintx32(char * s1, uint32_t num, char * s2) {
 void dbgprintx64(char * s1, uint64_t num, char * s2) {
     dbgprint(s1);
     dbgprinthex64(num);
-    dbgprint(s2);
-}
-
-/**
- * @brief Print out a message containing a byte array
- *
- * @param s1 The optional string to issue before the number.
- * @param buf Pointer to the memory to display
- * @param len The length in bytes of the buffer
- * @param s2 The optional string to issue after the number.
- *
- * @returns Nothing
- */
-void dbgprintxbuf(char * s1, uint8_t * buf, int len, char * s2) {
-    dbgprint(s1);
-    dbgprinthexbuf(buf, len);
     dbgprint(s2);
 }
 

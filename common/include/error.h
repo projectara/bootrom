@@ -29,8 +29,9 @@
 #ifndef __COMMON_INCLUDE_ERROR_H
 #define __COMMON_INCLUDE_ERROR_H
 
-#//include <stdint.h>
+//include <stdint.h>
 //#include <stddef.h>
+#include "debug.h"
 
 /*
  * A global bootrom-specific "errno" into which we can put qualification
@@ -41,6 +42,9 @@
 extern uint32_t br_errno;
 
 #define BRE_OK                      ((uint32_t)0x000000)
+
+/* Error groups go up by 0x00000020 */
+#define BRE_GROUP_MASK              0x0000e0
 
 #define BRE_EFUSE_BASE              0x000010
 #define BRE_EFUSE_ECC               ((uint32_t)(BRE_EFUSE_BASE + 0))
@@ -63,6 +67,8 @@ extern uint32_t br_errno;
 #define BRE_TFTF_SECTION_AFTER_SIGNATURE    ((uint32_t)(BRE_TFTF_BASE + 10))
 #define BRE_TFTF_HEADER_TYPE        ((uint32_t)(BRE_TFTF_BASE + 11))
 #define BRE_TFTF_COLLISION          ((uint32_t)(BRE_TFTF_BASE + 12))
+#define BRE_TFTF_START_NOT_IN_CODE  ((uint32_t)(BRE_TFTF_BASE + 13))
+#define BRE_TFTF_IMAGE_CORRUPTED    ((uint32_t)(BRE_TFTF_BASE + 14))
 
 #define BRE_FFFF_BASE               ((uint32_t)0x000040)
 #define BRE_FFFF_LOAD_HEADER        ((uint32_t)(BRE_FFFF_BASE + 0))
@@ -76,6 +82,16 @@ extern uint32_t br_errno;
 #define BRE_FFFF_IMAGE_LENGTH       ((uint32_t)(BRE_FFFF_BASE + 8))
 #define BRE_FFFF_HEADER_NOT_FOUND   ((uint32_t)(BRE_FFFF_BASE + 9))
 #define BRE_FFFF_NO_FIRMWARE        ((uint32_t)(BRE_FFFF_BASE + 10))
+#define BRE_FFFF_ELT_RESERVED_MEMORY    ((uint32_t)(BRE_FFFF_BASE + 11))
+#define BRE_FFFF_ELT_ALIGNMENT          ((uint32_t)(BRE_FFFF_BASE + 12))
+#define BRE_FFFF_ELT_COLLISION          ((uint32_t)(BRE_FFFF_BASE + 13))
+#define BRE_FFFF_ELT_DUPLICATE          ((uint32_t)(BRE_FFFF_BASE + 14))
+
+#define BRE_CRYPTO_BASE             ((uint32_t)0x000060)
+
+/* Syntactic sugar */
+#define reset_last_error()  init_last_error()
+
 
 /* TODO: Add crypto error codes */
 //#define BRE_CRYPTO_BASE             ((uint32_t)0x000060)
@@ -95,11 +111,11 @@ static inline void init_last_error(void) {
 /**
  * @brief Wrapper to set the bootloader-specific "errno" value
  *
+ * Note: The first error is sticky (subsequent settings are ignored)
+ *
  * @param errno A BRE_xxx error code to save
  */
-static inline void set_last_error(uint32_t err) {
-    br_errno = err;
-}
+void set_last_error(uint32_t err);
 
 
 /**

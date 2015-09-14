@@ -45,11 +45,11 @@ int svc_wait_for_peer_ready(void) {
     while (1) {
         rc = read_mailbox(&val, &result);
         if (rc || result) {
-            dbgprint("Error when waiting for ready\r\n");
+            dbgprint("Error when waiting for ready\n");
             return -1;
         }
         if (val != TSB_MAIL_RESET) {
-            dbgprintx32("Peer ready: ", val, "\r\n");
+            dbgprintx32("Peer ready: ", val, "\n");
             ack_mailbox();
             break;
         }

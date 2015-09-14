@@ -168,7 +168,7 @@ static int es2_fixup_mphy(void)
                             &urc);
     if (urc) {
         dbgprint((char*)__func__);
-        dbgprintx32(": failed to switch to register 2 map:", urc, "\r\n");
+        dbgprintx32(": failed to switch to register 2 map:", urc, "\n");
         return urc;
     }
     fu = tsb_register_2_map_mphy_fixups;
@@ -177,7 +177,7 @@ static int es2_fixup_mphy(void)
                                 &urc);
         if (urc) {
             dbgprint((char*)__func__);
-            dbgprintx32(": failed to switch to register 2 map:", urc, "\r\n");
+            dbgprintx32(": failed to switch to register 2 map:", urc, "\n");
             return urc;
         }
     } while (!tsb_mphy_fixup_is_last(fu++));
@@ -189,7 +189,7 @@ static int es2_fixup_mphy(void)
                             &urc);
     if (urc) {
         dbgprint((char*)__func__);
-        dbgprintx32(": failed to switch to normal map: ", urc, "\r\n");
+        dbgprintx32(": failed to switch to normal map: ", urc, "\n");
         return urc;
     }
 
@@ -200,7 +200,7 @@ static int es2_fixup_mphy(void)
                             &urc);
     if (urc) {
         dbgprint((char*)__func__);
-        dbgprintx32(": failed to switch to register 1 map: ", urc, "\r\n");
+        dbgprintx32(": failed to switch to register 1 map: ", urc, "\n");
         return urc;
     }
     fu = tsb_register_1_map_mphy_fixups;
@@ -217,7 +217,7 @@ static int es2_fixup_mphy(void)
         }
         if (urc) {
             dbgprint((char*)__func__);
-            dbgprintx32(": failed to switch to register 1 map: ", urc, "\r\n");
+            dbgprintx32(": failed to switch to register 1 map: ", urc, "\n");
             return urc;
         }
     } while (!tsb_mphy_fixup_is_last(fu++));
@@ -229,7 +229,7 @@ static int es2_fixup_mphy(void)
                             &urc);
     if (urc) {
         dbgprint((char*)__func__);
-        dbgprintx32(": failed to switch to normal map: ", urc, "\r\n");
+        dbgprintx32(": failed to switch to normal map: ", urc, "\n");
         return urc;
     }
 
@@ -287,14 +287,14 @@ void configure_transfer_mode(int mode) {
     tsb_unipro_write(AHM_MODE_CTRL_0, TRANSFER_MODE_2_CTRL_0);
     break;
   default:
-    dbgprintx32("Unsupported transfer mode: ", mode, "\r\n");
+    dbgprintx32("Unsupported transfer mode: ", mode, "\n");
     break;
   }
 }
 
 void chip_unipro_init(void) {
     if (es2_fixup_mphy()) {
-        dbgprint("Failed to apply M-PHY fixups (results in link instability at HS-G1).\r\n");
+        dbgprint("Failed to apply M-PHY fixups (results in link instability at HS-G1).\n");
     }
 
     configure_transfer_mode(TRANSFER_MODE);
@@ -303,7 +303,7 @@ void chip_unipro_init(void) {
     tsb_unipro_write(UNIPRO_INT_EN, 1);
 
     tsb_reset_all_cports();
-    dbgprint("Unipro enabled!\r\n");
+    dbgprint("Unipro enabled!\n");
 }
 
 #define DME_DDBL2_DUMMY_VID (0xdead)
@@ -390,11 +390,11 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
         eot_bit = (1 << cportid);
 
         if ((eom & eom_err_bit) != 0) {
-            dbgprint("UniPro RX error\r\n");
+            dbgprint("UniPro RX error\n");
             return -1;
         }
         if ((eot & eot_bit) != 0) {
-            dbgprint("data received exceeded max length\r\n");
+            dbgprint("data received exceeded max length\n");
             return -1;
         }
         if ((eom & eom_nom_bit) != 0) {
@@ -406,7 +406,7 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
                 if(0 != handler(cportid,
                                 cport->rx_buf,
                                 bytes_received)) {
-                    dbgprint("RX handler returned error\r\n");
+                    dbgprint("RX handler returned error\n");
                     return -1;
                 }
             }

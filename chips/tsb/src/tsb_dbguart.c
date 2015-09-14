@@ -105,6 +105,11 @@ void chip_dbgputc(int c) {
     while ((getreg32(UART_LSR) & UART_LSR_THRE) != UART_LSR_THRE)
         ;
 
+    /* Auto-convert "\n" into "\r\n" */
+    if (c == '\n') {
+        putreg32('\r', UART_RBR_THR_DLL);
+        while ((getreg32(UART_LSR) & UART_LSR_THRE) != UART_LSR_THRE);
+    }
     putreg32(c, UART_RBR_THR_DLL);
 }
 

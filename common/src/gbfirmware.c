@@ -83,7 +83,7 @@ static int gbfw_firmware_size(uint8_t stage, uint32_t *size) {
 static int gbfw_firmware_size_response(gb_operation_header *head, void *data,
                                        uint32_t len) {
     if(len < sizeof(struct gbfw_firmware_size_response)) {
-        dbgprint("gbfw_firmware_size_response: incorrect response size\r\n");
+        dbgprint("gbfw_firmware_size_response: bad response size\n");
         return GB_FW_ERR_INVALID;
     }
     memcpy(&firmware_size_response, data, sizeof(firmware_size_response));
@@ -114,11 +114,11 @@ static int gbfw_get_firmware(uint32_t offset, uint32_t size, void *data,
 
     rc = chip_unipro_receive(gbfw_cportid, fw_cport_handler);
     if (rc) {
-        dbgprintx32("failed to receive firmware: -", -rc, "\r\n");
+        dbgprintx32("FW receive failed: -", -rc, "\n");
         return rc;
     }
     if (responded_op != (GB_FW_OP_GET_FIRMWARE | GB_TYPE_RESPONSE)) {
-        dbgprint("Response wasn't a get-firmware response\r\n");
+        dbgprint("Response wasn't get-FW response\n");
         return -ENODEV;
     }
 
@@ -129,11 +129,11 @@ static int gbfw_get_firmware_response(gb_operation_header *header, void *data,
                                       uint32_t len) {
     if (header->size - sizeof(gb_operation_header) != len ||
         len != fw_get_firmware_buff.size) {
-        dbgprint("gbfw_get_firmware_response(): incorrect response size\r\n");
+        dbgprint("gbfw_get_firmware_response(): incorrect response size\n");
         return GB_FW_ERR_INVALID;
     }
     if (header->status) {
-        dbgprint("gbfw_get_firmware_response(): error status in response\r\n");
+        dbgprint("gbfw_get_firmware_response(): got error status\n");
         return -header->status;
     }
     memcpy(fw_get_firmware_buff.buffer, data, fw_get_firmware_buff.size);
@@ -160,7 +160,7 @@ static int gbfw_ready_to_boot(uint8_t status) {
 static int gbfw_ready_to_boot_response(gb_operation_header *header, void *data,
                                        uint32_t len) {
     if (header->status) {
-        dbgprint("gbfw_ready_to_boot_response(): error status in response\r\n");
+        dbgprint("gbfw_ready_to_boot_response(): got error status\n");
         return -header->status;
     }
     return 0;
@@ -169,22 +169,22 @@ static int gbfw_ready_to_boot_response(gb_operation_header *header, void *data,
 int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
     int rc = 0;
     if (cportid != gbfw_cportid) {
-        dbgprint("fw_cport_handler: incorrect CPort number");
+        dbgprint("fw_cport_handler: incorrect CPort #");
         return GB_FW_ERR_INVALID;
     }
     if (len < sizeof(gb_operation_header)) {
-        dbgprint("fw_cport_handler: RX data length error\r\n");
+        dbgprint("fw_cport_handler: RX data length error\n");
         return GB_FW_ERR_INVALID;
     }
 
     gb_operation_header *op_header = (gb_operation_header *)data;
     if(op_header->size < len) {
-        dbgprint("fw_cport_handler: nonsense message received.\r\n");
+        dbgprint("fw_cport_handler: nonsense message.\n");
         return GB_FW_ERR_INVALID;
     }
     if (op_header->type & GB_TYPE_RESPONSE && op_header->status) {
-        dbgprintx32("fw_cport_handler: Greybus response received with status 0x",
-                   op_header->status, "\r\n");
+        dbgprintx32("fw_cport_handler: Greybus response, status 0x",
+                   op_header->status, "\n");
         return GB_FW_ERR_FAILURE;
     }
     /*
@@ -257,14 +257,14 @@ static int data_load_greybus_init(void) {
     while (!manifest_fetched_by_ap() && retries-- > 0) {
         rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
         if (rc == GB_FW_ERR_INVALID) {
-            dbgprint("Greybus init failed\r\n");
+            dbgprint("Greybus init failed\n");
         }
         if (rc) {
             goto protocol_error;
         }
     }
     if (!manifest_fetched_by_ap()) {
-        dbgprint("Greybus Control CPort timed out\r\n");
+        dbgprint("Greybus Control CPort timed out\n");
         return -ETIMEDOUT;
     }
 
@@ -277,14 +277,14 @@ static int data_load_greybus_init(void) {
     while (cport_connected == 0 && retries-- > 0) {
         rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
         if (rc == GB_FW_ERR_INVALID) {
-            dbgprint("Greybus init failed\r\n");
+            dbgprint("Greybus init failed\n");
         }
         if (rc) {
             goto protocol_error;
         }
     }
     if (!cport_connected) {
-        dbgprint("Greybus Control CPort timed out\r\n");
+        dbgprint("Greybus Control CPort timeout\n");
         return -ETIMEDOUT;
     }
 
@@ -293,16 +293,16 @@ static int data_load_greybus_init(void) {
     while(responded_op != GB_FW_OP_AP_READY && retries-- > 0) {
         rc = chip_unipro_receive(gbfw_cportid, fw_cport_handler);
         if (rc) {
-            dbgprint("Greybus Firmware CPort handler failed\r\n");
+            dbgprint("Greybus FW CPort handler failed\n");
             goto protocol_error;
         }
     }
     if(responded_op != GB_FW_OP_AP_READY) {
-        dbgprint("Greybus Firmware CPort timed out\r\n");
+        dbgprint("Greybus FW CPort timed out\n");
         return -ETIMEDOUT;
     }
 
-    dbgprint("Beginning Greybus Firmware download.\r\n");
+    dbgprint("Beginning Greybus FW download.\n");
 
     /* Fetch the firmware size. */
     rc = gbfw_firmware_size(NEXT_BOOT_STAGE, &firmware_size);
@@ -365,7 +365,7 @@ static int data_load_greybus_finish(bool valid, bool is_secure_image) {
 
     rc = gbfw_ready_to_boot(status);
 
-    dbgprint("Finished Greybus Firmware download.\r\n");
+    dbgprint("Finished Greybus FW download.\n");
 
     firmware_size = offset = -1;
     cport_connected = 0;

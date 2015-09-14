@@ -96,7 +96,7 @@ int efuse_init(void) {
      */
     register_val = tsb_get_eccerror();
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
-        dbgprint("efuse_init: Efuse ECC error\r\n");
+        dbgprint("efuse_init: Efuse ECC error\n");
         set_last_error(BRE_EFUSE_ECC);
         return -1;
     }
@@ -121,7 +121,7 @@ int efuse_init(void) {
      */
     ara_vid = tsb_get_vid();
     if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
-        dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\r\n");
+        dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
     } else {
@@ -130,7 +130,7 @@ int efuse_init(void) {
 
     ara_pid = tsb_get_pid();
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
-        dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\r\n");
+        dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_PID);
         return -1;
     } else {
@@ -141,7 +141,7 @@ int efuse_init(void) {
     if (!valid_hamming_weight((uint8_t *)&serial_number,
                               sizeof(serial_number))) {
         dbgprintx64("efuse_init: Invalid serial number: ",
-                    serial_number.quad, "\r\n");
+                    serial_number.quad, "\n");
         set_last_error(BRE_EFUSE_BAD_SERIAL_NO);
         return -1;
     }
@@ -160,14 +160,14 @@ int efuse_init(void) {
             return -1;
         }
     } else {
-        /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\r\n");
+        /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\n");
         chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
                                ATTR_LOCAL, &dme_write_result);
         chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
                                ATTR_LOCAL, &dme_write_result);
     }
 
-    dbgprint("efuse_init: OK\r\n");
+    dbgprint("efuse_init: OK\n");
     return 0;
 }
 
@@ -281,7 +281,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
     if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
         /* Compute Endpoint Unique ID */
         if (!valid_hamming_weight((uint8_t *)ims_value, IMS_LENGTH)) {
-            dbgprint("efuse_init: Invalid IMS\r\n");
+            dbgprint("efuse_init: Invalid IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
             /***** THIS IS TBD UNTIL WE GET THE *REAL* IMS->EID ALGORITHM! *****/
@@ -303,7 +303,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
                 i += 8;
             }
             /*****/dbgprintx64("efuse_init: FAKE endpoint unique Id =  ",
-            /*****/            endpoint_id->quad, "\r\n");
+            /*****/            endpoint_id->quad, "\n");
             have_endpoint_id =  true;
         }
     }
