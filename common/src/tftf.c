@@ -294,6 +294,8 @@ bool valid_tftf_section(tftf_section_descriptor * section,
                         bool * end_of_sections) {
     uint32_t    section_start;
     uint32_t    section_end;
+    uint32_t    other_section_start;
+    uint32_t    other_section_end;
     uint32_t    tftf_end;
     tftf_section_descriptor * other_section;
 
@@ -328,7 +330,6 @@ bool valid_tftf_section(tftf_section_descriptor * section,
     if ((header->start_location >= section_start) &&
         (header->start_location < section_end) &&
         (section->section_type == TFTF_SECTION_RAW_CODE)) {
-        /*****/dbgprint("TFTF section contains start\r\n");
         *section_contains_start = true;
     }
 
@@ -337,15 +338,19 @@ bool valid_tftf_section(tftf_section_descriptor * section,
      * Since we're called in a scanning fashion from the start to the end of
      * the sections array, all sections before us have already validated that
      * they don't collide with us.
+     *
+     * Overlap is determined to be "non-disjoint" sections
      */
     for (other_section = section + 1;
          ((other_section < &header->sections[TFTF_MAX_SECTIONS]) &&
           (other_section->section_type != TFTF_SECTION_SIGNATURE) &&
           (other_section->section_type != TFTF_SECTION_END));
          other_section++) {
+        other_section_start = header->load_base + other_section->copy_offset;
+        other_section_end = other_section_start + other_section->expanded_length;
         if ((other_section->section_type != TFTF_SECTION_END) &&
-            (other_section->expanded_length >= section->copy_offset) &&
-            (other_section->copy_offset < section->expanded_length)) {
+            (!((other_section_end < section_start) ||
+            (other_section_start >= section_end)))) {
             dbgprint("TFTF sections collide\r\n");
             set_last_error(BRE_TFTF_COLLISION);
             return false;
