@@ -42,12 +42,12 @@
 #define FFFF_PADDING                      16
 
 /* Element types */
-#define FFFF_ELEMENT_END                  0
-#define FFFF_ELEMENT_STAGE_2_FW           1
-#define FFFF_ELEMENT_STAGE_3_FW           2
-#define FFFF_ELEMENT_IMS_CERT             3
-#define FFFF_ELEMENT_CMS_CERT             4
-#define FFFF_ELEMENT_DATA                 5
+#define FFFF_ELEMENT_STAGE_2_FW           0x01
+#define FFFF_ELEMENT_STAGE_3_FW           0x02
+#define FFFF_ELEMENT_IMS_CERT             0x03
+#define FFFF_ELEMENT_CMS_CERT             0x04
+#define FFFF_ELEMENT_DATA                 0x05
+#define FFFF_ELEMENT_END                  0xfe
 
 typedef struct {
     uint32_t element_type;
