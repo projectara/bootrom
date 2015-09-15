@@ -56,7 +56,7 @@ typedef struct {
 #define GB_OP_INVALID                0x06
 #define GB_OP_UNKNOWN_ERROR          0xFE
 
-#define GB_MAX_PAYLOAD_SIZE          (0x200)
+#define GB_MAX_PAYLOAD_SIZE          (0x800 - 2*sizeof(gb_operation_header))
 
 #define CONTROL_CPORT 0
 
