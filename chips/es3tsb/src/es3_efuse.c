@@ -34,7 +34,7 @@
  */
 #include <stdint.h>
 #include <errno.h>
-#include <string.h> /***** temp, for fake endpoint ID *****/
+#include <string.h>
 #include "chip.h"
 #include "chipapi.h"
 #include "debug.h"
@@ -45,6 +45,7 @@
 #include "error.h"
 #include "unipro.h"
 #include "efuse.h"
+#include "crypto.h"
 
 
 /* Mask values used by "count_ones" */
@@ -272,6 +273,7 @@ static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val) {
  * the IMS was deemed invalid (get_last_error will return BRE_EFUSE_BAD_IMS).
  */
 static bool get_endpoint_id(union large_uint * endpoint_id) {
+    int i;
     /* Establish the default (i.e., no endpoint ID) */
     bool have_endpoint_id = false;
     endpoint_id->quad = 0;
@@ -284,29 +286,47 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             dbgprint("efuse_init: Invalid IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
-            /***** THIS IS TBD UNTIL WE GET THE *REAL* IMS->EID ALGORITHM! *****/
-            /* Compute a fake IMS */
-            int i = 8;
-            int len = IMS_LENGTH - 8;
-            union large_uint temp;
+            /**
+             * The algorithm used to calculate Endpoint Unique ID is:
+             * Y1 = sha256(IMS[0:15] xor copy(0x3d, 16))
+             * Z0 = sha256(Y1 || copy(0x01, 32))
+             * EP_UID[0:7] = sha256(Z0)[0:7]
+             */
+            unsigned char EP_UID[HASH_DIGEST_SIZE];
+            unsigned char Y1[HASH_DIGEST_SIZE];
+            unsigned char Z0[HASH_DIGEST_SIZE];
+            unsigned char temp;
 
-            memcpy(endpoint_id, &ims_value[0], 8);
-            while (len > 0) {
-                if (len >= 8) {
-                    memcpy(&temp, &ims_value[i], 8);
-                } else {
-                    memcpy(&temp, &ims_value[i], len);
-                }
-                endpoint_id->quad ^= temp.quad;
-
-                len -= 8;
-                i += 8;
+            hash_start();
+            for (i = 0; i < 16; i++) {
+                temp = ims_value[i] ^ 0x3d;
+                hash_update(&temp, 1);
             }
-            /*****/dbgprintx64("efuse_init: FAKE endpoint unique Id =  ",
-            /*****/            endpoint_id->quad, "\n");
+            hash_final(Y1);
+
+            hash_start();
+            hash_update(Y1, HASH_DIGEST_SIZE);
+            temp = 0x01;
+            for (i = 0; i < 32; i++) {;
+                hash_update(&temp, 1);
+            }
+            hash_final(Z0);
+
+            hash_start();
+            hash_update(Z0, HASH_DIGEST_SIZE);
+            hash_final(EP_UID);
+
+            memcpy(endpoint_id, EP_UID, 8);
+
             have_endpoint_id =  true;
+            /* wipe the temp values in RAM for security */
+            memset(EP_UID, 0, HASH_DIGEST_SIZE);
+            memset(Y1, 0, HASH_DIGEST_SIZE);
+            memset(Z0, 0, HASH_DIGEST_SIZE);
         }
     }
 
+    /* wipe the ims value in RAM for security */
+    memset(ims_value, 0, sizeof(ims_value));
     return have_endpoint_id;
 }

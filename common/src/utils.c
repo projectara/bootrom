@@ -49,6 +49,21 @@ void *memcpy(void *dest, const void *src, size_t n) {
     return dest;
 }
 
+void *memset(void *s, int c, size_t n) {
+    size_t i;
+    unsigned char *pd = (unsigned char*)s;
+
+    /*
+     * Parameter validation is skipped here, since this is used internally
+     * only and the paramters are expected to be vailidated by caller
+     */
+
+    for (i = 0; i < n; i++) {
+        *pd++ = c;
+    }
+    return s;
+}
+
 /**
  * @brief Determine if a value is a power of 2
  *

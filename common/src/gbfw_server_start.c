@@ -30,6 +30,7 @@
 #include "chipapi.h"
 #include "common.h"
 #include "unipro.h"
+#include "error.h"
 #include "greybus.h"
 #include "debug.h"
 #include "data_loading.h"
@@ -323,3 +324,26 @@ static void server_loop(void) {
     gb_control();
     gbfw_process();
 }
+
+/**
+ * @brief Wrapper to set the bootloader-specific "errno" value
+ *
+ * Note: The first error is sticky (subsequent settings are ignored)
+ *
+ * @param errno A BRE_xxx error code to save
+ */
+void set_last_error(uint32_t err) {
+    if (br_errno == BRE_OK) {
+        uint32_t    err_group = err & BRE_GROUP_MASK;
+
+        /* Save the error */
+        br_errno = err;
+        /* Print out the error */
+        dbgprintx32((err_group == BRE_EFUSE_BASE)? "e-Fuse err: ":
+                    (err_group == BRE_TFTF_BASE)? "TFTF err: ":
+                    (err_group == BRE_FFFF_BASE)? "FFFF err: " :
+                    (err_group == BRE_CRYPTO_BASE)? "Crypto err: " : "error: ",
+                    err, "\n");
+    }
+}
+
