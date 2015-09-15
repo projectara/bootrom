@@ -168,7 +168,7 @@ int efuse_init(void) {
 
 
 void efuse_rig_for_untrusted(void) {
-#ifdef ALLOW_JTAG_FOR_UNTRUSTED_IMAGES
+#ifdef DISABLE_JTAG_FOR_UNTRUSTED_IMAGES
     tsb_jtag_disable();
 #endif
     /* TA-21 Lock function with register (IMS, CMS) */

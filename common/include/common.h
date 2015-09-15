@@ -38,9 +38,9 @@
 #endif
 #endif
 
-/* Define ALLOW_JTAG_FOR_UNTRUSTED_IMAGES to leave JTAG accessible
- *  during initial bring-up of 2nd-level code from untrusted images
+/** Define DISABLE_JTAG_FOR_UNTRUSTED_IMAGES to disable JTAG accessible
+ *  from untrusted images
  */
-/* #define ALLOW_JTAG_FOR_UNTRUSTED_IMAGES */
+/* #define DISABLE_JTAG_FOR_UNTRUSTED_IMAGES */
 
 #endif /* __COMMON_H */

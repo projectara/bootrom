@@ -187,6 +187,23 @@ void bootrom_main(void) {
             status = greybus_ops.finish(true, is_secure_image);
             if (status)
                 goto halt_and_catch_fire;
+            if (is_secure_image) {
+                dbgprint("Trusted image\r\n");
+                boot_status = fallback_boot_unipro ?
+                    INIT_STATUS_FALLLBACK_TRUSTED_UNIPRO_BOOT_FINISHED :
+                    INIT_STATUS_TRUSTED_UNIPRO_BOOT_FINISHED;
+            } else {
+                dbgprint("Untrusted image\r\n");
+                boot_status = fallback_boot_unipro ?
+                    INIT_STATUS_FALLLBACK_UNTRUSTED_UNIPRO_BOOT_FINISHED :
+                    INIT_STATUS_UNTRUSTED_UNIPRO_BOOT_FINISHED;
+
+                /*
+                 *  Disable JTAG, IMS, CMS access before starting
+                 * untrusted image
+                 */
+                efuse_rig_for_untrusted();
+            }
             /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
             jump_to_image();
         }
