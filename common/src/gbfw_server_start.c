@@ -144,7 +144,7 @@ int create_connection(struct unipro_connection *c) {
     chip_unipro_init_cport(c->cport_id0);
     wait_for_mailbox_ack(0, &result);
 
-    write_mailbox(c->cport_id1 + 1, &result);
+    write_mailbox(c->cport_id1 + 1);
     if (result) {
         dbgprintx32("Couldn't poke mailbox for connecting cport ",
                     c->cport_id1 + 1,
@@ -286,6 +286,12 @@ static int gbfw_process(void) {
                          GB_FW_OP_PROTOCOL_VERSION,
                          ver,
                          2);
+    chip_unipro_receive(GBFW_CPORT, gbfw_cport_handler);
+    greybus_send_request(GBFW_CPORT,
+                         1,
+                         GB_FW_OP_AP_READY,
+                         NULL,
+                         0);
     chip_unipro_receive(GBFW_CPORT, gbfw_cport_handler);
     image_download_finished = false;
     while (!image_download_finished) {

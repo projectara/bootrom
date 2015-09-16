@@ -90,21 +90,13 @@ int ack_mailbox(void) {
         return DISJOINT_OR(rc, unipro_rc);
     }
 
-    /**
-     * The following loop does not have a time-out built in, and can fail to
-     * terminate if it never sees the mailbox interrupt pend.  Since the bootrom
-     * is writing to its own mailbox, the interrupt should always pend.  Should.
-     */
-    do {
-        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+                               ATTR_LOCAL, &unipro_rc);
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
     }
 
     rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_LOCAL, &unipro_rc);
-
     return DISJOINT_OR(rc, unipro_rc);
 }
 

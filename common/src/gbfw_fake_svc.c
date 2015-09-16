@@ -39,12 +39,11 @@
 
 int svc_wait_for_peer_ready(void) {
     uint32_t val;
-    uint32_t result;
     int rc;
 
     while (1) {
-        rc = read_mailbox(&val, &result);
-        if (rc || result) {
+        rc = read_mailbox(&val);
+        if (rc) {
             dbgprint("Error when waiting for ready\n");
             return -1;
         }
