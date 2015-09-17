@@ -62,24 +62,26 @@ typedef enum {
     NUMBER_OF_SHARED_FUNCTIONS
 } shared_function_index;
 
+#define COMMUNICATION_AREA_DATA_FIELDS \
+    uint32_t ara_vid; \
+    uint32_t ara_pid; \
+    void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
+    unsigned char endpoint_unique_id[EUID_LENGTH]; \
+    unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \
+    char stage_2_validation_key_name[S2_KEY_NAMELENGTH]; \
+    char stage_2_firmware_description[S2_FW_DESC_LENGTH]; \
+    resume_address_communication_area resume_address
+
+typedef struct {
+    COMMUNICATION_AREA_DATA_FIELDS;
+} __attribute__ ((packed)) communication_area_defined;
+
 #define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
-                    (ARA_VID_LENGTH + ARA_PID_LENGTH + \
-                     EUID_LENGTH + S2_FW_ID_LENGTH + \
-                     S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
-                     RESUME_ADDR_LENGTH + \
-                     sizeof(void *) * NUMBER_OF_SHARED_FUNCTIONS))
+                     sizeof(communication_area_defined))
 
 typedef struct {
     unsigned char padding[PAD_LENGTH];
-    /***** ADD NEW VARIABLES BELOW THIS LINE AND UPDATE "PAD_LENGTH" *****/
-    uint32_t ara_vid;
-    uint32_t ara_pid;
-    void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS];
-    unsigned char endpoint_unique_id[EUID_LENGTH];
-    unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH];
-    char stage_2_validation_key_name[S2_KEY_NAMELENGTH];
-    char stage_2_firmware_description[S2_FW_DESC_LENGTH];
-    resume_address_communication_area resume_address;
+    COMMUNICATION_AREA_DATA_FIELDS;
 } __attribute__ ((packed)) communication_area;
 
 extern unsigned char _communication_area;
