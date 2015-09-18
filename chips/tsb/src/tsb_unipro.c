@@ -226,18 +226,14 @@ void tsb_reset_before_jump(void) {
 }
 
 /**
- * ES2/ES3 has the same definition for LUP_DONE_INT_BEF,
+ * ES2/ES3 has the same definition for TSB_PowerState,
  * so let's have this function shared between ES2 and ES3 here
  */
 void chip_wait_for_link_up(void) {
-#if BOOT_STAGE == 1
-    uint32_t lup_int = 0;
-
-    dbgprint("Wait for UniPro link up...\n");
-    while (!(lup_int & LUP_DONE_INT_BEF)) {
-        lup_int = tsb_unipro_read(LUP_INT_BEF);
-    }
-    tsb_unipro_write(LUP_INT_BEF, LUP_DONE_INT_BEF);
-    dbgprint("UniPro link ready\n");
-#endif
+    int rc;
+    uint32_t tempval, unipro_rc;
+    do {
+        rc = chip_unipro_attr_read(TSB_POWERSTATE, &tempval, 0,
+                                   ATTR_LOCAL, &unipro_rc);
+    } while (!rc && !unipro_rc && (tempval != POWERSTATE_LINKUP));
 }

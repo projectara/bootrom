@@ -342,6 +342,14 @@
 #define TSB_MAIL_READY_AP           (0x01)
 #define TSB_MAIL_READY_OTHER        (0x02)
 
+/* TSB_PowerState */
+#define TSB_POWERSTATE             0xd083
+    #define POWERSTATE_DISABLED     (0x00)
+    #define POWERSTATE_LINKDOWN     (0x01)
+    #define POWERSTATE_LINKUP       (0x02)
+    #define POWERSTATE_HIBERNATE    (0x03)
+    #define POWERSTATE_LINKLOST     (0x04)
+    #define POWERSTATE_LINKCFG      (0x05)
 /*
  * Interrupt Status attribute values
  */
