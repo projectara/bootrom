@@ -47,8 +47,35 @@ Reset_Handler:
 .globl chip_jump_to_image
 .type chip_jump_to_image, %function
 chip_jump_to_image:
-    orr r0, #1    /* set Thumb mode for bx */
-    bx r0
+    mov r10, r0
+
+#ifndef _SIMULATION
+    ldr r0, =0
+    mov r1, r0
+    mov r2, r0
+    mov r3, r0
+    mov r4, r0
+    mov r5, r0
+    mov r6, r0
+    mov r7, r0
+    /* clear the BootRom .data, .bss */
+    ldr r8, =_bootrom_data_area
+    ldr r9, =_communication_area
+clear_bootrom_data:
+    str r0, [r8], #4
+    cmp r8, r9
+    bmi clear_bootrom_data
+
+    ldr r8, =_bufram_start
+    ldr r9, =_bufram_end
+clear_bufram_before_jump:
+    stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
+    cmp r8, r9
+    bmi clear_bufram_before_jump
+#endif
+
+    orr r10, #1    /* set Thumb mode for bx */
+    bx r10
 
 #if BOOT_STAGE == 1
 .type exception_common_handler, %function
@@ -186,6 +213,16 @@ cold_boot:
     // ES2's ARM core doesn't seem to load the correct stack pointer
     ldr sp, =_stack_top
 #endif
+
+#ifdef _SIMULATION
+    /* Just clear the BootRom .data, .bss, stack and communication region*/
+    ldr r8, =_bootrom_data_area
+    ldr r9, =_workram_end
+clear_workram:
+    str r0, [r8], #4  /* no gurantee it would be 32 bytes aligned as below */
+    cmp r8, r9
+    bmi clear_workram
+#else
     /* Clear workram
      *
      * WARNING!!!: Assumption here is that workram will always be
@@ -205,18 +242,23 @@ cold_boot:
     mov r6, r0
     mov r7, r0
     /* TA-10 Write/Read data in workRAM */
-#ifdef _SIMULATION
-    /* Just clear the BootRom .data, .bss, stack and communication region*/
-    ldr r8, =_bootrom_data_area
-#else
+
     /* Clear all of work RAM */
     ldr r8, =_workram_start
-#endif
     ldr r9, =_workram_end
 clear_workram:
     stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
     cmp r8, r9
     bmi clear_workram
+
+    /* clear the bufram */
+    ldr r8, =_bufram_start
+    ldr r9, =_bufram_end
+clear_bufram:
+    stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
+    cmp r8, r9
+    bmi clear_bufram
+#endif
 
     /* initialize .data section */
     ldr r1, =_data_in_rom

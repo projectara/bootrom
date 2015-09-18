@@ -1,6 +1,8 @@
 
 _workram_start = ORIGIN(sram);
 _workram_end = ORIGIN(sram) + LENGTH(sram);
+_bufram_start = ORIGIN(bufram0);
+_bufram_end = ORIGIN(bufram3) + LENGTH(bufram3);
 
 _resume_address_size = 8;
 /**

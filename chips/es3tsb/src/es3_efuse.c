@@ -319,14 +319,8 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             memcpy(endpoint_id, EP_UID, 8);
 
             have_endpoint_id =  true;
-            /* wipe the temp values in RAM for security */
-            memset(EP_UID, 0, HASH_DIGEST_SIZE);
-            memset(Y1, 0, HASH_DIGEST_SIZE);
-            memset(Z0, 0, HASH_DIGEST_SIZE);
         }
     }
 
-    /* wipe the ims value in RAM for security */
-    memset(ims_value, 0, sizeof(ims_value));
     return have_endpoint_id;
 }
