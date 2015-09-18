@@ -37,4 +37,7 @@
 #define SPI_BASE        (0x40018000)
 #define SPI_SIZE        (0x800)
 
+#define ES3_SYSTEM_STATUS_15    0x610f
+#define MBOX_ACK_ATTR           ES3_SYSTEM_STATUS_15
+
 #endif

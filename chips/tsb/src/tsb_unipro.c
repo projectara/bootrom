@@ -143,7 +143,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
 
     tsb_unipro_restart_rx(cport);
 
-    return ack_mailbox();
+    return ack_mailbox((uint16_t)mail);
 }
 
 /**
@@ -172,7 +172,7 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
 
     tsb_unipro_restart_rx(cport);
 
-    return ack_mailbox();
+    return ack_mailbox((uint16_t)(cport_recv + 1));
 }
 
 uint32_t tsb_unipro_read(uint32_t offset) {

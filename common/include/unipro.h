@@ -369,7 +369,7 @@ int read_mailbox(uint32_t *val);
  * @brief Acknowledge that we've read local mailbox, clearing it.
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
-int ack_mailbox(void);
+int ack_mailbox(uint16_t val);
 /**
  * @brief Synchronously write to the peer mailbox, polling for it to be cleared
  * once we've written it.

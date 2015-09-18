@@ -44,7 +44,7 @@
  */
 int read_mailbox(uint32_t *val) {
     int rc;
-    uint32_t tempval = TSB_MAIL_RESET, irq_status, unipro_rc;
+    uint32_t mbox = TSB_MAIL_RESET, irq_status, unipro_rc;
 
     if (!val) {
         return -EINVAL;
@@ -65,13 +65,18 @@ int read_mailbox(uint32_t *val) {
         return DISJOINT_OR(rc, unipro_rc);
     }
 
-    rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &mbox, 0, ATTR_LOCAL,
                                &unipro_rc);
     if (DISJOINT_OR(rc, unipro_rc)) {
         return DISJOINT_OR(rc, unipro_rc);
     }
 
-    *val = tempval;
+    if (mbox >= UINT16_MAX) {
+        dbgprint("Mailbox protocol only supports 16-bit values\n");
+        return -EINVAL;
+    }
+
+    *val = mbox;
 
     return 0;
 }
@@ -80,23 +85,11 @@ int read_mailbox(uint32_t *val) {
  * @brief Acknowledge that we've read our local mailbox, clearing it.
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
-int ack_mailbox(void) {
+int ack_mailbox(uint16_t val) {
     int rc;
-    uint32_t val, irq_status, unipro_rc;
+    uint32_t unipro_rc;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, TSB_MAIL_RESET, 0, ATTR_LOCAL,
-                                &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
-    }
-
-    rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                               ATTR_LOCAL, &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
-    }
-
-    rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_LOCAL, &unipro_rc);
+    rc = chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, ATTR_LOCAL, &unipro_rc);
     return DISJOINT_OR(rc, unipro_rc);
 }
 
@@ -123,17 +116,6 @@ int write_mailbox(uint32_t val) {
         rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
                                    ATTR_PEER, &unipro_rc);
     } while (!rc && !unipro_rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
-    }
-    /**
-     * Now poll the switch mailbox until it's cleared, indicating the SVC has
-     * given us the go-ahead.
-     */
-    do {
-        rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_PEER,
-                                   &unipro_rc);
-    } while (!rc && !unipro_rc && val != TSB_MAIL_RESET);
 
     return DISJOINT_OR(rc, unipro_rc);
 }

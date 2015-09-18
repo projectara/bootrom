@@ -40,6 +40,8 @@
 #define MMAP_LOAD_BASE  SPI_BASE
 #define MMAP_LOAD_SIZE  SPI_SIZE
 
+#define MBOX_ACK_ATTR   T_TSTSRCINTERMESSAGEGAP
+
 #define ES2_INIT_STATUS(boot_status) (boot_status >> 24)
 
 #endif
