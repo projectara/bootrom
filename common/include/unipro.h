@@ -335,6 +335,11 @@
 #define TSB_INTERRUPTSTATUS        0xd081
 #define TSB_MAILBOX                0xa000
 
+#define TSB_HIBERNATE_ENTER_REQ    0xd030
+#define TSB_HIBERNATE_ENTER_IND    0xd031
+#define TSB_HIBERNATE_EXIT_REQ     0xd032
+#define TSB_HIBERNATE_EXIT_IND     0xd033
+
 /*
  * Mailbox attribute values
  */

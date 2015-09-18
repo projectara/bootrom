@@ -580,6 +580,7 @@
 #define RX_SW_RESET_41                         0x000015A4
 #define RX_SW_RESET_42                         0x000015A8
 #define RX_SW_RESET_43                         0x000015AC
+    #define CPORT_SW_RESET_BITS                         3
 
 #define TSB_MAXSEGMENTCONFIG        0xd089
 

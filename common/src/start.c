@@ -41,11 +41,13 @@
 #include "tftf.h"
 #include "ffff.h"
 #include "crypto.h"
+#include "bootrom.h"
 
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
 
 uint32_t br_errno;
+
 
 /**
  * @brief Bootloader "C" entry point
@@ -75,6 +77,7 @@ void bootrom_main(void) {
     crypto_init();
 
 #if BOOT_STAGE == 1
+    set_shared_function(SHARED_FUNCTION_ENTER_STANDBY, chip_enter_standby);
     dbgprint("Hello world from s1fw\n");
 #elif BOOT_STAGE == 2
     dbgprint("Hello world from s2fw\n");

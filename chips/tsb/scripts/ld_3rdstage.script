@@ -17,6 +17,10 @@ ENTRY(Reset_Handler)
 
 REGION_ALIAS("REGION_TEXT", sram);
 
+_stack_top = _communication_area;
 _bootrom_text_area = _workram_start;
+
+_3rd_stage_fw_data_area_size = 24k; /* a big enough random number */
+_bootrom_data_area = _workram_end - _3rd_stage_fw_data_area_size;
 
 INCLUDE chips/tsb/scripts/common.ld

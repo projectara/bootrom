@@ -4,7 +4,7 @@ _workram_end = ORIGIN(sram) + LENGTH(sram);
 _bufram_start = ORIGIN(bufram0);
 _bufram_end = ORIGIN(bufram3) + LENGTH(bufram3);
 
-_resume_address_size = 8;
+_resume_data_size = 12;
 /**
  * NOTE: _communication_area_size must match COMMUNICATION_AREA_LENGTH in
  * bootrom.h
@@ -12,9 +12,11 @@ _resume_address_size = 8;
  */
 _communication_area_size = 1024; /* includes resume address */
 
-_resume_address = _workram_end - _resume_address_size;
+_resume_data = _workram_end - _resume_data_size;
 _communication_area = _workram_end - _communication_area_size;
-_stack_top = ORIGIN(bufram3) + LENGTH(bufram3);
+_stack_top = DEFINED(_stack_top) ?
+             _stack_top :
+             ORIGIN(bufram3) + LENGTH(bufram3);
 
 /**
  * & 0xFFFFFFE0 to make sure it is aligned with 32 bytes

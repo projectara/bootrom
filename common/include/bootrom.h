@@ -33,9 +33,10 @@
 #include "debug.h"
 
 typedef struct {
+    uint32_t jtag_disabled;
     uint32_t resume_address;
     uint32_t resume_address_complement;
-} __attribute__ ((packed)) resume_address_communication_area;
+} __attribute__ ((packed)) resume_communication_area;
 
 /*
  * Area of memory used to communicate between boot ROM and second stage FW.
@@ -59,6 +60,7 @@ typedef enum {
     SHARED_FUNCTION_SHA256_PROCESS,
     SHARED_FUNCTION_SHA256_HASH,
     SHARED_FUNCTION_RSA2048_VERIFY,
+    SHARED_FUNCTION_ENTER_STANDBY,
     NUMBER_OF_SHARED_FUNCTIONS
 } shared_function_index;
 
@@ -70,7 +72,7 @@ typedef enum {
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \
     char stage_2_validation_key_name[S2_KEY_NAMELENGTH]; \
     char stage_2_firmware_description[S2_FW_DESC_LENGTH]; \
-    resume_address_communication_area resume_address
+    resume_communication_area resume_data
 
 typedef struct {
     COMMUNICATION_AREA_DATA_FIELDS;

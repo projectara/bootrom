@@ -102,9 +102,6 @@ _vectors:
 	.word exception_common_handler
 	.word exception_common_handler
 
-/* experiment on ES1 shows this is enough for 0.1us */
-#define DELAY_100NS_LOOP_COUNT 3
-
 #ifdef BOOT_FROM_SLOW_ROM
 .section .bootstrap.loader, "ax"
 #else
@@ -143,70 +140,15 @@ __start:
     bl chip_gpio_get_value
     /* seems there is pull-up on the GPIOs on HAPS */
     cmp r0, #1
-    beq cold_boot
+    bne resume_from_standby
 #else
     ldr r1, =BOOTRET_O
     ldr r0, [r1]
     tst r0, #1
-    beq cold_boot
+    bne resume_from_standby
 #endif
 
-    /*
-     * "Resume" path
-     * TA-06 Write/Read registers to resume standby
-     */
-    ldr r2, =RETSRAMRET
-    ldr r0, =0
-    str r0, [r2]
-
-    ldr r3, =DELAY_100NS_LOOP_COUNT
-delay_100ns_loop:
-    subs r3, r3, #1
-    bne delay_100ns_loop
-
-    ldr r2, =RETSRAMCLKCONT
-    ldr r0, =1
-    str r0, [r2]
-
-    /* delay 5 CPU cycles or more */
-    nop
-    nop
-    nop
-    nop
-    nop
-
-    ldr r2, =RETSRAMCENCONT
-    ldr r0, =0
-    str r0, [r2]
-
-    /*
-     * Check for the resume address and its complement before jumping to it
-     */
-    ldr r2, =_resume_address
-    ldm r2, {r0, r1}
-    mvn r1, r1
-    cmp r0, r1   /* check the complement of the resume address */
-    bne cold_boot
-
-    /*
-     * Before resuming the higher-level code, ensure that IMS and CMS
-     * and JTAG are disabled.
-     */
-    ldr r0, = DISABLE_JTAG_IMS_CMS_ACCESS
-    ldr r3, =_DISABLE_IMS_ACCESS
-    str r0, [r3]
-    ldr r3, = _DISABLE_CMS_ACCESS
-    str r0, [r3]
-    ldr r3, = _JTAG_DISABLE
-    str r0, [r3]
-
-
-    ldr r3, =0
-    str r3, [r2], #4 /* clear the resume address */
-    str r3, [r2]
-    orr r0, #1   /* make sure thumb bit is set */
-    bx r0   /* jump to resume address */
-
+.globl cold_boot
 cold_boot:
 #endif
 #if CONFIG_CHIP_REVISION < CHIP_REVISION_ES3

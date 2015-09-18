@@ -33,12 +33,13 @@
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "debug.h"
+#include "utils.h"
 
 struct cport cporttable[4] = {
     DECLARE_CPORT(0),  DECLARE_CPORT(1),  DECLARE_CPORT(2),  DECLARE_CPORT(3),
 };
 
-#define CPORT_SW_RESET_BITS 3
+
 static int tsb_unipro_reset_cport(uint32_t cportid) {
     int rc;
     uint32_t result;

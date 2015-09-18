@@ -195,13 +195,16 @@ static int gb_control(void) {
 }
 
 static bool image_download_finished = false;
+static int stage_to_load;
 static int gbfw_get_firmware_size(uint32_t cportid,
                                   gb_operation_header *op_header) {
     int rc;
     uint8_t *payload = (uint8_t *)op_header + sizeof(*op_header);
     uint32_t size;
     spi_ops.init();
-    rc = locate_ffff_element_on_storage(&spi_ops, *payload - 1, &size);
+
+    stage_to_load = *payload - 1;
+    rc = locate_ffff_element_on_storage(&spi_ops, stage_to_load, &size);
 
     dbgprintx32("image size: ", size, "\n");
     return greybus_op_response(cportid,
@@ -301,6 +304,8 @@ static int gbfw_process(void) {
     return 0;
 }
 
+int chip_enter_hibern8_server(void);
+
 static void server_loop(void) {
     int rc;
 
@@ -323,6 +328,10 @@ static void server_loop(void) {
 
     gb_control();
     gbfw_process();
+#ifdef _SIMULATION
+    if (stage_to_load == FFFF_ELEMENT_STAGE_2_FW)
+        chip_enter_hibern8_server();
+#endif
 }
 
 /**

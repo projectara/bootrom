@@ -107,10 +107,20 @@
 #define PMU_SIZE        64
 
 /* PMU registers */
+#define ISO_EN          (PMU_BASE + 0)
+#define ISO_FOR_IO_EN   (PMU_BASE + 0x04)
 #define RETSRAMRET      (PMU_BASE + 0x10)
 #define RETSRAMCENCONT  (PMU_BASE + 0x14)
 #define RETSRAMCLKCONT  (PMU_BASE + 0x18)
+#define HB8CLK_EN       (PMU_BASE + 0x1C)
+#define WAKEUPSRC       (PMU_BASE + 0x24)
 #define BOOTRET_O       (PMU_BASE + 0x2C)
+#define RETFFSAVE       (PMU_BASE + 0x40)
+#define RETFFSTR        (PMU_BASE + 0x40)
+
+#define UNIPRO_CLK_EN               (SYSCTL_BASE + 0x0E10)
+#define SOFTRESETRELEASE1           (SYSCTL_BASE + 0x0104)
+    #define SRSTRELEASE_UNIPRO_SYSRESET_N         (1 << 2)
 
 /* ISAA registers */
 #define _DISABLE_IMS_ACCESS         (ISAA_BASE + 0x00000400)

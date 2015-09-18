@@ -162,4 +162,11 @@ int chip_is_key_revoked(int index);
  */
 void chip_wait_for_link_up(void);
 
+/**
+ * @brief enter standby mode
+ * @return <0 on error
+ *         never returns on success
+ */
+int chip_enter_standby(void);
+
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */
