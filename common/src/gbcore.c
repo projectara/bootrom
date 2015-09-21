@@ -36,9 +36,8 @@
 
 uint32_t gbfw_cportid = 0;
 
-static unsigned char manifest[] = {
-    #include MANIFEST_HEADER
-};
+extern unsigned char build_manifest_manifest_mnfb[];
+extern unsigned int build_manifest_manifest_mnfb_len;
 
 static int greybus_send_message(uint32_t cport,
                                 uint16_t id,
@@ -120,7 +119,7 @@ static int gbctrl_probe_ap(uint32_t cportid,
 
 static int gbctrl_get_manifest_size(uint32_t cportid,
                                   gb_operation_header *op_header) {
-    uint16_t payload[1] = {sizeof(manifest)};
+    uint16_t payload[1] = {build_manifest_manifest_mnfb_len};
 
     return greybus_op_response(cportid,
                                op_header,
@@ -142,8 +141,8 @@ static int gbctrl_get_manifest(uint32_t cportid,
     rc = greybus_op_response(cportid,
                              op_header,
                              GB_OP_SUCCESS,
-                             manifest,
-                             sizeof(manifest));
+                             build_manifest_manifest_mnfb,
+                             build_manifest_manifest_mnfb_len);
     if (rc) {
         return rc;
     }

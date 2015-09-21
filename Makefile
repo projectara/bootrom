@@ -112,19 +112,23 @@ AFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
 
 all: $(HEX)
 
-$(MANIFEST_OUTDIR)/$(MANIFEST).h: $(MANIFEST_OUTDIR)/$(MANIFEST).mnfb
-	@echo "Generating manifest data..."
-	$(Q) xxd -i <$< >$@
+$(MANIFEST_OUTDIR)/manifest.o: $(MANIFEST_OUTDIR)/manifest.c
+	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
 
-$(MANIFEST_OUTDIR)/$(MANIFEST).mnfb: $(MANIFEST_OUTDIR)/$(MANIFEST)
+$(MANIFEST_OUTDIR)/manifest.c: $(MANIFEST_OUTDIR)/manifest.mnfb
+	@echo "Generating manifest data..."
+	$(Q) xxd -i $< >$@
+
+$(MANIFEST_OUTDIR)/manifest.mnfb: $(MANIFEST_OUTDIR)/manifest
 	$(Q) manifesto $<
 
-$(MANIFEST_OUTDIR)/$(MANIFEST): $(MANIFEST_SRCDIR)/$(MANIFEST)
+$(MANIFEST_OUTDIR)/manifest: $(MANIFEST_SRCDIR)/$(MANIFEST)
 	$(Q) cp $< $@
 
-$(ELF): $(MANIFEST_OUTDIR)/$(MANIFEST).h $(AOBJS) $(COBJS)
+$(ELF): $(MANIFEST_OUTDIR)/manifest.o $(AOBJS) $(COBJS)
 	@ echo Linking $@
-	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS)
+	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS) \
+		$(MANIFEST_OUTDIR)/manifest.o
 
 $(BIN): $(ELF)
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@
