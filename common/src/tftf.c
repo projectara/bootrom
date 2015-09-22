@@ -50,6 +50,11 @@ typedef struct {
 
 static tftf_processing_state tftf;
 
+/* Cached values of ARA VID & PID, read from e-Fuse */
+uint32_t ara_vid;
+uint32_t ara_pid;
+
+
 /*
  * Prototypes
  */
@@ -60,7 +65,6 @@ static int load_tftf_header(data_load_ops *ops) {
     uint32_t unipro_vid = 0;
     uint32_t unipro_pid = 0;
     uint32_t read_stat;
-    communication_area *p = (communication_area *)&_communication_area;
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
@@ -91,9 +95,9 @@ static int load_tftf_header(data_load_ops *ops) {
         ((tftf.header.unipro_pid != 0) &&
          (tftf.header.unipro_pid != unipro_pid)) ||
         ((tftf.header.ara_vid != 0) &&
-         (tftf.header.ara_vid != p->ara_vid)) ||
+         (tftf.header.ara_vid != ara_vid)) ||
         ((tftf.header.ara_pid != 0) &&
-         (tftf.header.ara_pid != p->ara_pid))) {
+         (tftf.header.ara_pid != ara_pid))) {
         set_last_error(BRE_TFTF_VIDPID_MISMATCH);
         return -1;
     }

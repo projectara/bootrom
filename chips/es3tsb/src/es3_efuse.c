@@ -62,8 +62,7 @@ union large_uint {
   uint64_t quad;
 };
 
-static uint32_t         ara_vid;
-static uint32_t         ara_pid;
+
 static union large_uint serial_number;
 static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
 
@@ -88,7 +87,6 @@ int efuse_init(void) {
     uint32_t    register_val;
     uint32_t    dme_write_result;
     union large_uint endpoint_id;
-    communication_area *p = (communication_area *)&_communication_area;
 
 
     /* Check for e­-Fuse CRC error
@@ -125,8 +123,6 @@ int efuse_init(void) {
         dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
-    } else {
-        p->ara_vid = ara_vid;
     }
 
     ara_pid = tsb_get_pid();
@@ -134,8 +130,6 @@ int efuse_init(void) {
         dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_PID);
         return -1;
-    } else {
-        p->ara_pid = ara_pid;
     }
 
     serial_number.quad = tsb_get_serial_no();

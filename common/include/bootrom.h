@@ -32,6 +32,12 @@
 #include <stdint.h>
 #include "debug.h"
 
+/*
+ * Globals shared by source files, but not part of the communication area:
+ */
+extern uint32_t ara_vid;
+extern uint32_t ara_pid;
+
 typedef struct {
     uint32_t jtag_disabled;
     uint32_t resume_address;
@@ -47,8 +53,6 @@ typedef struct {
  * common.ld!
  */
 #define COMMUNICATION_AREA_LENGTH   1024
-#define ARA_VID_LENGTH      (sizeof(uint32_t))
-#define ARA_PID_LENGTH      (sizeof(uint32_t))
 #define EUID_LENGTH         8
 #define S2_FW_ID_LENGTH     32
 #define S2_KEY_NAMELENGTH   96
@@ -65,8 +69,6 @@ typedef enum {
 } shared_function_index;
 
 #define COMMUNICATION_AREA_DATA_FIELDS \
-    uint32_t ara_vid; \
-    uint32_t ara_pid; \
     void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
     unsigned char endpoint_unique_id[EUID_LENGTH]; \
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \
