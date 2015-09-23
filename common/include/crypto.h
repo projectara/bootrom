@@ -37,13 +37,6 @@
 
 #define ALGORITHM_TYPE_RSA2048_SHA256 0x01
 
-typedef enum {
-    CRYPTO_STATE_INIT,
-    CRYPTO_STATE_HASHING,
-    CRYPTO_STATE_HASHED,
-    CRYPTO_STATE_VERIFIED
-} crypto_processing_state;
-
 typedef struct {
     uint32_t type;
     char key_name[96];

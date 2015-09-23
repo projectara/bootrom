@@ -69,12 +69,11 @@ void chip_init(void) {
 
 extern char _workram_start;
 extern char _bootrom_data_area, _bootrom_text_area;
-/*** TODO: Possibly subsumed by tftf validation */
 int chip_validate_data_load_location(void *base, uint32_t length) {
     if ((uint32_t)base < (uint32_t)&_workram_start) {
         return -1;
     }
-#if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
+#if (CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3) && (BOOT_STAGE == 1)
     if ((uint32_t)base + length >= (uint32_t)&_bootrom_data_area) {
 #else
     if ((uint32_t)base + length >= (uint32_t)&_bootrom_text_area) {

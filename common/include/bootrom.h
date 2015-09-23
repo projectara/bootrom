@@ -63,7 +63,6 @@ typedef struct {
 #define EUID_LENGTH         8
 #define S2_FW_ID_LENGTH     32
 #define S2_KEY_NAMELENGTH   96
-#define S2_FW_DESC_LENGTH   64
 #define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
 
 typedef enum {
@@ -75,13 +74,13 @@ typedef enum {
     NUMBER_OF_SHARED_FUNCTIONS
 } shared_function_index;
 
-/*** TODO: Add the hash from the image load  to the comm. area */
 #define COMMUNICATION_AREA_DATA_FIELDS \
     void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
     unsigned char endpoint_unique_id[EUID_LENGTH]; \
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \
     char stage_2_validation_key_name[S2_KEY_NAMELENGTH]; \
-    char stage_2_firmware_description[S2_FW_DESC_LENGTH]; \
+    char build_timestamp[16]; \
+    char firmware_package_name[48]; \
     resume_communication_area resume_data
 
 typedef struct {

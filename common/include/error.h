@@ -63,11 +63,12 @@ extern uint32_t br_errno;
 #define BRE_TFTF_VIDPID_MISMATCH    ((uint32_t)(BRE_TFTF_BASE + 7))
 #define BRE_TFTF_COMPRESSION_UNSUPPORTED    ((uint32_t)(BRE_TFTF_BASE + 8))
 #define BRE_TFTF_COMPRESSION_BAD    ((uint32_t)(BRE_TFTF_BASE + 9))
-#define BRE_TFTF_SECTION_AFTER_SIGNATURE    ((uint32_t)(BRE_TFTF_BASE + 10))
+#define BRE_TFTF_HASHED_SECTION_AFTER_UNHASHED    ((uint32_t)(BRE_TFTF_BASE + 10))
 #define BRE_TFTF_HEADER_TYPE        ((uint32_t)(BRE_TFTF_BASE + 11))
 #define BRE_TFTF_COLLISION          ((uint32_t)(BRE_TFTF_BASE + 12))
 #define BRE_TFTF_START_NOT_IN_CODE  ((uint32_t)(BRE_TFTF_BASE + 13))
 #define BRE_TFTF_IMAGE_CORRUPTED    ((uint32_t)(BRE_TFTF_BASE + 14))
+#define BRE_TFTF_LOAD_DATA          ((uint32_t)(BRE_TFTF_BASE + 15))
 
 #define BRE_FFFF_BASE               ((uint32_t)0x000040)
 #define BRE_FFFF_LOAD_HEADER        ((uint32_t)(BRE_FFFF_BASE + 0))
@@ -85,6 +86,7 @@ extern uint32_t br_errno;
 #define BRE_FFFF_ELT_ALIGNMENT          ((uint32_t)(BRE_FFFF_BASE + 12))
 #define BRE_FFFF_ELT_COLLISION          ((uint32_t)(BRE_FFFF_BASE + 13))
 #define BRE_FFFF_ELT_DUPLICATE          ((uint32_t)(BRE_FFFF_BASE + 14))
+#define BRE_FFFF_LOGIC_ERROR            ((uint32_t)(BRE_FFFF_BASE + 15))
 
 #define BRE_CRYPTO_BASE             ((uint32_t)0x000060)
 

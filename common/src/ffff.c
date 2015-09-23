@@ -290,19 +290,6 @@ static int locate_element(data_load_ops *ops,
         return -1;
     }
 
-    /*** TODO: Eliminate this validation or merge into validation suite */
-    /* validate the element */
-    if (ffff.cur_element->element_location <
-        (ffff.cur_header->header_size << 1)) {
-        set_last_error(BRE_FFFF_MEMORY_RANGE);
-        return -1;
-    }
-    if (ffff.cur_element->element_location + ffff.cur_element->element_length >
-        ffff.cur_header->flash_image_length) {
-        set_last_error(BRE_FFFF_MEMORY_RANGE);
-        return -1;
-    }
-
     if (length != NULL) {
         *length = ffff.cur_element->element_length;
     }
@@ -313,7 +300,7 @@ int locate_ffff_element_on_storage(data_load_ops *ops,
                                    uint32_t type,
                                    uint32_t *length) {
     if (ops->read == NULL) {
-        set_last_error(BRE_FFFF_NO_FIRMWARE); /*** TODO: Change to BRE_FFFF_LOGIC_ERROR */
+        set_last_error(BRE_FFFF_LOGIC_ERROR);
         return -1;
     }
 
