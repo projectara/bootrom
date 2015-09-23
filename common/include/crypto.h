@@ -50,6 +50,9 @@ typedef struct {
     unsigned char key[PUBLIC_KEY_SIZE];
 } __attribute__ ((packed)) crypto_public_key;
 
+extern const crypto_public_key public_keys[];
+extern const uint32_t number_of_public_keys;
+
 void crypto_init(void);
 
 void hash_start(void);

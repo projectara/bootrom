@@ -110,10 +110,16 @@ CFLAGS += -I$(MANIFEST_OUTDIR)
 CFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
 AFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
 
+COBJS += $(MANIFEST_OUTDIR)/manifest.o $(MANIFEST_OUTDIR)/public_keys.o
+
 all: $(HEX)
 
-$(MANIFEST_OUTDIR)/manifest.o: $(MANIFEST_OUTDIR)/manifest.c
+$(MANIFEST_OUTDIR)/%.o: $(MANIFEST_OUTDIR)/%.c
 	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
+
+$(MANIFEST_OUTDIR)/public_keys.c: $(PUBLIC_KEYS_FILE)
+	@ echo "Use "$<" as the public keys file"
+	$(Q) cp $< $@
 
 $(MANIFEST_OUTDIR)/manifest.c: $(MANIFEST_OUTDIR)/manifest.mnfb
 	@echo "Generating manifest data..."
@@ -125,10 +131,9 @@ $(MANIFEST_OUTDIR)/manifest.mnfb: $(MANIFEST_OUTDIR)/manifest
 $(MANIFEST_OUTDIR)/manifest: $(MANIFEST_SRCDIR)/$(MANIFEST)
 	$(Q) cp $< $@
 
-$(ELF): $(MANIFEST_OUTDIR)/manifest.o $(AOBJS) $(COBJS)
+$(ELF): $(AOBJS) $(COBJS)
 	@ echo Linking $@
-	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS) \
-		$(MANIFEST_OUTDIR)/manifest.o
+	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS)
 
 $(BIN): $(ELF)
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@

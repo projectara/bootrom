@@ -44,6 +44,10 @@ endif
 MANIFEST = IID1-simple-bootrom-mnfs
 MANIFEST_SRCDIR = manifest
 
+ifeq ($(PUBLIC_KEYS_FILE), )
+	PUBLIC_KEYS_FILE = $(MANIFEST_SRCDIR)/public_keys.c
+endif
+
 CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 

@@ -29,9 +29,7 @@
 #include <stddef.h>
 #include "crypto.h"
 
-#define NUMBER_OF_PUBLIC_KEYS   1
-
-const crypto_public_key public_keys[NUMBER_OF_PUBLIC_KEYS] = {
+const crypto_public_key public_keys[] = {
     {
         .type = ALGORITHM_TYPE_RSA2048_SHA256,
         .key_name = "key1@rsa2048-sha256.projectara.com",
@@ -61,4 +59,6 @@ const crypto_public_key public_keys[NUMBER_OF_PUBLIC_KEYS] = {
         }
     },
 };
+
+const uint32_t number_of_public_keys = sizeof(public_keys)/sizeof(crypto_public_key);
 

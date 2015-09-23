@@ -32,7 +32,6 @@
 #include "tftf.h"
 #include "debug.h"
 #include "crypto.h"
-#include "public_keys.h"
 
 #include "../vendors/MIRACL/bootrom.c"
 
@@ -99,7 +98,7 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
 
     ps = (uint32_t *)&(signature->type);
 
-    for (k = 0; k < NUMBER_OF_PUBLIC_KEYS; k++) {
+    for (k = 0; k < number_of_public_keys; k++) {
         if (chip_is_key_revoked(k)) {
             dbgprintx32("Key ", k, " revoked\n");
             continue;
