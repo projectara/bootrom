@@ -35,11 +35,13 @@
 #include "debug.h"
 #include "utils.h"
 
+/* Statically allocate the CPort buffers in BufRam, 8kB each */
 struct cport cporttable[4] = {
     DECLARE_CPORT(0),  DECLARE_CPORT(1),  DECLARE_CPORT(2),  DECLARE_CPORT(3),
 };
 
-
+#define CPORT_SW_RESET_BITS 3
+/*** TODO: Cross-reference table in spec about what steps need to be done. */
 static int tsb_unipro_reset_cport(uint32_t cportid) {
     int rc;
     uint32_t result;
@@ -148,6 +150,7 @@ int tsb_unipro_init_cport(uint32_t cportid) {
 /**
  * @brief Receive a dynamically-assigned CPort identifier
  */
+/*** TODO: x-ref to ~"boot sequence document" */
 int tsb_unipro_recv_cport(uint32_t *cportid) {
     struct cport *cport;
     int rc;

@@ -35,9 +35,11 @@
 #define FFFF_HEADER_SIZE                  512
 #define FFFF_ERASE_BLOCK_SIZE_MAX         (1024 * 512)
 
+/*** TODO? The length of the sentinel value must match the sentinel size */
 #define FFFF_SENTINEL_SIZE                16
 #define FFFF_SENTINEL_VALUE               "FlashFormatForFW"
 
+/*** TODO: MAKE FFFF_MAX_ELEMENTS and FFFF_PADDING calculated by the compiler */
 #define FFFF_MAX_ELEMENTS                 19
 #define FFFF_PADDING                      16
 

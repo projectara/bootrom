@@ -50,8 +50,7 @@ extern uint32_t br_errno;
 #define BRE_EFUSE_ECC               ((uint32_t)(BRE_EFUSE_BASE + 0))
 #define BRE_EFUSE_BAD_ARA_VID       ((uint32_t)(BRE_EFUSE_BASE + 1))
 #define BRE_EFUSE_BAD_ARA_PID       ((uint32_t)(BRE_EFUSE_BASE + 2))
-#define BRE_EFUSE_BAD_SERIAL_NO     ((uint32_t)(BRE_EFUSE_BASE + 3))
-#define BRE_EFUSE_BAD_IMS           ((uint32_t)(BRE_EFUSE_BASE + 4))
+#define BRE_EFUSE_BAD_IMS           ((uint32_t)(BRE_EFUSE_BASE + 3))
 
 #define BRE_TFTF_BASE               ((uint32_t)0x000020)
 #define BRE_TFTF_LOAD_HEADER        ((uint32_t)(BRE_TFTF_BASE + 0))

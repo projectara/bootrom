@@ -69,6 +69,7 @@ void chip_init(void) {
 
 extern char _workram_start;
 extern char _bootrom_data_area, _bootrom_text_area;
+/*** TODO: Possibly subsumed by tftf validation */
 int chip_validate_data_load_location(void *base, uint32_t length) {
     if ((uint32_t)base < (uint32_t)&_workram_start) {
         return -1;
@@ -111,7 +112,7 @@ void chip_handshake_with_test_controller(void) {
  *
  * @returns Nothing.
  */
-void chip_signal_boot_status(uint32_t status) {
+void chip_handshake_boot_status(uint32_t status) {
     chip_gpio_set_value(GPIO_TEST_STATUS, status?
             GPIO_TEST_STATUS_FAIL : GPIO_TEST_STATUS_OK);
     chip_handshake_with_test_controller();

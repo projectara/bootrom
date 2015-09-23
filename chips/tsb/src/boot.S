@@ -79,6 +79,7 @@ clear_bufram_before_jump:
 
 #if BOOT_STAGE == 1
 .type exception_common_handler, %function
+/*** Tight loop will lock up the bus - a feature */
 exception_common_handler:
 	b exception_common_handler
 

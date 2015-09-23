@@ -202,7 +202,6 @@ int chip_is_key_revoked(int index) {
     return 0;
 }
 
-/* TODO: Remove after bootloader completion if not used */
 uint32_t tsb_get_scr(void) {
     return isaa_read(TSB_ISAA_SCR);
 }

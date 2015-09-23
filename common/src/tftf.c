@@ -37,6 +37,8 @@
 #include "utils.h"
 #include "error.h"
 
+/* NB. The bootloader will discard and ignore unrecognized section types */
+
 #define NEW_VALIDATION
 
 
@@ -66,6 +68,7 @@ static int load_tftf_header(data_load_ops *ops) {
     uint32_t unipro_pid = 0;
     uint32_t read_stat;
 
+    /*** TODO: Explain use of global crypto state */
     tftf.crypto_state = CRYPTO_STATE_INIT;
 
     if (ops->load(&tftf.header, TFTF_HEADER_SIZE, false)) {
@@ -117,11 +120,15 @@ static int load_tftf_header(data_load_ops *ops) {
             break;
         }
 
+        /*** TODO: Think over 1-pass/2-pass */
         if (section->section_type == TFTF_SECTION_SIGNATURE) {
             if (tftf.crypto_state == CRYPTO_STATE_INIT) {
                 uint32_t header_hash_len;
 
-                /* found the first signature block, start hashing */
+                /* Found the first section of type 0x80 and above (i.e.,
+                 * signature or certificate), start by hashing all of the
+                 * header up to but not including the first signature.
+                 */
                 hash_start();
                 tftf.crypto_state = CRYPTO_STATE_HASHING;
                 header_hash_len = (uint32_t)section - (uint32_t)&tftf.header;
@@ -175,7 +182,7 @@ static int process_tftf_section(data_load_ops *ops,
             }
             break;
         default:
-            /* For other state, nothing need to be done here */
+            /* For other state, nothing needs to be done here */
             break;
         }
         return 0;
@@ -222,6 +229,7 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
     }
 
     communication_area *p = (communication_area *)&_communication_area;
+    /*** TODO: copy 2 fields separately */
     memcpy(p->stage_2_firmware_description,
            tftf.header.build_timestamp,
            sizeof(p->stage_2_firmware_description));
@@ -300,11 +308,18 @@ bool valid_tftf_section(tftf_section_descriptor * section,
      * Convert the section limits to absolute addresses to compare against
      * absolute addresses found in the TFTF header.
      */
+    /*** TODO: Revamp for elimination of load_base and conversion of copy
+     * offset to section load address
+     */
     section_start = header->load_base + section->copy_offset;
     section_end = section_start + section->expanded_length;
     tftf_end = header->load_base + header->expanded_length;
 
     /* Does the section fall outside the overall TFTF span? */
+    /*** TODO: (a) Change to chip_validate_data_load_location for the section
+     * (start,length) instead of against the TFTF span
+     * (b) ignore the test if the section load address is -1.
+     */
     if ((section_start < header->load_base) || (section_end > tftf_end)) {
         set_last_error(BRE_TFTF_MEMORY_RANGE);
         return false;
@@ -325,6 +340,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
      *
      * Overlap is determined to be "non-disjoint" sections
      */
+    /*** TODO: Revamp for load_base elimination? */
     for (other_section = section + 1;
          ((other_section < &header->sections[TFTF_MAX_SECTIONS]) &&
           (other_section->section_type != TFTF_SECTION_SIGNATURE) &&
@@ -368,6 +384,7 @@ bool valid_tftf_header(tftf_header * header) {
     }
 
     /* Verify that the TFTF fits in available memory */
+    /*** TODO: Eliminate this test block when load base goes away */
     if (chip_validate_data_load_location((void *)header->load_base,
                                          header->expanded_length)) {
         set_last_error(BRE_TFTF_MEMORY_RANGE);

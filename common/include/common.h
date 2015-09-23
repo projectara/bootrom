@@ -28,6 +28,8 @@
 
 #ifndef __COMMON_H
 #define __COMMON_H
+#include <stdint.h>
+#include <stdbool.h>
 
 /*****TBD: temporary #define's for testing/bringup: *****/
 
@@ -42,5 +44,16 @@
  *  from untrusted images
  */
 /* #define DISABLE_JTAG_FOR_UNTRUSTED_IMAGES */
+
+/**
+ * @brief Wrapper to set the boot status and stop
+ *
+ * This is a terminal execution node. All passengers must disembark
+ *
+ * @param errno A BRE_xxx error code to save
+ * @param push_dme If true, publish the boot status via DME variable
+ * (Use "false" if calling from chip_advertise_boot_status())
+ */
+void halt_and_catch_fire(uint32_t boot_status, bool push_dme);
 
 #endif /* __COMMON_H */

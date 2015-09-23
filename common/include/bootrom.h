@@ -68,6 +68,7 @@ typedef enum {
     NUMBER_OF_SHARED_FUNCTIONS
 } shared_function_index;
 
+/*** TODO: Add the hash from the image load  to the comm. area */
 #define COMMUNICATION_AREA_DATA_FIELDS \
     void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
     unsigned char endpoint_unique_id[EUID_LENGTH]; \

@@ -584,6 +584,7 @@
 
 #define TSB_MAXSEGMENTCONFIG        0xd089
 
+/*** TODO: Split this file here! (Toshiba above, Firmware below), rename tsb_unipro.h */
 #define CPORT_BUF_SIZE            (0x2000U)
 #define CPORT_RX_BUF_BASE         (0x20000000U)
 #define CPORT_RX_BUF_SIZE         (CPORT_BUF_SIZE)

@@ -31,16 +31,21 @@
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "chipapi.h"
+#include "common.h"
 
 /**
  * @brief advertise the boot status
  * @param boot_status
  * @param result_code destination for advertisement result
- * @return 0 on success, <0 on error
+ * @return nothing (will call halt_and_catch_fire if unable to write boot
+ *         status
  */
-int chip_advertise_boot_status(uint32_t boot_status, uint32_t *result_code) {
-    return chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                                  ATTR_LOCAL, result_code);
+void chip_advertise_boot_status(uint32_t boot_status) {
+    uint32_t result_code;
+    if (chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
+                                  ATTR_LOCAL, &result_code) != 0) {
+        halt_and_catch_fire(boot_status, false);
+    }
 }
 
 /**

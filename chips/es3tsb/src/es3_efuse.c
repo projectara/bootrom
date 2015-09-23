@@ -49,9 +49,15 @@
 
 
 /* Mask values used by "count_ones" */
-#define MASK_1S     ((uint8_t)0x55) /* binary: 0101... */
-#define MASK_2S     ((uint8_t)0x33) /* binary: 00110011.. */
-#define MASK_4S     ((uint8_t)0x0f) /* binary:  4 zeros,  4 ones ... */
+#define MASK8_1S    ((uint8_t)0x55) /* binary: 0101... */
+#define MASK8_2S    ((uint8_t)0x33) /* binary: 00110011.. */
+#define MASK8_4S    ((uint8_t)0x0f) /* binary:  4 zeros,  4 ones ... */
+
+#define MASK32_1S   ((uint32_t)0x55555555) /* binary: 0101... */
+#define MASK32_2S   ((uint32_t)0x33333333) /* binary: 00110011.. */
+#define MASK32_4S   ((uint32_t)0x0f0f0f0f) /* binary:  4 zeros,  4 ones ... */
+#define MASK32_8S   ((uint32_t)0x00ff00ff) /* binary:  8 zeros,  8 ones ... */
+#define MASK32_16S  ((uint32_t)0x0000ffff) /* binary:  16 zeros, 16 ones ... */
 
 
 union large_uint {
@@ -62,8 +68,8 @@ union large_uint {
   uint64_t quad;
 };
 
-
-static union large_uint serial_number;
+static uint32_t         ara_vid;
+static uint32_t         ara_pid;
 static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
 
 #define IMS_LENGTH  35
@@ -132,15 +138,6 @@ int efuse_init(void) {
         return -1;
     }
 
-    serial_number.quad = tsb_get_serial_no();
-    if (!valid_hamming_weight((uint8_t *)&serial_number,
-                              sizeof(serial_number))) {
-        dbgprintx64("efuse_init: Invalid serial number: ",
-                    serial_number.quad, "\n");
-        set_last_error(BRE_EFUSE_BAD_SERIAL_NO);
-        return -1;
-    }
-
     /* Extract Internal Master Secret (IMS) from e­-Fuse, and if it is
      * non-zero, compute the Endpoint Unique ID
      */
@@ -155,7 +152,7 @@ int efuse_init(void) {
             return -1;
         }
     } else {
-        /*****/dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\n");
+        dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\n");
         chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
                                ATTR_LOCAL, &dme_write_result);
         chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
@@ -168,9 +165,6 @@ int efuse_init(void) {
 
 
 void efuse_rig_for_untrusted(void) {
-#ifdef DISABLE_JTAG_FOR_UNTRUSTED_IMAGES
-    tsb_jtag_disable();
-#endif
     /* TA-21 Lock function with register (IMS, CMS) */
     tsb_disable_ims_access();
     tsb_disable_cms_access();
@@ -188,19 +182,46 @@ void efuse_rig_for_untrusted(void) {
 static int count_ones(uint8_t *buf, int len)
 {
     uint8_t     x;
+    uint32_t    x32;
+    uint32_t *  buf32 = (uint32_t *) buf;
     int         count = 0;
 
+    /* Process in 4-byte chunks as far as possible */
+    while (len >= 4) {
+        x32 = *buf32++;
+
+        /* put count of each 2 bits into those 2 bits */
+        x32 = (x32 & MASK32_1S) + ((x32 >> 1) & MASK32_1S);
+
+        /* put count of each 4 bits into those 4 bits */
+        x32 = (x32 & MASK32_2S) + ((x32 >> 2) & MASK32_2S);
+
+        /* put count of each 8 bits into those 8 bits */
+        x32 = (x32 & MASK32_4S) + ((x32 >> 4) & MASK32_4S);
+
+        /* put count of each 16 bits into those 16 bits */
+        x32 = (x32 & MASK32_8S) + ((x32 >> 8) & MASK32_8S);
+
+        /* put count of each 16 bits into those 16 bits */
+        x32 = (x32 + (x32 >> 16)) & MASK32_16S;
+
+        count += x32;
+        len -= 4;
+    }
+
+    /* Process any remaining bytes one at a time */
+    buf = (uint8_t *)buf32;
     while (len > 0) {
         x = *buf++;
 
         /* put count of each 2 bits into those 2 bits */
-        x -= (x >> 1) & MASK_1S;
+        x -= (x >> 1) & MASK8_1S;
 
         /* put count of each 4 bits into those 4 bits */
-        x = (x & MASK_2S) + ((x >> 2) & MASK_2S);
+        x = (x & MASK8_2S) + ((x >> 2) & MASK8_2S);
 
         /* put count of each 8 bits into those 8 bits */
-        x = (x + (x >> 4)) & MASK_4S;
+        x = (x + (x >> 4)) & MASK8_4S;
 
         count += x;
         len--;
@@ -292,6 +313,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             unsigned char temp;
 
             hash_start();
+            /*** TODO: grab IMS 4bytes at a time and feed that to hash_update */
             for (i = 0; i < 16; i++) {
                 temp = ims_value[i] ^ 0x3d;
                 hash_update(&temp, 1);

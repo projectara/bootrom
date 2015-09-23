@@ -40,6 +40,13 @@
 #include "gbfirmware.h"
 #include "crypto.h"
 
+/*** TODO: Rename file - this bridge boot protocol, not a general firmware protocol
+ *  "firmware pull protocol"?
+ */
+
+/* We are receiving a firmware package in TFTF format, and not a raw firmware
+ * binary
+ */
 /* Greybus FirmWare protocol version we support */
 #define GB_FIRMWARE_VERSION_MAJOR   0x00
 #define GB_FIRMWARE_VERSION_MINOR   0x01
@@ -329,7 +336,9 @@ static int data_load_greybus_load(void *dest, uint32_t length, bool hash) {
         return GB_FW_ERR_INVALID;
     }
 
+    /*** TODO: Add compiler assertion that GB_MAX_PAYLOAD_SIZE is smaller than the buffer */
     while (length) {
+        /*** TODO: Add comment explaining reasoning */
         blk_len = (length > GB_MAX_PAYLOAD_SIZE) ? GB_MAX_PAYLOAD_SIZE : length;
         rc = gbfw_get_firmware(offset, blk_len, dest, prev, prev_len);
         if (rc) {

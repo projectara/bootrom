@@ -67,6 +67,12 @@ bool valid_ffff_element(ffff_element_descriptor * element,
     uint32_t that_start;
     uint32_t that_end;
 
+    /*
+     * Because we don't *know* the real length of the Flash, it is possible to
+     * read past the end of the flash (which simply wraps around). This is benign
+     * because the resulting mess will not validate.
+     */
+
     /* Is this the end-of-table marker? */
     if (element->element_type == FFFF_ELEMENT_END) {
         *end_of_elements = true;
@@ -89,17 +95,18 @@ bool valid_ffff_element(ffff_element_descriptor * element,
     }
 
     /*
-     * Check this element for collisions against all following sections and
-     * for duplicates of this element.
+     * Check this element for:
+     *   a) collisions against all following sections and
+     *   b) duplicates of this element.
      * Since we're called in a scanning fashion from the start to the end of
      * the elements array, all elements before us have already validated that
-     * they don't duplcate or collide with us.
+     * they don't duplicate or collide with us.
      */
     for (other_element = element + 1;
          ((other_element < &header->elements[FFFF_MAX_ELEMENTS]) &&
           (other_element->element_type != FFFF_ELEMENT_END));
          other_element++) {
-        /* check for collision */
+        /* (a) check for collision */
         that_start = other_element->element_location;
         that_end = that_start + other_element->element_length - 1;
         if ((that_end >= this_start) && (that_start <= this_end)) {
@@ -109,7 +116,7 @@ bool valid_ffff_element(ffff_element_descriptor * element,
 
 
         /*
-         * Check for other duplicate entries per the specification:
+         * (b) Check for  duplicate entries per the specification:
          * "At most, one element table entry with a particular element type,
          * element ID, and element generation may be present in the element
          * table."
@@ -198,10 +205,11 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
 
 static int locate_ffff_table(data_load_ops *ops)
 {
-    uint32_t address = 0;//FFFF_HEADER_SIZE;
+    uint32_t address = 0;
 
     ffff.cur_header = &ffff.header1;
 
+    /*** TODO: Fix wording */
     /* First look for header at beginning of the storage */
     if (ops->read(&ffff.header1, address, sizeof(ffff_header))) {
         set_last_error(BRE_FFFF_LOAD_HEADER);
@@ -282,6 +290,7 @@ static int locate_element(data_load_ops *ops,
         return -1;
     }
 
+    /*** TODO: Eliminate this validation or merge into validation suite */
     /* validate the element */
     if (ffff.cur_element->element_location <
         (ffff.cur_header->header_size << 1)) {
@@ -304,7 +313,7 @@ int locate_ffff_element_on_storage(data_load_ops *ops,
                                    uint32_t type,
                                    uint32_t *length) {
     if (ops->read == NULL) {
-        set_last_error(BRE_FFFF_NO_FIRMWARE);
+        set_last_error(BRE_FFFF_NO_FIRMWARE); /*** TODO: Change to BRE_FFFF_LOGIC_ERROR */
         return -1;
     }
 

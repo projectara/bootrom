@@ -56,7 +56,7 @@ static inline void chip_gpio_direction_out(uint8_t which, uint8_t value) {}
 
 #if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
 void chip_handshake_with_test_controller(void);
-void chip_signal_boot_status(uint32_t status);
+void chip_handshake_boot_status(uint32_t status);
 #endif
 
 int chip_validate_data_load_location(void *base, uint32_t length);
@@ -131,9 +131,10 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler);
  * @brief advertise the boot status to the switch
  * @param boot_status
  * @param result_code destination for advertisement result
- * @return 0 on success, <0 on error
+ * @return nothing (will call halt_and_catch_fire if unable to write boot
+ *         status
  */
-int chip_advertise_boot_status(uint32_t boot_status, uint32_t *result_code);
+void chip_advertise_boot_status(uint32_t boot_status);
 
 /**
  * @brief advertise the boot type to the switch

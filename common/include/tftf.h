@@ -34,10 +34,11 @@
 #include "data_loading.h"
 
 #define TFTF_HEADER_SIZE                  512
+/*** TODO: MAKE TFTF_MAX_SECTIONS calculated by the compiler */
 #define TFTF_MAX_SECTIONS                 25
 
 /**
- * @brief TFTF Sentinal value "TFTF"
+ * @brief TFTF Sentinel value "TFTF"
  *
  * Note: string must be in reverse order so that it looks OK on a little-
  * endian dump.
@@ -54,6 +55,9 @@
 #define TFTF_SECTION_SIGNATURE            0x80
 #define TFTF_SECTION_CERTIFICATE          0x81
 
+/*** TODO: Section type values are Byte, but field is DWORD. rationalize this, perhaps
+ * use the 3 "padding" bytes for section_id. (rationalize field order with ffff element)
+ */
 typedef struct {
     uint32_t section_length;
     uint32_t expanded_length;

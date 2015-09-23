@@ -217,6 +217,11 @@ int control_cport_handler(uint32_t cportid,
                           size_t len)
 {
     int rc = 0;
+
+    /* If the message is longer than the buffer, it will have been rejected by the Rx function
+     * If the message is shorter than the buffer but longer than the specific message type,
+     * the remainder of the buffer is silently and benignly ignored.
+     * */
     if (len < sizeof(gb_operation_header)) {
         dbgprint("control_cport_handler: RX data length error\r\n");
         return -1;
@@ -244,6 +249,7 @@ int control_cport_handler(uint32_t cportid,
         rc = gbctrl_disconnected(cportid, op_header);
         break;
     default:
+        /*** TODO: Do we treat this as an error, or explicitly ignore it? */
         break;
     }
 

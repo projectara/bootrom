@@ -48,6 +48,8 @@ extern data_load_ops greybus_ops;
 
 uint32_t br_errno;
 
+uint32_t merge_errno_with_boot_status(uint32_t boot_status);
+
 
 /**
  * @brief Bootloader "C" entry point
@@ -62,10 +64,8 @@ void bootrom_main(void) {
     uint32_t    boot_status = INIT_STATUS_OPERATING;
     uint32_t    register_val;
     bool        boot_from_spi = true;
-#ifdef BOOT_OVER_UNIPRO
     bool        fallback_boot_unipro = false;
-#endif
-    uint32_t is_secure_image;
+    uint32_t    is_secure_image;
 
     /* Ensure that we start each boot with an assumption of success */
     init_last_error();
@@ -85,7 +85,7 @@ void bootrom_main(void) {
     dbgprint("Hello world from s3fw\n");
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating success */
-    chip_signal_boot_status(0);
+    chip_handshake_boot_status(0);
 #endif
     /* Our work is done */
     while(1);
@@ -94,8 +94,7 @@ void bootrom_main(void) {
     chip_unipro_init();
 
     /* Advertise our boot status */
-    chip_advertise_boot_status(boot_status, &dme_write_result);
-
+    chip_advertise_boot_status(boot_status);
     /* Advertise our initialization type */
     chip_advertise_boot_type(&dme_write_result);
 
@@ -103,34 +102,32 @@ void bootrom_main(void) {
      * Validate and make available e-fuse information (it handles error
      * reporting). Note that an error here is unrecoverable.
      */
-    if (0 != efuse_init()) {
-        goto halt_and_catch_fire;
+    if (efuse_init() != 0) {
+        halt_and_catch_fire(boot_status, true);
     }
 
+    /* determine if we're booting from flash or unipro */
     register_val = tsb_get_bootselector();
 #ifndef BOOT_OVER_UNIPRO
     register_val = 0;
 #endif
    /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
-   if ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0) {
-        boot_from_spi = true;
-    } else {
-        boot_from_spi = false;
-    }
+    boot_from_spi = ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0);
     if (boot_from_spi) {
         dbgprint("Boot from SPIROM\n");
 
         spi_ops.init();
 
         /**
-         * Call locate_ffff_element_on_stage to locate next stage FW.
+         * Call locate_ffff_element_on_storage to locate next stage FW.
          * Do not care about the image length here so pass NULL.
          * The element type of next stage FW defined in FFFF happens to be
          * the same as BOOT_STAGE
          */
+        /*** TODO: Change 2nd param to element type, not BOOT_STAGE - depends on splitting l2fw start */
         if (locate_ffff_element_on_storage(&spi_ops, BOOT_STAGE, NULL) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
-            chip_advertise_boot_status(boot_status, &dme_write_result);
+            chip_advertise_boot_status(boot_status);
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
                 spi_ops.finish(true, is_secure_image);
                 if (is_secure_image) {
@@ -141,13 +138,13 @@ void bootrom_main(void) {
                     boot_status = INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED;
 
                     /*
-                     *  Disable JTAG, IMS, CMS access before starting
-                     * untrusted image
+                     *  Disable IMS, CMS access before starting untrusted image.
+                     *  NB. JTAG continues to be not enabled at this point
                      */
                     efuse_rig_for_untrusted();
                 }
                 /* Log that we're starting the boot-from-SPIROM */
-                chip_advertise_boot_status(boot_status, &dme_write_result);
+                chip_advertise_boot_status(boot_status);
                 /* TA-16 jump to SPI code (BOOTRET_o = 0 && SPIBOOT_N = 0) */
                 jump_to_image();
             }
@@ -155,38 +152,39 @@ void bootrom_main(void) {
         /*****/dbgprint("No image\n");
         spi_ops.finish(false, false);
 
-#ifdef BOOT_OVER_UNIPRO
         /* Fallback to UniPro boot */
         boot_from_spi = false;
-        fallback_boot_unipro = false;
+        fallback_boot_unipro = true;
 
     } else {
-        fallback_boot_unipro = true;
-#endif
+        /* (Not boot-from-spi, */
+        fallback_boot_unipro = false;
     }
 
-#ifdef BOOT_OVER_UNIPRO
-    /* Boot-Over-UniPro if directed to do so or as a fallback for a failed
-     * SPIROM boot.
+    /* Boot-Over-UniPro...
+     * We get here if directed to do so by the bootselector, or as a fallback
+     * for a failed SPIROM boot.
      */
     if (!boot_from_spi) {
-        int         status = 0;
-
-        /* Boot over Uniprom */
+       /* Boot over Unipro */
+        if (fallback_boot_unipro) {
+            boot_status = merge_errno_with_boot_status(
+                            INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED);
+            dbgprintx32("Spi boot failed (", boot_status, "), ");
+        } else {
+            boot_status = INIT_STATUS_UNIPRO_BOOT_STARTED;
+        }
+        chip_advertise_boot_status(boot_status);
         dbgprint("Boot over UniPro\n");
-        boot_status = fallback_boot_unipro?
-                INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED :
-                INIT_STATUS_UNIPRO_BOOT_STARTED;
-        chip_advertise_boot_status(boot_status, &dme_write_result);
         advertise_ready();
         dbgprint("Ready-poked; download-ready\n");
-        status = greybus_ops.init();
-        if (status)
-            goto halt_and_catch_fire;
+        if (greybus_ops.init() != 0) {
+            halt_and_catch_fire(boot_status, true);
+        }
         if (!load_tftf_image(&greybus_ops, &is_secure_image)) {
-            status = greybus_ops.finish(true, is_secure_image);
-            if (status)
-                goto halt_and_catch_fire;
+            if (greybus_ops.finish(true, is_secure_image) != 0) {
+                halt_and_catch_fire(boot_status, true);
+            }
             if (is_secure_image) {
                 dbgprint("Trusted image\r\n");
                 boot_status = fallback_boot_unipro ?
@@ -207,32 +205,65 @@ void bootrom_main(void) {
             /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
             jump_to_image();
         }
-        status = greybus_ops.finish(false, is_secure_image);
+        if (greybus_ops.finish(false, is_secure_image) != 0) {
+            halt_and_catch_fire(boot_status, true);
+        }
     }
-#endif
+
+    /* If we reach here, we didn't find an image to boot - stop while we're
+     * ahead...
+     */
+    halt_and_catch_fire(boot_status, true);
+}
 
 
-    /* Failure */
-halt_and_catch_fire:
+/**
+ * @brief Merge the bootrom "errno" and the boot status
+ *
+ *
+ * @param boot_status The boot_status to push out to the DME variable
+ * @return The merged boot_status variable
+ */
+uint32_t merge_errno_with_boot_status(uint32_t boot_status) {
     /* Since the boot has failed, add in the "boot failed" bit and the
      * global bootrom "errno", containing the details of the failure to
      * whatever boot status we've reached thus far, publish it via DME
      * and stop.
      */
-    boot_status = (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
-                   (get_last_error() & INIT_STATUS_ERROR_CODE_MASK) |
-                   INIT_STATUS_FAILED;
+    return (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
+           (get_last_error() & INIT_STATUS_ERROR_CODE_MASK);
+}
+
+
+/**
+ * @brief Wrapper to set the boot status and stop
+ *
+ * This is a terminal execution node. All passengers must disembark
+ *
+ * @param errno A BRE_xxx error code to save
+ * @param push_dme If true, publish the boot status via DME variable
+ * (Use "false" if calling from chip_advertise_boot_status())
+ */
+void halt_and_catch_fire(uint32_t boot_status, bool push_dme) {
+    /* Since the boot has failed, add in the "boot failed" bit and the
+     * global bootrom "errno", containing the details of the failure to
+     * whatever boot status we've reached thus far, publish it via DME
+     * and stop.
+     */
+    boot_status = merge_errno_with_boot_status(boot_status) |
+                  INIT_STATUS_FAILED;
     dbgprintx32("Boot failed (", boot_status, ") halt\n");
-    chip_advertise_boot_status(boot_status, &dme_write_result);
+    if (push_dme) {
+        chip_advertise_boot_status(boot_status);
+    }
 
 #if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
     /*
      * Indicate failure with GPIO 18 showing a '1' and execute a handshake
      * cycle on GPIO 16,17
      */
-    chip_signal_boot_status(boot_status);
+    chip_handshake_boot_status(boot_status);
 #endif
-    /* TODO: Change from while(1); to WFI? */
     while(1);
 }
 
