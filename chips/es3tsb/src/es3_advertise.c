@@ -32,6 +32,9 @@
 #include "tsb_unipro.h"
 #include "chipapi.h"
 #include "common.h"
+#include "bootrom.h"
+
+uint32_t boot_status_offline = 0;
 
 /**
  * @brief advertise the boot status
@@ -41,10 +44,21 @@
  *         status
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
-    uint32_t result_code;
-    if (chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                                  ATTR_LOCAL, &result_code) != 0) {
-        halt_and_catch_fire(boot_status, false);
+    int status = 0;
+    uint32_t result_code = 0;
+
+    status = chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
+                                    ATTR_LOCAL, &result_code);
+    /*
+     * Being unable to write the DME value is regarded as a catastrophic failure.
+     */
+    if ((status != 0) || (result_code != 0)) {
+        /*
+         * Set this flag so that halt_and_catch_fire doesn't try to
+         * recursively call us to advertise the boot status.
+         */
+        boot_status_offline = true;
+        halt_and_catch_fire(boot_status);
     }
 }
 

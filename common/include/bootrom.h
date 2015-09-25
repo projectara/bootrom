@@ -37,6 +37,13 @@
  */
 extern uint32_t ara_vid;
 extern uint32_t ara_pid;
+/* This is set to non-zero if chip_advertise_boot_status can't write to DME) */
+extern uint32_t boot_status_offline;
+
+
+/*
+ * Communication area definition:
+ */
 
 typedef struct {
     uint32_t jtag_disabled;

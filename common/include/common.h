@@ -51,9 +51,7 @@
  * This is a terminal execution node. All passengers must disembark
  *
  * @param errno A BRE_xxx error code to save
- * @param push_dme If true, publish the boot status via DME variable
- * (Use "false" if calling from chip_advertise_boot_status())
  */
-void halt_and_catch_fire(uint32_t boot_status, bool push_dme);
+void halt_and_catch_fire(uint32_t boot_status);
 
 #endif /* __COMMON_H */

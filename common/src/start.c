@@ -32,6 +32,7 @@
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
 #include "common.h"
+#include "bootrom.h"
 #include "error.h"
 #include "efuse.h"
 #include "unipro.h"
@@ -103,7 +104,7 @@ void bootrom_main(void) {
      * reporting). Note that an error here is unrecoverable.
      */
     if (efuse_init() != 0) {
-        halt_and_catch_fire(boot_status, true);
+        halt_and_catch_fire(boot_status);
     }
 
     /* determine if we're booting from flash or unipro */
@@ -179,11 +180,11 @@ void bootrom_main(void) {
         advertise_ready();
         dbgprint("Ready-poked; download-ready\n");
         if (greybus_ops.init() != 0) {
-            halt_and_catch_fire(boot_status, true);
+            halt_and_catch_fire(boot_status);
         }
         if (!load_tftf_image(&greybus_ops, &is_secure_image)) {
             if (greybus_ops.finish(true, is_secure_image) != 0) {
-                halt_and_catch_fire(boot_status, true);
+                halt_and_catch_fire(boot_status);
             }
             if (is_secure_image) {
                 dbgprint("Trusted image\r\n");
@@ -206,14 +207,14 @@ void bootrom_main(void) {
             jump_to_image();
         }
         if (greybus_ops.finish(false, is_secure_image) != 0) {
-            halt_and_catch_fire(boot_status, true);
+            halt_and_catch_fire(boot_status);
         }
     }
 
     /* If we reach here, we didn't find an image to boot - stop while we're
      * ahead...
      */
-    halt_and_catch_fire(boot_status, true);
+    halt_and_catch_fire(boot_status);
 }
 
 
@@ -244,7 +245,7 @@ uint32_t merge_errno_with_boot_status(uint32_t boot_status) {
  * @param push_dme If true, publish the boot status via DME variable
  * (Use "false" if calling from chip_advertise_boot_status())
  */
-void halt_and_catch_fire(uint32_t boot_status, bool push_dme) {
+void halt_and_catch_fire(uint32_t boot_status) {
     /* Since the boot has failed, add in the "boot failed" bit and the
      * global bootrom "errno", containing the details of the failure to
      * whatever boot status we've reached thus far, publish it via DME
@@ -253,7 +254,7 @@ void halt_and_catch_fire(uint32_t boot_status, bool push_dme) {
     boot_status = merge_errno_with_boot_status(boot_status) |
                   INIT_STATUS_FAILED;
     dbgprintx32("Boot failed (", boot_status, ") halt\n");
-    if (push_dme) {
+    if (!boot_status_offline) {
         chip_advertise_boot_status(boot_status);
     }
 
