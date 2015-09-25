@@ -633,11 +633,6 @@ void tsb_unipro_write(uint32_t offset, uint32_t v);
 void tsb_unipro_restart_rx(struct cport *cport);
 
 /**
- * @brief Enable E2EFC on a specific CPort
- * @param cportid cport on which to enable End-to-End Flow Control
- */
-void tsb_enable_e2efc(uint16_t cportid);
-/**
  * @brief Disable E2EFC on all CPorts
  */
 void tsb_disable_all_e2efc(void);

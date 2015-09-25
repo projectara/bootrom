@@ -142,7 +142,6 @@ int tsb_unipro_init_cport(uint32_t cportid) {
     }
 
     tsb_unipro_restart_rx(cport);
-    tsb_enable_e2efc(cportid);
 
     return ack_mailbox();
 }
@@ -172,7 +171,6 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     }
 
     tsb_unipro_restart_rx(cport);
-    tsb_enable_e2efc(*cportid);
 
     return ack_mailbox();
 }
@@ -191,23 +189,6 @@ void tsb_unipro_restart_rx(struct cport *cport) {
     tsb_unipro_write(AHM_ADDRESS_00 + (cportid << 2), (uint32_t)cport->rx_buf);
     tsb_unipro_write(REG_RX_PAUSE_SIZE_00 + (cportid << 2),
                  RX_PAUSE_RESTART | CPORT_RX_BUF_SIZE);
-}
-
-/**
- * @brief Enable E2EFC on a specific CPort
- * @param cportid cport on which to enable End-to-End Flow Control
- */
-void tsb_enable_e2efc(uint16_t cportid) {
-    uint32_t e2efc;
-    if (cportid < 32) {
-        e2efc = tsb_unipro_read(CPB_RX_E2EFC_EN_0);
-        e2efc |= (1 << cportid);
-        tsb_unipro_write(CPB_RX_E2EFC_EN_0, e2efc);
-    } else if (cportid < CPORT_MAX) {
-        e2efc = tsb_unipro_read(CPB_RX_E2EFC_EN_1);
-        e2efc |= (1 << (cportid - 32));
-        tsb_unipro_write(CPB_RX_E2EFC_EN_1, e2efc);
-    }
 }
 
 /**
