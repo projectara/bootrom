@@ -68,8 +68,6 @@ union large_uint {
   uint64_t quad;
 };
 
-static uint32_t         ara_vid;
-static uint32_t         ara_pid;
 static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
 
 #define IMS_LENGTH  35
