@@ -43,10 +43,21 @@ extern uint32_t br_errno;
 
 #define BRE_OK                      ((uint32_t)0x000000)
 
-/* Error groups go up by 0x00000020 */
+/* These are used to divide the 24-bits of errno pushed to BOOT_STATUS */
+#define BRE_L1_FW_MASK              0x000000ff
+#define BRE_L2_FW_MASK              0x0000ff00
+#define BRE_L3_FW_MASK              0x00ff0000
+#define BRE_L1_FW_SHIFT             0
+#define BRE_L2_FW_SHIFT             8
+#define BRE_L3_FW_SHIFT             16
+
+/*
+ * Level 1 Firmware error codes
+ * (Error groups go up by 0x00000020)
+ */
 #define BRE_GROUP_MASK              0x0000e0
 
-#define BRE_EFUSE_BASE              0x000010
+#define BRE_EFUSE_BASE              (0x000010)
 #define BRE_EFUSE_ECC               ((uint32_t)(BRE_EFUSE_BASE + 0))
 #define BRE_EFUSE_BAD_ARA_VID       ((uint32_t)(BRE_EFUSE_BASE + 1))
 #define BRE_EFUSE_BAD_ARA_PID       ((uint32_t)(BRE_EFUSE_BASE + 2))
@@ -94,6 +105,23 @@ extern uint32_t br_errno;
 
 #define BRE_CRYPTO_BASE             ((uint32_t)0x000060)
 
+
+/*
+ * Level 2 Firmware error codes
+ * (Note that these will be automatically shifted into the correct bit-field
+ * by "set_last_error". Do not pre-shift them in your definitions!)
+ */
+/* TBD */
+
+
+/*
+ * Level 3 Firmware error codes
+ * (Note that these will be automatically shifted into the correct bit-field
+ * by "set_last_error". Do not pre-shift them in your definitions!)
+ */
+/* TBD */
+
+
 /* Syntactic sugar */
 #define reset_last_error()  init_last_error()
 
@@ -109,7 +137,17 @@ extern uint32_t br_errno;
  * @brief Bootloader-specific "set-errno" wrapper initializer
  */
 static inline void init_last_error(void) {
+    /*
+     * 1st level fw will erase all erro fields. Subsequent levels
+     * will only erase their level's field.
+     */
+#if BOOT_STAGE == 1
     br_errno = BRE_OK;
+#elif BOOT_STAGE == 2
+    br_errno &= ~BRE_L2_FW_MASK;
+#elif BOOT_STAGE == 3
+    br_errno &= ~BRE_L3_FW_MASK;
+#endif
 }
 
 

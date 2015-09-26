@@ -97,6 +97,18 @@ void dbgprinthex8(uint8_t num) {
 }
 
 /**
+ * @brief Print out a 16-bit unsigned integer in hex
+ *
+ * @param num The number to display
+ *
+ * @returns Nothing
+ */
+void dbgprinthex16(uint16_t num) {
+    dbgprinthex8((uint8_t)(num >> 8));
+    dbgprinthex8((uint8_t)(num & 0x0ff));
+}
+
+/**
  * @brief Print out a 32-bit unsigned integer in hex
  *
  * @param num The number to display
@@ -128,6 +140,21 @@ void dbgprinthex64(uint64_t num) {
         byte_value = (num >> (byte << 3)) & 0x0ff;
         dbgprinthex8(byte_value);
     }
+}
+
+/**
+ * @brief Print out a message containing a 16-bit unsigned integer
+ *
+ * @param s1 The optional string to issue before the number.
+ * @param num The number to display
+ * @param s2 The optional string to issue after the number.
+ *
+ * @returns Nothing
+ */
+void dbgprintx16(char * s1, uint16_t num, char * s2) {
+    dbgprint(s1);
+    dbgprinthex16(num);
+    dbgprint(s2);
 }
 
 /**

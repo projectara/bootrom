@@ -79,16 +79,17 @@ void bootrom_main(void) {
 
 #if BOOT_STAGE == 1
     set_shared_function(SHARED_FUNCTION_ENTER_STANDBY, chip_enter_standby);
-    dbgprint("Hello world from s1fw\n");
+    dbgprint("\nHello world from s1fw\n");
 #elif BOOT_STAGE == 2
-    dbgprint("Hello world from s2fw\n");
+    dbgprint("\nHello world from s2fw\n");
 #elif BOOT_STAGE == 3
-    dbgprint("Hello world from s3fw\n");
+    dbgprint("\nHello world from s3fw\n");
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating success */
     chip_handshake_boot_status(0);
 #endif
     /* Our work is done */
+    dbgprint("s3fw done - spin\n");
     while(1);
 #endif
 
@@ -135,11 +136,15 @@ void bootrom_main(void) {
             if (!load_tftf_image(&spi_ops, &is_secure_image)) {
                 spi_ops.finish(true, is_secure_image);
                 if (is_secure_image) {
-                    dbgprint("Trusted image\n");
                     boot_status = INIT_STATUS_TRUSTED_SPI_FLASH_BOOT_FINISHED;
+                    dbgprintx32("SPI Trusted: (",
+                                merge_errno_with_boot_status(boot_status),
+                                ")\n");
                 } else {
-                    dbgprint("Untrusted image\n");
                     boot_status = INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED;
+                    dbgprintx32("SPI Untrusted: (",
+                                merge_errno_with_boot_status(boot_status),
+                                ")\n");
 
                     /*
                      *  Disable IMS, CMS access before starting untrusted image.
@@ -147,13 +152,13 @@ void bootrom_main(void) {
                      */
                     efuse_rig_for_untrusted();
                 }
+
                 /* Log that we're starting the boot-from-SPIROM */
                 chip_advertise_boot_status(boot_status);
                 /* TA-16 jump to SPI code (BOOTRET_o = 0 && SPIBOOT_N = 0) */
                 jump_to_image();
             }
         }
-        /*****/dbgprint("No image\n");
         spi_ops.finish(false, false);
 
         /* Fallback to UniPro boot */
@@ -180,7 +185,9 @@ void bootrom_main(void) {
             boot_status = INIT_STATUS_UNIPRO_BOOT_STARTED;
         }
         chip_advertise_boot_status(boot_status);
-        dbgprint("Boot over UniPro\n");
+        dbgprintx32("Boot over UniPro (",
+                    merge_errno_with_boot_status(boot_status),
+                    ")\n");
         advertise_ready();
         dbgprint("Ready-poked; download-ready\n");
         if (greybus_ops.init() != 0) {
@@ -191,22 +198,30 @@ void bootrom_main(void) {
                 halt_and_catch_fire(boot_status);
             }
             if (is_secure_image) {
-                dbgprint("Trusted image\r\n");
                 boot_status = fallback_boot_unipro ?
                     INIT_STATUS_FALLLBACK_TRUSTED_UNIPRO_BOOT_FINISHED :
                     INIT_STATUS_TRUSTED_UNIPRO_BOOT_FINISHED;
+                dbgprintx32("UP Trusted: (",
+                            merge_errno_with_boot_status(boot_status),
+                            ")\n");
             } else {
-                dbgprint("Untrusted image\r\n");
                 boot_status = fallback_boot_unipro ?
                     INIT_STATUS_FALLLBACK_UNTRUSTED_UNIPRO_BOOT_FINISHED :
                     INIT_STATUS_UNTRUSTED_UNIPRO_BOOT_FINISHED;
+                dbgprintx32("UP Trusted: (",
+                            merge_errno_with_boot_status(boot_status),
+                            ")\n");
 
                 /*
-                 *  Disable JTAG, IMS, CMS access before starting
+                 *  Disable IMS, CMS access before starting
                  * untrusted image
+                 *  NB. JTAG continues to be not enabled at this point
                  */
                 efuse_rig_for_untrusted();
             }
+
+            /* Log that we're starting the boot-from-UniPro */
+            chip_advertise_boot_status(boot_status);
             /* TA-17 jump to Workram code (BOOTRET_o = 0 && SPIM_BOOT_N = 1) */
             jump_to_image();
         }
@@ -246,8 +261,6 @@ uint32_t merge_errno_with_boot_status(uint32_t boot_status) {
  * This is a terminal execution node. All passengers must disembark
  *
  * @param errno A BRE_xxx error code to save
- * @param push_dme If true, publish the boot status via DME variable
- * (Use "false" if calling from chip_advertise_boot_status())
  */
 void halt_and_catch_fire(uint32_t boot_status) {
     /* Since the boot has failed, add in the "boot failed" bit and the
@@ -285,15 +298,44 @@ void halt_and_catch_fire(uint32_t boot_status) {
  */
 void set_last_error(uint32_t err) {
     if (br_errno == BRE_OK) {
-        uint32_t    err_group = err & BRE_GROUP_MASK;
 
-        /* Save the error */
-        br_errno = err;
-        /* Print out the error */
-        dbgprintx32((err_group == BRE_EFUSE_BASE)? "e-Fuse err: ":
-                    (err_group == BRE_TFTF_BASE)? "TFTF err: ":
-                    (err_group == BRE_FFFF_BASE)? "FFFF err: " :
-                    (err_group == BRE_CRYPTO_BASE)? "Crypto err: " : "error: ",
-                    err, "\n");
+        /* Automatically shift and mask the error based on BOOT_STAGE */
+#if BOOT_STAGE == 1
+        err = (err << BRE_L1_FW_SHIFT) & BRE_L1_FW_MASK;
+#elif BOOT_STAGE == 2
+        err = (err << BRE_L2_FW_SHIFT) & BRE_L2_FW_MASK;
+#elif BOOT_STAGE == 3
+        err = (err << BRE_L3_FW_SHIFT) & BRE_L3_FW_MASK;
+#endif
+
+        /* Save the first error in each L1,2,3 reporting zone */
+        if (err & BRE_L1_FW_MASK) {
+            /* level 1 error */
+            if ((br_errno & BRE_L1_FW_MASK) == 0) {
+                br_errno |= err & BRE_L1_FW_MASK;
+            }
+            uint32_t    err_group = err & BRE_GROUP_MASK;
+            /* Print out the error */
+            dbgprintx32((err_group == BRE_EFUSE_BASE)? "L1 e-Fuse err: ":
+                        (err_group == BRE_TFTF_BASE)? "L1 TFTF err: ":
+                        (err_group == BRE_FFFF_BASE)? "L1 FFFF err: " :
+                        (err_group == BRE_CRYPTO_BASE)? "L1 Crypto err: " :
+                                "L1 error: ",
+                                err, "\n");
+
+        } else if (err & BRE_L2_FW_MASK) {
+            /* level 2 error */
+            if ((br_errno & BRE_L2_FW_MASK) == 0) {
+                br_errno |= err & BRE_L2_FW_MASK;
+                dbgprintx32("L2 err: ", err, "\n");
+            }
+       } else  {
+            /* level 3 error */
+           if ((br_errno & BRE_L3_FW_MASK) == 0) {
+               br_errno |= err & BRE_L3_FW_MASK;
+               dbgprintx32("L3 err: ", err, "\n");
+           }
+        }
+
     }
 }
