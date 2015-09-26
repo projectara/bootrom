@@ -254,6 +254,9 @@ void halt_and_catch_fire(uint32_t boot_status) {
     boot_status = merge_errno_with_boot_status(boot_status) |
                   INIT_STATUS_FAILED;
     dbgprintx32("Boot failed (", boot_status, ") halt\n");
+    dbgflush();
+    /* NOTE: NO FURTHER DEBUG MESSAGES BETWEEN HERE AND FUNCTION END! */
+
     if (!boot_status_offline) {
         chip_advertise_boot_status(boot_status);
     }
