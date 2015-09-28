@@ -27,7 +27,7 @@
  */
 
 .syntax		unified
-.file		"standby.S"
+.file		"es3_standby.S"
 
 #include "chipdef.h"
 
@@ -40,17 +40,6 @@
 
 #define TSB_SCM_CLOCKENABLE1            0x40000304
 #define    CE_UNIPRO_SYSCLK               (1 << 2)
-
-/**
- * each CPU cycle is about 10ns and a loop needs at least two cycles
- */
-#define DELAY_NS_LOOP_COUNT(n) (n / 20)
-.macro delay_ns ns
-    ldr r3, =DELAY_NS_LOOP_COUNT(\ns)
-1:
-    subs r3, r3, #1
-    bne 1b
-.endm
 
 .globl	chip_enter_standby
 .type	chip_enter_standby, %function
@@ -90,20 +79,6 @@ ok_to_standby:
     ldr r2, =RETSRAMRET
     str r1, [r2]
 
-    ldr r2, =HB8CLK_EN
-    str r0, [r2]
-
-    /* delay 1.5us or more */
-    delay_ns 1500
-
-    ldr r2, =RETFFSAVE
-    str r1, [r2]
-
-    /* delay 0.1us or more */
-    delay_ns 100
-
-    str r0, [r2]
-
     ldr r2, =ISO_FOR_IO_EN
     str r1, [r2]
     ldr r2, =ISO_EN
@@ -123,7 +98,12 @@ resume_from_standby:
     str r0, [r2]
 
     /* delay 0.1us or more */
-    delay_ns 100
+    /**
+     * This is running in boot ROM, we have stack on the bufram
+     * so it is OK to call other functions
+     */
+    ldr r0, =CHIP_NS_TO_DELAY(100)
+    bl chip_delay
 
     ldr r2, =RETSRAMCLKCONT
     ldr r1, =1
@@ -136,38 +116,8 @@ resume_from_standby:
     nop
     nop
 
+    ldr r0, =0
     ldr r2, =RETSRAMCENCONT
-    str r0, [r2]
-
-    ldr r2, =SOFTRESETRELEASE1
-    ldr r4, =SRSTRELEASE_UNIPRO_SYSRESET_N
-    str r4, [r2]
-
-    /* delay 0.1us or more */
-    delay_ns 100
-
-    ldr r2, =RETFFSTR
-    str r1, [r2]
-
-    /* delay 5us or more */
-    delay_ns 5000
-
-    ldr r2, =RETFFSTR
-    str r0, [r2]
-
-    /* delay 5us or more */
-    delay_ns 5000
-
-    ldr r2, =HB8CLK_EN
-    str r1, [r2]
-
-    /* delay 1.5us or more */
-    delay_ns 1500
-
-    ldr r2, =ISO_FOR_IO_EN
-    str r0, [r2]
-
-    ldr r2, =BOOTRET_O
     str r0, [r2]
 
     /*

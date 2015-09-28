@@ -170,4 +170,13 @@ void chip_wait_for_link_up(void);
  */
 int chip_enter_standby(void);
 
+/**
+ * @brief delay function
+ * Each chip should define a CHIP_NS_TO_DELAY macro to convert ns to the param
+ * for this function
+ */
+void chip_delay(uint32_t delay);
+
+#define delay_ns(ns) chip_delay(CHIP_NS_TO_DELAY(ns))
+
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

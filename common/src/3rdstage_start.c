@@ -49,38 +49,29 @@ uint32_t br_errno;
 int chip_enter_hibern8_client(void);
 int chip_exit_hibern8_client(void);
 
+void resume_sequence_in_workram(void);
 void resume_point(void) {
-    chip_init();
-
-    dbginit();
-
-    dbgprint("Resumed from standby\n");
-    chip_exit_hibern8_client();
+    /**
+     * NOTE:
+     * this experiment code runs resume_point on the stack of boot ROM
+     * real code needs to save/restore its own stack pointer
+     */
+    resume_sequence_in_workram();
 
     /* handshake with test controller to indicate success */
     chip_signal_boot_status(0);
     while(1);
 }
 
-/* use all 4 GPIOs 3, 4, 5, 23 as wakeup source */
-#define TEST_WAKEUPSRC 0x1111
+int standby_sequence(void);
 int enter_standby(void) {
-    int (*enter_standby_func)(void);
-    int status;
     communication_area *p = (communication_area *)&_communication_area;
 
     p->resume_data.jtag_disabled = 1;
     p->resume_data.resume_address = (uint32_t)resume_point;
     p->resume_data.resume_address_complement = ~(uint32_t)resume_point;
 
-    chip_enter_hibern8_client();
-
-    putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
-
-    enter_standby_func = get_shared_function(SHARED_FUNCTION_ENTER_STANDBY);
-
-    status = enter_standby_func();
-    return status;
+    return standby_sequence();
 }
 #endif
 

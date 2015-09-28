@@ -41,4 +41,5 @@ CHIP_CSRC += $(CHIP_SRCDIR)/tsb_isaa.c
 CHIP_CSRC += $(CHIP_SRCDIR)/tsb_unipro.c
 
 CHIP_ASRC = $(CHIP_SRCDIR)/boot.S
+CHIP_ASRC += $(CHIP_SRCDIR)/tsb_utils.S
 CHIP_ASRC += $(CHIP_SRCDIR)/copy_to_ram.S

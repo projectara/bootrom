@@ -25,6 +25,14 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+ * This file contains code to run in workram before calling code in ROM to enter
+ * standby, and after code in ROM resumed from standby.
+ * This file is only needed by the third stage FW. It is here in the boot ROM
+ * source tree as code to test the standby/resume function of the boot ROM
+ */
+
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
@@ -62,8 +70,6 @@ int chip_enter_hibern8_client(void) {
     }
     dbgprint("hibernate entered\n");
 
-    while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
-    tsb_clk_disable(TSB_CLK_UNIPROSYS);
     return 0;
 }
 
@@ -139,4 +145,64 @@ int chip_enter_hibern8_server(void) {
     return 0;
 }
 
+/* use all 4 GPIOs 3, 4, 5, 23 as wakeup source */
+#define TEST_WAKEUPSRC 0x1111
+int standby_sequence(void) {
+    int (*enter_standby_func)(void);
+    int status;
 
+    putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
+
+    chip_enter_hibern8_client();
+
+    while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
+    tsb_clk_disable(TSB_CLK_UNIPROSYS);
+
+    putreg32(0, HB8CLK_EN);
+    delay_ns(1500);
+    putreg32(1, RETFFSAVE);
+    delay_ns(100);
+    putreg32(0, RETFFSAVE);
+
+    /**
+     * Following code cannot run in workram
+     * let's use the code in ROM, as part of the boot ROM shared function
+     */
+    enter_standby_func = get_shared_function(SHARED_FUNCTION_ENTER_STANDBY);
+
+    status = enter_standby_func();
+    return status;
+}
+
+void resume_sequence_in_workram(void) {
+    putreg32(SRSTRELEASE_UNIPRO_SYSRESET_N, SOFTRESETRELEASE1);
+
+    /* delay 0.1us or more */
+    delay_ns(100);
+
+    putreg32(1, RETFFSTR);
+
+    /* delay 5us or more */
+    delay_ns(5000);
+
+    putreg32(0, RETFFSTR);
+
+    /* delay 5us or more */
+    delay_ns(5000);
+
+    putreg32(1, HB8CLK_EN);
+
+    /* delay 1.5us or more */
+    delay_ns(1500);
+
+    putreg32(0, ISO_FOR_IO_EN);
+
+    putreg32(0, BOOTRET_O);
+
+    chip_init();
+
+    dbginit();
+
+    dbgprint("Resumed from standby\n");
+    chip_exit_hibern8_client();
+}

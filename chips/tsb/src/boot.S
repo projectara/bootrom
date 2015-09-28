@@ -116,38 +116,15 @@ _bootstrap_vectors:
 	.word __start
 #endif
 
-/* GPIO 20 for resume in simulation */
-#define SIMULATION_GPIO_PINS_SET (1 << 13)
-#define SIMULATION_GPIO          20
-.globl chip_gpio_init
-.globl tsb_set_pinshare
-.globl chip_gpio_direction_in
-.globl chip_gpio_get_value
-
 .globl __start
 .type __start, %function
 __start:
 # TA-01 The Boot ROM begins executing at address 0x00000000...
 #if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
-#ifdef _SIMULATION
-    bl chip_gpio_init
-    ldr r0, =SIMULATION_GPIO_PINS_SET
-    bl tsb_set_pinshare
-
-    ldr r0, =SIMULATION_GPIO
-    bl chip_gpio_direction_in
-
-    ldr r0, =SIMULATION_GPIO
-    bl chip_gpio_get_value
-    /* seems there is pull-up on the GPIOs on HAPS */
-    cmp r0, #1
-    bne resume_from_standby
-#else
     ldr r1, =BOOTRET_O
     ldr r0, [r1]
     tst r0, #1
     bne resume_from_standby
-#endif
 
 .globl cold_boot
 cold_boot:
@@ -158,6 +135,7 @@ cold_boot:
 #endif
 
 #ifdef _SIMULATION
+    ldr r0, =0
     /* Just clear the BootRom .data, .bss, stack and communication region*/
     ldr r8, =_bootrom_data_area
     ldr r9, =_workram_end
