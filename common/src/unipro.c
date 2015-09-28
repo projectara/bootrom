@@ -44,7 +44,7 @@
  */
 int read_mailbox(uint32_t *val) {
     int rc;
-    uint32_t mbox = TSB_MAIL_RESET, irq_status, unipro_rc;
+    uint32_t mbox = TSB_MAIL_RESET, irq_status;
 
     if (!val) {
         return -EINVAL;
@@ -59,16 +59,15 @@ int read_mailbox(uint32_t *val) {
      */
     do {
         rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                   ATTR_LOCAL);
+    } while (!rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    if (rc) {
+        return rc;
     }
 
-    rc = chip_unipro_attr_read(TSB_MAILBOX, &mbox, 0, ATTR_LOCAL,
-                               &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &mbox, 0, ATTR_LOCAL);
+    if (rc) {
+        return rc;
     }
 
     if (mbox >= UINT16_MAX) {
@@ -86,11 +85,7 @@ int read_mailbox(uint32_t *val) {
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
 int ack_mailbox(uint16_t val) {
-    int rc;
-    uint32_t unipro_rc;
-
-    rc = chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, ATTR_LOCAL, &unipro_rc);
-    return DISJOINT_OR(rc, unipro_rc);
+    return chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, ATTR_LOCAL);
 }
 
 /**
@@ -100,12 +95,11 @@ int ack_mailbox(uint16_t val) {
  */
 int write_mailbox(uint32_t val) {
     int rc;
-    uint32_t irq_status = 0, unipro_rc;
+    uint32_t irq_status = 0;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER,
-                                &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER);
+    if (rc) {
+        return rc;
     }
     /**
      * Poll the interrupt-assert line on the switch until we know the SVC has
@@ -114,10 +108,10 @@ int write_mailbox(uint32_t val) {
      */
     do {
         rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                                   ATTR_PEER, &unipro_rc);
-    } while (!rc && !unipro_rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+                                   ATTR_PEER);
+    } while (!rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
 
-    return DISJOINT_OR(rc, unipro_rc);
+    return rc;
 }
 
 /**

@@ -90,7 +90,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id);
  */
 int efuse_init(void) {
     uint32_t    register_val;
-    uint32_t    dme_write_result;
+    uint32_t    urc;
     union large_uint endpoint_id;
 
 
@@ -152,10 +152,18 @@ int efuse_init(void) {
         }
     } else {
         dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\n");
-        chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
-                               ATTR_LOCAL, &dme_write_result);
-        chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high, 0,
-                               ATTR_LOCAL, &dme_write_result);
+        urc = chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
+                                ATTR_LOCAL);
+        if (urc) {
+            set_last_error(BRE_EFUSE_ENDPOINT_ID_WRITE);
+            return -1;
+        }
+        urc = chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high,
+                                0, ATTR_LOCAL);
+        if (urc) {
+            set_last_error(BRE_EFUSE_ENDPOINT_ID_WRITE);
+            return -1;
+        }
     }
 
     dbgprint("efuse_init: OK\n");

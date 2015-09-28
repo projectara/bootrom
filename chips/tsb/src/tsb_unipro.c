@@ -44,7 +44,6 @@ struct cport cporttable[4] = {
 /*** TODO: Cross-reference table in spec about what steps need to be done. */
 static int tsb_unipro_reset_cport(uint32_t cportid) {
     int rc;
-    uint32_t result;
     uint32_t tx_reset_offset, rx_reset_offset;
     uint32_t tx_queue_empty_offset, tx_queue_empty_bit;
 
@@ -65,30 +64,26 @@ static int tsb_unipro_reset_cport(uint32_t cportid) {
     putreg32(CPORT_SW_RESET_BITS,
              (volatile unsigned int*)(AIO_UNIPRO_BASE + tx_reset_offset));
 
-    rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, ATTR_LOCAL,
-                                &result);
-    if (rc || result) {
+    rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, ATTR_LOCAL);
+    if (rc) {
         dbgprint("error resetting T_CONNECTIONSTATE\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, ATTR_LOCAL,
-                                &result);
-    if (rc || result) {
+    rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, ATTR_LOCAL);
+    if (rc) {
         dbgprint("error resetting T_LOCALBUFFERSPACE\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, ATTR_LOCAL,
-                                &result);
-    if (rc || result) {
+    rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, ATTR_LOCAL);
+    if (rc) {
         dbgprint("error resetting T_PEERBUFFERSPACE\n");
         return -EIO;
     }
 
-    rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, ATTR_LOCAL,
-                                &result);
-    if (rc || result) {
+    rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, ATTR_LOCAL);
+    if (rc) {
         dbgprint("error resetting T_CREDITSTOSEND\n");
         return -EIO;
     }
@@ -216,9 +211,9 @@ void tsb_reset_before_jump(void) {
  */
 void chip_wait_for_link_up(void) {
     int rc;
-    uint32_t tempval, unipro_rc;
+    uint32_t tempval;
     do {
         rc = chip_unipro_attr_read(TSB_POWERSTATE, &tempval, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && (tempval != POWERSTATE_LINKUP));
+                                   ATTR_LOCAL);
+    } while (!rc && (tempval != POWERSTATE_LINKUP));
 }

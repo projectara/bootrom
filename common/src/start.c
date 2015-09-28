@@ -60,7 +60,7 @@ uint32_t merge_errno_with_boot_status(uint32_t boot_status);
  * @returns Nothing. Will launch/restart image if successful, halt if not.
  */
 void bootrom_main(void) {
-    uint32_t    dme_write_result;
+    int rc;
     /* TA-20 R/W data in bufRAM */
     uint32_t    boot_status = INIT_STATUS_OPERATING;
     uint32_t    register_val;
@@ -97,7 +97,10 @@ void bootrom_main(void) {
     /* Advertise our boot status */
     chip_advertise_boot_status(boot_status);
     /* Advertise our initialization type */
-    chip_advertise_boot_type(&dme_write_result);
+    rc = chip_advertise_boot_type();
+    if (rc) {
+        halt_and_catch_fire(boot_status);
+    }
 
     /*
      * Validate and make available e-fuse information (it handles error

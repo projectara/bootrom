@@ -88,7 +88,7 @@ static int load_tftf_header(data_load_ops *ops) {
     tftf_section_descriptor *section;
     uint32_t unipro_vid = 0;
     uint32_t unipro_pid = 0;
-    uint32_t read_stat;
+    int rc;
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
     tftf.contain_signature = false;
@@ -111,10 +111,17 @@ static int load_tftf_header(data_load_ops *ops) {
      * takes place for that VID/PID.
      * TA-12 Read  DME attribute (DDBL1)
      */
-    chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_vid, 0,
-                          ATTR_LOCAL, &read_stat);
-    chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
-                          ATTR_LOCAL, &read_stat);
+    rc = chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_vid, 0,
+                          ATTR_LOCAL);
+    if (rc) {
+        set_last_error(BRE_EFUSE_UNIPRO_VID_READ);
+        return -1;
+    }
+    rc = chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0, ATTR_LOCAL);
+    if (rc) {
+        set_last_error(BRE_EFUSE_UNIPRO_PID_READ);
+        return -1;
+    }
     if (((tftf.header.unipro_vid != 0) &&
          (tftf.header.unipro_vid != unipro_vid)) ||
         ((tftf.header.unipro_pid != 0) &&

@@ -76,14 +76,12 @@ int chip_unipro_recv_cport(uint32_t *cportid);
  * @param val destination to read into
  * @param selector attribute selector index, or NCP_SELINDEXNULL if none
  * @param peer 1 if peer access, 0 if local
- * @param result_code destination for access result
- * @return 0
+ * @return 0 for success, <0 for internal error, >0 for UniPro error
  */
 int chip_unipro_attr_read(uint16_t attr,
                           uint32_t *val,
                           uint16_t selector,
-                          int peer,
-                          uint32_t *result_code);
+                          int peer);
 
 /**
  * @brief Perform a DME set request
@@ -91,14 +89,12 @@ int chip_unipro_attr_read(uint16_t attr,
  * @param val value to write
  * @param selector attribute selector index, or NCP_SELINDEXNULL if none
  * @param peer 1 if peer access, 0 if local
- * @param result_code destination for access result
- * @return 0
+ * @return 0 for success, <0 for internal error, >0 for UniPro error
  */
 int chip_unipro_attr_write(uint16_t attr,
                            uint32_t val,
                            uint16_t selector,
-                           int peer,
-                           uint32_t *result_code);
+                           int peer);
 
 /**
  * @brief send data down a CPort
@@ -138,10 +134,9 @@ void chip_advertise_boot_status(uint32_t boot_status);
 
 /**
  * @brief advertise the boot type to the switch
- * @param result_code destination for advertisement result
- * @return 0 on success, <0 on error
+ * @return 0 on success, <0 on error, >0 for UniPro error
  */
-int chip_advertise_boot_type(uint32_t *result_code);
+int chip_advertise_boot_type(void);
 
 /**
  * @brief reset UniPro before signalling readiness to boot firmware to switch

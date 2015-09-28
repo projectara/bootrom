@@ -45,14 +45,13 @@ uint32_t boot_status_offline = 0;
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
     int status = 0;
-    uint32_t result_code = 0;
 
     status = chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
-                                    ATTR_LOCAL, &result_code);
+                                    ATTR_LOCAL);
     /*
      * Being unable to write the DME value is regarded as a catastrophic failure.
      */
-    if ((status != 0) || (result_code != 0)) {
+    if (status != 0) {
         /*
          * Set this flag so that halt_and_catch_fire doesn't try to
          * recursively call us to advertise the boot status.
@@ -67,9 +66,9 @@ void chip_advertise_boot_status(uint32_t boot_status) {
  * @param result_code destination for advertisement result
  * @return 0 on success, <0 on error
  */
-int chip_advertise_boot_type(uint32_t *result_code) {
+int chip_advertise_boot_type(void) {
     return chip_unipro_attr_write(DME_DDBL2_INIT_TYPE, INIT_TYPE_TOSHIBA, 0,
-                                  ATTR_LOCAL, result_code);
+                                  ATTR_LOCAL);
 }
 
 /**

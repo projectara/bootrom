@@ -30,14 +30,13 @@
 #define __ARCH_ARM_SRC_TSB_ES2TSB_ES2_UNIPRO_H
 
 static int unipro_attr_access(uint16_t attr, uint32_t *val, uint16_t selector,
-                       int peer, int write, uint32_t *result_code);
+                       int peer, int write);
 
 static inline int unipro_attr_local_write(uint16_t attr,
                                           uint32_t val,
-                                          uint16_t selector,
-                                          uint32_t *result_code)
+                                          uint16_t selector)
 {
-    return chip_unipro_attr_write(attr, val, selector, 0, result_code);
+    return chip_unipro_attr_write(attr, val, selector, 0);
 }
 
 #define TRANSFER_MODE          (2)

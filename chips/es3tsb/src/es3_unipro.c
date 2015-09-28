@@ -45,8 +45,8 @@ static int unipro_attr_access(uint16_t attr,
                               uint32_t *val,
                               uint16_t selector,
                               int peer,
-                              int write,
-                              uint32_t *result_code) {
+                              int write) {
+    uint32_t rc = 0;
 
     uint32_t ctrl = (REG_ATTRACS_CTRL_PEERENA(peer) |
                      REG_ATTRACS_CTRL_SELECT(selector) |
@@ -68,35 +68,31 @@ static int unipro_attr_access(uint16_t attr,
     /* Clear status bit */
     tsb_unipro_write(A2D_ATTRACS_INT_BEF, 0x1);
 
-    if (result_code) {
-        *result_code = tsb_unipro_read(A2D_ATTRACS_STS_00);
-    }
+    rc = tsb_unipro_read(A2D_ATTRACS_STS_00);
 
     if (!write) {
         *val = tsb_unipro_read(A2D_ATTRACS_DATA_STS_00);
     }
 
-    return 0;
+    return rc;
 }
 
 
 int chip_unipro_attr_read(uint16_t attr,
                           uint32_t *val,
                           uint16_t selector,
-                          int peer,
-                          uint32_t *result_code)
+                          int peer)
 {
-    return unipro_attr_access(attr, val, selector, peer, 0, result_code);
+    return unipro_attr_access(attr, val, selector, peer, 0);
 }
 
 
 int chip_unipro_attr_write(uint16_t attr,
                            uint32_t val,
                            uint16_t selector,
-                           int peer,
-                           uint32_t *result_code)
+                           int peer)
 {
-    return unipro_attr_access(attr, &val, selector, peer, 1, result_code);
+    return unipro_attr_access(attr, &val, selector, peer, 1);
 }
 
 /**

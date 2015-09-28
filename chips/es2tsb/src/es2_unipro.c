@@ -158,14 +158,13 @@ const struct tsb_mphy_fixup tsb_register_2_map_mphy_fixups[] = {
 static int es2_fixup_mphy(void)
 {
     uint32_t debug_0720 = tsb_get_debug_reg(0x0720);
-    uint32_t urc;
+    int urc;
     const struct tsb_mphy_fixup *fu;
 
     /*
      * Apply the "register 2" map fixups.
      */
-    unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_TSB_REGISTER_2, 0,
-                            &urc);
+    urc = unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_TSB_REGISTER_2, 0);
     if (urc) {
         dbgprint((char*)__func__);
         dbgprintx32(": failed to switch to register 2 map:", urc, "\n");
@@ -173,8 +172,7 @@ static int es2_fixup_mphy(void)
     }
     fu = tsb_register_2_map_mphy_fixups;
     do {
-        unipro_attr_local_write(fu->attrid, fu->value, fu->select_index,
-                                &urc);
+        urc = unipro_attr_local_write(fu->attrid, fu->value, fu->select_index);
         if (urc) {
             dbgprint((char*)__func__);
             dbgprintx32(": failed to switch to register 2 map:", urc, "\n");
@@ -185,8 +183,7 @@ static int es2_fixup_mphy(void)
     /*
      * Switch to "normal" map.
      */
-    unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_NORMAL, 0,
-                            &urc);
+    urc = unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_NORMAL, 0);
     if (urc) {
         dbgprint((char*)__func__);
         dbgprintx32(": failed to switch to normal map: ", urc, "\n");
@@ -196,8 +193,7 @@ static int es2_fixup_mphy(void)
     /*
      * Apply the "register 1" map fixups.
      */
-    unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_TSB_REGISTER_1, 0,
-                            &urc);
+    urc = unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_TSB_REGISTER_1, 0);
     if (urc) {
         dbgprint((char*)__func__);
         dbgprintx32(": failed to switch to register 1 map: ", urc, "\n");
@@ -210,10 +206,10 @@ static int es2_fixup_mphy(void)
              * The magic R1 fixups come from the mysterious and solemn
              * debug register 0x0720.
              * */
-            unipro_attr_local_write(0x8002, (debug_0720 >> 1) & 0x1f, 0, &urc);
+            urc = unipro_attr_local_write(0x8002, (debug_0720 >> 1) & 0x1f, 0);
         } else {
-            unipro_attr_local_write(fu->attrid, fu->value, fu->select_index,
-                                    &urc);
+            urc = unipro_attr_local_write(fu->attrid, fu->value,
+                                          fu->select_index);
         }
         if (urc) {
             dbgprint((char*)__func__);
@@ -225,8 +221,7 @@ static int es2_fixup_mphy(void)
     /*
      * Switch to "normal" map.
      */
-    unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_NORMAL, 0,
-                            &urc);
+    urc = unipro_attr_local_write(TSB_MPHY_MAP, TSB_MPHY_MAP_NORMAL, 0);
     if (urc) {
         dbgprint((char*)__func__);
         dbgprintx32(": failed to switch to normal map: ", urc, "\n");
@@ -248,8 +243,8 @@ static int unipro_attr_access(uint16_t attr,
                               uint32_t *val,
                               uint16_t selector,
                               int peer,
-                              int write,
-                              uint32_t *result_code) {
+                              int write) {
+    int rc = 0;
     uint32_t ctrl = (REG_ATTRACS_CTRL_PEERENA(peer) |
                      REG_ATTRACS_CTRL_SELECT(selector) |
                      REG_ATTRACS_CTRL_WRITE(write) |
@@ -270,15 +265,13 @@ static int unipro_attr_access(uint16_t attr,
     /* Clear status bit */
     tsb_unipro_write(A2D_ATTRACS_INT_BEF, 0x1);
 
-    if(result_code) {
-        *result_code = tsb_unipro_read(A2D_ATTRACS_STS_00);
-    }
+    rc = tsb_unipro_read(A2D_ATTRACS_STS_00);
 
     if(!write) {
         *val = tsb_unipro_read(A2D_ATTRACS_DATA_STS_00);
     }
 
-    return 0;
+    return rc;
 }
 
 void configure_transfer_mode(int mode) {
@@ -310,7 +303,7 @@ void chip_unipro_init(void) {
 #define DME_DDBL2_DUMMY_PID (0xbeef)
 
 int chip_unipro_attr_read(uint16_t attr, uint32_t *val, uint16_t selector,
-                          int peer, uint32_t *result_code) {
+                          int peer) {
     switch(attr) {
         case DME_DDBL2_VID:
             *val = DME_DDBL2_DUMMY_VID;
@@ -323,12 +316,12 @@ int chip_unipro_attr_read(uint16_t attr, uint32_t *val, uint16_t selector,
         default:
             break;
     }
-    return unipro_attr_access(attr, val, selector, peer, 0, result_code);
+    return unipro_attr_access(attr, val, selector, peer, 0);
 }
 
 int chip_unipro_attr_write(uint16_t attr, uint32_t val, uint16_t selector,
-                           int peer, uint32_t *result_code) {
-    return unipro_attr_access(attr, &val, selector, peer, 1, result_code);
+                           int peer) {
+    return unipro_attr_access(attr, &val, selector, peer, 1);
 }
 
 /**

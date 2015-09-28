@@ -48,15 +48,15 @@ int chip_enter_hibern8_client(void) {
     uint32_t tx_reset_offset, rx_reset_offset;
     uint32_t cportid;
     int rc;
-    uint32_t tempval, unipro_rc;
+    uint32_t tempval;
 
     dbgprint("Wait for hibernate\n");
     do {
         rc = chip_unipro_attr_read(TSB_HIBERNATE_ENTER_IND, &tempval, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && tempval == 0);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                   ATTR_LOCAL);
+    } while (!rc && tempval == 0);
+    if (rc) {
+        return rc;
     }
 
     for (cportid = 0; cportid < CPORT_MAX; cportid++) {
@@ -75,23 +75,23 @@ int chip_enter_hibern8_client(void) {
 
 int chip_exit_hibern8_client(void) {
     int rc;
-    uint32_t tempval, unipro_rc;
+    uint32_t tempval;
 
     tsb_clk_enable(TSB_CLK_UNIPROSYS);
     dbgprint("Try to exit hibernate\n");
     tempval = 1;
     rc = chip_unipro_attr_write(TSB_HIBERNATE_EXIT_REQ, tempval, 0,
-                                ATTR_LOCAL, &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                ATTR_LOCAL);
+    if (rc) {
+        return rc;
     }
 
     do {
         rc = chip_unipro_attr_read(TSB_HIBERNATE_EXIT_IND, &tempval, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && tempval == 0);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                   ATTR_LOCAL);
+    } while (!rc && tempval == 0);
+    if (rc) {
+        return rc;
     }
     dbgprint("hibernate exit\n");
     return 0;
@@ -102,7 +102,7 @@ int chip_enter_hibern8_server(void) {
     uint32_t tx_reset_offset, rx_reset_offset;
     uint32_t cportid;
     int rc;
-    uint32_t tempval, unipro_rc;
+    uint32_t tempval;
 
     dbgprint("entering hibernate\n");
     for (cportid = 0; cportid < CPORT_MAX; cportid++) {
@@ -117,18 +117,18 @@ int chip_enter_hibern8_server(void) {
 
     tempval = 1;
     rc = chip_unipro_attr_write(TSB_HIBERNATE_ENTER_REQ, tempval, 0,
-                                ATTR_LOCAL, &unipro_rc);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                ATTR_LOCAL);
+    if (rc) {
+        return rc;
     }
 
     dbgprint("wait for hibernate\n");
     do {
         rc = chip_unipro_attr_read(TSB_HIBERNATE_ENTER_IND, &tempval, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && tempval == 0);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                   ATTR_LOCAL);
+    } while (!rc && tempval == 0);
+    if (rc) {
+        return rc;
     }
 
     dbgprint("hibernate entered\n");
@@ -136,10 +136,10 @@ int chip_enter_hibern8_server(void) {
     dbgprint("wait for hibernate exit\n");
     do {
         rc = chip_unipro_attr_read(TSB_HIBERNATE_EXIT_IND, &tempval, 0,
-                                   ATTR_LOCAL, &unipro_rc);
-    } while (!rc && !unipro_rc && tempval == 0);
-    if (DISJOINT_OR(rc, unipro_rc)) {
-        return DISJOINT_OR(rc, unipro_rc);
+                                   ATTR_LOCAL);
+    } while (!rc && tempval == 0);
+    if (rc) {
+        return rc;
     }
     dbgprint("hibernate exit\n");
     return 0;
