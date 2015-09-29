@@ -32,6 +32,10 @@
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "debug.h"
+#include "common.h"
+#include "utils.h"
+
+uint32_t boot_status_offline = 0;
 
 /**
  * @brief advertise the boot status
@@ -39,10 +43,23 @@
  * @param result_code destination for advertisement result
  * @return 0 on success, <0 on error
  */
-int chip_advertise_boot_status(uint32_t boot_status, uint32_t *result_code) {
-    return chip_unipro_attr_write(T_TSTSRCINCREMENT,
-                                  ES2_INIT_STATUS(boot_status), 0, ATTR_LOCAL,
-                                  result_code);
+void chip_advertise_boot_status(uint32_t boot_status) {
+    int rc;
+    uint32_t unipro_rc;
+
+    rc = chip_unipro_attr_write(T_TSTSRCINCREMENT, ES2_INIT_STATUS(boot_status),
+                                0, ATTR_LOCAL, &unipro_rc);
+    /*
+     * Being unable to write the DME value is regarded as a catastrophic failure.
+     */
+    if (DISJOINT_OR(rc, unipro_rc)) {
+        /*
+         * Set this flag so that halt_and_catch_fire doesn't try to
+         * recursively call us to advertise the boot status.
+         */
+        boot_status_offline = true;
+        halt_and_catch_fire(boot_status);
+    }
 }
 
 /**
