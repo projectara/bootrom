@@ -286,7 +286,6 @@ static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val) {
  * the IMS was deemed invalid (get_last_error will return BRE_EFUSE_BAD_IMS).
  */
 static bool get_endpoint_id(union large_uint * endpoint_id) {
-    int i;
     /* Establish the default (i.e., no endpoint ID) */
     bool have_endpoint_id = false;
     endpoint_id->quad = 0;
@@ -299,6 +298,12 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             dbgprint("efuse_init: Invalid IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
+#ifdef _SIMULATION
+            /* some fake value for simulation build */
+            endpoint_id->low = 0x12345678;
+            endpoint_id->high = 0x9ABCDEF0;
+#else
+            int i;
             /**
              * The algorithm used to calculate Endpoint Unique ID is:
              * Y1 = sha256(IMS[0:15] xor copy(0x3d, 16))
@@ -331,7 +336,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             hash_final(EP_UID);
 
             memcpy(endpoint_id, EP_UID, 8);
-
+#endif
             have_endpoint_id =  true;
         }
     }
