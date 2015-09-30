@@ -70,7 +70,8 @@ union large_uint {
 
 static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
 
-#define IMS_LENGTH  35
+/* IMS is 35 bytes long, but boot ROM only cares about the first 32 bytes */
+#define IMS_MEANINGFUL_LENGTH  32
 
 /* Prototypes */
 static int count_ones(uint8_t *buf, int len);
@@ -263,6 +264,17 @@ static bool valid_hamming_weight(uint8_t *buf, int len)
  * @returns Nothing
  */
 static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val) {
+    uint32_t val32 = val;
+    val32 |= (val32 << 8);
+    val32 |= (val32 << 16);
+    while (size > sizeof(uint32_t)) {
+        if (*(uint32_t *)buf != val32) {
+            return false;
+        }
+        buf += sizeof(uint32_t);
+        size -= sizeof(uint32_t);
+    }
+
     while (size > 0) {
         if (*buf++ != val) {
             return false;
@@ -291,10 +303,11 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
     endpoint_id->quad = 0;
 
     /* Get the IMS and determine the course of action if non-zero */
-    tsb_get_ims(ims_value, sizeof(ims_value));
-    if (!is_buf_const(ims_value, sizeof(ims_value), 0)) {
+    tsb_get_ims(ims_value, IMS_MEANINGFUL_LENGTH);
+    if (!is_buf_const(ims_value, IMS_MEANINGFUL_LENGTH, 0)) {
         /* Compute Endpoint Unique ID */
-        if (!valid_hamming_weight((uint8_t *)ims_value, IMS_LENGTH)) {
+        if (!valid_hamming_weight((uint8_t *)ims_value,
+                                  IMS_MEANINGFUL_LENGTH)) {
             dbgprint("efuse_init: Invalid IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
@@ -313,21 +326,22 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             unsigned char EP_UID[HASH_DIGEST_SIZE];
             unsigned char Y1[HASH_DIGEST_SIZE];
             unsigned char Z0[HASH_DIGEST_SIZE];
-            unsigned char temp;
+            uint32_t temp;
+            uint32_t *pims = (uint32_t *)ims_value;
 
             hash_start();
-            /*** TODO: grab IMS 4bytes at a time and feed that to hash_update */
-            for (i = 0; i < 16; i++) {
-                temp = ims_value[i] ^ 0x3d;
-                hash_update(&temp, 1);
+            /*** grab IMS 4bytes at a time and feed that to hash_update */
+            for (i = 0; i < 4; i++) {
+                temp = pims[i] ^ 0x3d3d3d3d;
+                hash_update((unsigned char *)&temp, 1);
             }
             hash_final(Y1);
 
             hash_start();
             hash_update(Y1, HASH_DIGEST_SIZE);
-            temp = 0x01;
-            for (i = 0; i < 32; i++) {;
-                hash_update(&temp, 1);
+            temp = 0x01010101;
+            for (i = 0; i < 8; i++) {;
+                hash_update((unsigned char *)&temp, 1);
             }
             hash_final(Z0);
 
