@@ -49,7 +49,7 @@ int svc_wait_for_peer_ready(void) {
         }
         if (val != TSB_MAIL_RESET) {
             dbgprintx32("Peer ready: ", val, "\n");
-            ack_mailbox();
+            ack_mailbox(val);
             break;
         }
     }
@@ -71,13 +71,10 @@ static int switch_dme_set(struct fake_switch *sw,
                           uint16_t attrid,
                           uint16_t select_index,
                           uint32_t attr_value) {
-    uint32_t res;
-    chip_unipro_attr_write(attrid,
-                           attr_value,
-                           select_index,
-                           0,
-                           &res);
-    return -res;
+    return chip_unipro_attr_write(attrid,
+                                  attr_value,
+                                  select_index,
+                                  0);
 }
 
 static int switch_dme_get(struct fake_switch *sw,
@@ -85,13 +82,10 @@ static int switch_dme_get(struct fake_switch *sw,
                           uint16_t attrid,
                           uint16_t select_index,
                           uint32_t *attr_value) {
-    uint32_t res;
-    chip_unipro_attr_read(attrid,
-                          attr_value,
-                          select_index,
-                          0,
-                          &res);
-    return -res;
+    return chip_unipro_attr_read(attrid,
+                                 attr_value,
+                                 select_index,
+                                 0);
 }
 
 static int switch_dme_peer_set(struct fake_switch *sw,
@@ -99,13 +93,10 @@ static int switch_dme_peer_set(struct fake_switch *sw,
                                uint16_t attrid,
                                uint16_t select_index,
                                uint32_t attr_value) {
-    uint32_t res;
-    chip_unipro_attr_write(attrid,
-                           attr_value,
-                           select_index,
-                           1,
-                           &res);
-    return -res;
+    return chip_unipro_attr_write(attrid,
+                                  attr_value,
+                                  select_index,
+                                  1);
 }
 
 static int switch_dme_peer_get(struct fake_switch *sw,
@@ -113,13 +104,10 @@ static int switch_dme_peer_get(struct fake_switch *sw,
                                uint16_t attrid,
                                uint16_t select_index,
                                uint32_t *attr_value) {
-    uint32_t res;
-    chip_unipro_attr_read(attrid,
-                          attr_value,
-                          select_index,
-                          0,
-                          &res);
-    return -res;
+    return chip_unipro_attr_read(attrid,
+                                 attr_value,
+                                 select_index,
+                                 0);
 }
 
 static int switch_set_port_l4attr(struct fake_switch *sw,

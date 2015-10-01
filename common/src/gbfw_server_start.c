@@ -38,6 +38,7 @@
 #include "gbfw_fake_svc.h"
 #include "utils.h"
 #include "gbfirmware.h"
+#include "chipdef.h"
 
 extern data_load_ops spi_ops;
 uint32_t br_errno;
@@ -78,7 +79,7 @@ struct unipro_connection conn[] = {
         .port_id1 = PEER_PORT_ID,
         .device_id1 = PEER_DEV_ID,
         .cport_id1  = CONTROL_CPORT,
-        .flags      = 7,  /* from the boot sequence doc */
+        .flags      = 6,  /* no E2EFC */
     },
     {
         .port_id0 = SWITCH_PORT_ID,
@@ -87,7 +88,7 @@ struct unipro_connection conn[] = {
         .port_id1 = PEER_PORT_ID,
         .device_id1 = PEER_DEV_ID,
         .cport_id1  = CLIENT_DATA_CPORT,
-        .flags      = 7,  /* from the boot sequence doc */
+        .flags      = 6,  /* no E2EFC */
     },
 };
 
@@ -106,52 +107,43 @@ static int server_control_cport_handler(uint32_t cportid,
     return 0;
 }
 
-int poke_mailbox(uint32_t val, int peer, uint32_t *result_code) {
+int poke_mailbox(uint32_t val, int peer) {
     int rc;
-    uint32_t result = 0;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, peer, &result);
+    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, peer);
     if (rc) {
         return rc;
     }
     return 0;
 }
 
-int wait_for_mailbox_ack(int peer, uint32_t *result_code) {
+int wait_for_mailbox_ack(uint32_t wval, int peer) {
     int rc;
-    uint32_t result = 0, read_result = 0, val = 0;
+    uint32_t val = 0;
     do {
-        rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, peer, &read_result);
-    } while (!rc && val != TSB_MAIL_RESET);
+        rc = chip_unipro_attr_read(MBOX_ACK_ATTR, &val, 0, peer);
+    } while (!rc && val != wval);
     if (rc) {
         return rc;
     }
 
-    if (result_code) {
-        *result_code = result;
-    }
+    val = 0;
+    chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, peer);
     return 0;
 }
 
 int create_connection(struct unipro_connection *c) {
-    uint32_t result;
     switch_cport_connect(NULL, c);
 
     /**
      * This part (poking local mailbox) is not part of the greybus spec.
      * It is here so we can re-use the existing unipro code
      */
-    poke_mailbox(c->cport_id0 + 1, 0, &result);
+    poke_mailbox(c->cport_id0 + 1, 0);
     chip_unipro_init_cport(c->cport_id0);
-    wait_for_mailbox_ack(0, &result);
+    wait_for_mailbox_ack(c->cport_id0 + 1, 0);
 
     write_mailbox(c->cport_id1 + 1);
-    if (result) {
-        dbgprintx32("Couldn't poke mailbox for connecting cport ",
-                    c->cport_id1 + 1,
-                    "\n");
-            return -1;
-    }
     return 0;
 }
 
