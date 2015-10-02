@@ -59,7 +59,7 @@ void resume_point(void) {
     resume_sequence_in_workram();
 
     /* handshake with test controller to indicate success */
-    chip_signal_boot_status(0);
+    chip_handshake_boot_status(0);
     while(1);
 }
 
@@ -92,7 +92,7 @@ void bootrom_main(void) {
 
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating trying to enter standby */
-    chip_signal_boot_status(0);
+    chip_handshake_boot_status(0);
     enter_standby();
 #endif
     /* Our work is done */
