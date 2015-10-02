@@ -35,7 +35,7 @@
 #include "tftf.h"
 #include "ffff.h"
 #include "tsb_unipro.h"
-#include "gbfw_fake_svc.h"
+#include "gbboot_fake_svc.h"
 
 int svc_wait_for_peer_ready(void) {
     uint32_t val;

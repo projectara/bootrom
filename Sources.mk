@@ -51,9 +51,9 @@ endif
 CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 
-ifeq ($(BUILD_FOR_GBFW_SERVER),1)
-CMN_CSRC =  $(CMN_SRCDIR)/gbfw_server_start.c
-CMN_CSRC += $(CMN_SRCDIR)/gbfw_fake_svc.c
+ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
+CMN_CSRC =  $(CMN_SRCDIR)/gbboot_server_start.c
+CMN_CSRC += $(CMN_SRCDIR)/gbboot_fake_svc.c
 else
 ifeq ($(BOOT_STAGE), 3)
 CMN_CSRC =  $(CMN_SRCDIR)/3rdstage_start.c
@@ -68,7 +68,7 @@ CMN_CSRC += $(CMN_SRCDIR)/utils.c
 CMN_CSRC += $(CMN_SRCDIR)/unipro.c
 CMN_CSRC += $(CMN_SRCDIR)/gbcore.c
 CMN_CSRC += $(CMN_SRCDIR)/debug.c
-CMN_CSRC += $(CMN_SRCDIR)/gbfirmware.c
+CMN_CSRC += $(CMN_SRCDIR)/gbboot.c
 
 CMN_ASRC =
 

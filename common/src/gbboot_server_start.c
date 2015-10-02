@@ -35,9 +35,9 @@
 #include "debug.h"
 #include "data_loading.h"
 #include "ffff.h"
-#include "gbfw_fake_svc.h"
+#include "gbboot_fake_svc.h"
 #include "utils.h"
-#include "gbfirmware.h"
+#include "gbboot.h"
 #include "chipdef.h"
 
 extern data_load_ops spi_ops;
@@ -48,7 +48,7 @@ static void server_loop(void);
 /* the values below do not really matter in our environment */
 #define LOCAL_DEV_ID 0xA
 #define PEER_DEV_ID 0xB
-#define GBFW_CPORT 1
+#define gbboot_CPORT 1
 #define CLIENT_DATA_CPORT 1
 #define PEER_PORT_ID 1
 /**
@@ -63,7 +63,7 @@ void bootrom_main(void) {
 
     dbginit();
 
-    dbgprint("GBFW Server\n");
+    dbgprint("gbboot Server\n");
 
     chip_wait_for_link_up();
     while(1) {
@@ -84,7 +84,7 @@ struct unipro_connection conn[] = {
     {
         .port_id0 = SWITCH_PORT_ID,
         .device_id0 = LOCAL_DEV_ID,
-        .cport_id0  = GBFW_CPORT,
+        .cport_id0  = gbboot_CPORT,
         .port_id1 = PEER_PORT_ID,
         .device_id1 = PEER_DEV_ID,
         .cport_id1  = CLIENT_DATA_CPORT,
@@ -188,7 +188,7 @@ static int gb_control(void) {
 
 static bool image_download_finished = false;
 static int stage_to_load;
-static int gbfw_get_firmware_size(uint32_t cportid,
+static int gbboot_get_firmware_size(uint32_t cportid,
                                   gb_operation_header *op_header) {
     int rc;
     uint8_t *payload = (uint8_t *)op_header + sizeof(*op_header);
@@ -206,7 +206,7 @@ static int gbfw_get_firmware_size(uint32_t cportid,
                                sizeof(size));
 }
 
-static int gbfw_get_firmware(uint32_t cportid,
+static int gbboot_get_firmware(uint32_t cportid,
                              gb_operation_header *op_header) {
     int rc;
     uint8_t *payload = (uint8_t *)op_header + sizeof(*op_header);
@@ -225,7 +225,7 @@ static int gbfw_get_firmware(uint32_t cportid,
                                req->size);
 }
 
-static int gbfw_ready_to_boot(uint32_t cportid,
+static int gbboot_ready_to_boot(uint32_t cportid,
                               gb_operation_header *op_header) {
     uint8_t *payload = (uint8_t *)op_header + sizeof(*op_header);
     dbgprintx32("ready-to-boot, status: ", *payload, "\n");
@@ -238,10 +238,10 @@ static int gbfw_ready_to_boot(uint32_t cportid,
                                0);
 }
 
-static int gbfw_cport_handler(uint32_t cportid,
+static int gbboot_cport_handler(uint32_t cportid,
                               void *data,
                               size_t len) {
-    dbgprint("GBFW cport Rx:");
+    dbgprint("gbboot cport Rx:");
     unsigned char *p = (unsigned char *)data;
     int i;
     for(i = 0; i < len; i++) {
@@ -259,14 +259,14 @@ static int gbfw_cport_handler(uint32_t cportid,
     gb_operation_header *op_header = (gb_operation_header *)data;
 
     switch (op_header->type) {
-    case GB_FW_OP_FIRMWARE_SIZE:
-        rc = gbfw_get_firmware_size(cportid, op_header);
+    case GB_BOOT_OP_FIRMWARE_SIZE:
+        rc = gbboot_get_firmware_size(cportid, op_header);
         break;
-    case GB_FW_OP_GET_FIRMWARE:
-        rc = gbfw_get_firmware(cportid, op_header);
+    case GB_BOOT_OP_GET_FIRMWARE:
+        rc = gbboot_get_firmware(cportid, op_header);
         break;
-    case GB_FW_OP_READY_TO_BOOT:
-        rc = gbfw_ready_to_boot(cportid, op_header);
+    case GB_BOOT_OP_READY_TO_BOOT:
+        rc = gbboot_ready_to_boot(cportid, op_header);
         break;
     default:
         break;
@@ -275,23 +275,23 @@ static int gbfw_cport_handler(uint32_t cportid,
     return rc;
 }
 
-static int gbfw_process(void) {
+static int gbboot_process(void) {
     unsigned char ver[] = {0, 1};
-    greybus_send_request(GBFW_CPORT,
+    greybus_send_request(gbboot_CPORT,
                          1,
-                         GB_FW_OP_PROTOCOL_VERSION,
+                         GB_BOOT_OP_PROTOCOL_VERSION,
                          ver,
                          2);
-    chip_unipro_receive(GBFW_CPORT, gbfw_cport_handler);
-    greybus_send_request(GBFW_CPORT,
+    chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
+    greybus_send_request(gbboot_CPORT,
                          1,
-                         GB_FW_OP_AP_READY,
+                         GB_BOOT_OP_AP_READY,
                          NULL,
                          0);
-    chip_unipro_receive(GBFW_CPORT, gbfw_cport_handler);
+    chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
     image_download_finished = false;
     while (!image_download_finished) {
-        chip_unipro_receive(GBFW_CPORT, gbfw_cport_handler);
+        chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
     }
     return 0;
 }
@@ -319,7 +319,7 @@ static void server_loop(void) {
     dbgprint("Control port connected\n");
 
     gb_control();
-    gbfw_process();
+    gbboot_process();
 #ifdef _SIMULATION
     if (stage_to_load == FFFF_ELEMENT_STAGE_2_FW)
         chip_enter_hibern8_server();
@@ -347,4 +347,3 @@ void set_last_error(uint32_t err) {
                     err, "\n");
     }
 }
-

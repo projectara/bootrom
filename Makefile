@@ -72,9 +72,9 @@ XCFLAGS += -D_NO_BOOT_OVER_UNIPRO
 XAFLAGS += -D_NO_BOOT_OVER_UNIPRO
 endif
 
-ifeq ($(BUILD_FOR_GBFW_SERVER),1)
-XCFLAGS += -DBUILD_FOR_GBFW_SERVER
-XAFLAGS += -DBUILD_FOR_GBFW_SERVER
+ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
+XCFLAGS += -DBUILD_FOR_GBBOOT_SERVER
+XAFLAGS += -DBUILD_FOR_GBBOOT_SERVER
 CONFIG_DEBUG = y
 endif
 
@@ -170,6 +170,6 @@ third_stage:
 	@ echo "Building for third stage boot firmware"
 	$(Q) VERBOSE=$(VERBOSE) BOOT_STAGE=3 make --no-print-directory
 
-gbfw_server:
+gbboot_server:
 	@ echo "Building server for downloading FW over UniPro"
-	$(Q) VERBOSE=$(VERBOSE) BUILD_FOR_GBFW_SERVER=1 make --no-print-directory
+	$(Q) VERBOSE=$(VERBOSE) BUILD_FOR_GBBOOT_SERVER=1 make --no-print-directory

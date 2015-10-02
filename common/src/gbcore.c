@@ -32,9 +32,9 @@
 #include "chipapi.h"
 #include "debug.h"
 #include "greybus.h"
-#include "gbfirmware.h"
+#include "gbboot.h"
 
-uint32_t gbfw_cportid = 0;
+uint32_t gbboot_cportid = 0;
 
 extern unsigned char build_manifest_manifest_mnfb[];
 extern unsigned int build_manifest_manifest_mnfb_len;
@@ -166,7 +166,7 @@ static int gbctrl_connected(uint32_t cportid,
     }
 
     rc = greybus_cport_connect();
-    if (rc != 0 || *payload != gbfw_cportid) {
+    if (rc != 0 || *payload != gbboot_cportid) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_UNKNOWN_ERROR,
@@ -187,7 +187,7 @@ static int gbctrl_disconnected(uint32_t cportid,
     uint16_t *payload = (uint16_t *)(op_header + 1);
 
     if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload) ||
-        *payload != gbfw_cportid) {
+        *payload != gbboot_cportid) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_INVALID,

@@ -26,57 +26,49 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_GBFIRMWARE_H
-#define __COMMON_INCLUDE_GBFIRMWARE_H
+#ifndef __COMMON_INCLUDE_GBBOOT_FAKE_SVC_H
+#define __COMMON_INCLUDE_GBBOOT_FAKE_SVC_H
 
-extern uint32_t gbfw_cportid;
+int svc_wait_for_peer_ready(void);
 
-/* Greybus FirmWare request types */
-#define GB_FW_OP_INVALID            0x00
-#define GB_FW_OP_PROTOCOL_VERSION   0x01
-#define GB_FW_OP_FIRMWARE_SIZE      0x02
-#define GB_FW_OP_GET_FIRMWARE       0x03
-#define GB_FW_OP_READY_TO_BOOT      0x04
-#define GB_FW_OP_AP_READY           0x05 /* Unidirectional request with no-payload */
-
-/* Greybus FirmWare boot statuses */
-#define GB_FW_BOOT_STATUS_INVALID   0x00
-#define GB_FW_BOOT_STATUS_INSECURE  0x01
-#define GB_FW_BOOT_STATUS_SECURE    0x02
-
-/* Greybus FirmWare boot instructions */
-#define GB_FW_BOOT_INSTR_FAILURE   0x00
-#define GB_FW_BOOT_INSTR_OK        0x01
-
-/* Greybus FirmWare error codes */
-#define GB_FW_ERR_INVALID          (-1)
-#define GB_FW_ERR_FAILURE          (-2)
-
-/* Boot stage whose firmware we request */
-#define NEXT_BOOT_STAGE            (BOOT_STAGE + 1)
-
-/* Greybus FirmWare request and response payloads */
-struct __attribute__ ((__packed__)) gbfw_protocol_version_request {
-  uint8_t major, minor;
+/*
+ * @brief UniPro connections
+ */
+struct unipro_connection {
+    uint8_t port_id0;
+    uint8_t device_id0;
+    uint16_t cport_id0;
+    uint8_t port_id1;
+    uint8_t device_id1;
+    uint16_t cport_id1;
+    uint8_t tc;
+    uint8_t flags;
+    uint8_t state;
 };
 
-struct __attribute__ ((__packed__)) gbfw_firmware_size_request {
-  uint8_t stage;
+struct fake_switch {
+    unsigned char not_used;
 };
 
-struct __attribute__ ((__packed__)) gbfw_firmware_size_response {
-  size_t size;
-};
+#define SWITCH_UNIPORT_MAX          (14)
+#define SWITCH_PORT_ID              SWITCH_UNIPORT_MAX
+#define SWITCH_PORT_MAX             (SWITCH_UNIPORT_MAX + 1)
 
-struct __attribute__ ((__packed__)) gbfw_get_firmware_request {
-  uint32_t offset, size;
-};
+int switch_set_local_dev_id(struct fake_switch *sw,
+                            uint8_t port_id,
+                            uint8_t dev_id);
 
-struct __attribute__ ((__packed__)) gbfw_ready_to_boot_request {
-  uint8_t status;
-};
+int switch_if_dev_id_set(struct fake_switch *sw,
+                         uint8_t port_id,
+                         uint8_t dev_id);
 
-int greybus_cport_connect(void);
-int greybus_cport_disconnect(void);
+int switch_cport_disconnect(struct fake_switch *sw,
+                            uint8_t port_id0,
+                            uint8_t cport_id0,
+                            uint8_t port_id1,
+                            uint8_t cport_id1);
 
-#endif
+int switch_cport_connect(struct fake_switch *sw,
+                         struct unipro_connection *c);
+
+#endif /* __COMMON_INCLUDE_GBBOOT_FAKE_SVC_H */
