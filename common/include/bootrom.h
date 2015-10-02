@@ -75,6 +75,7 @@ typedef enum {
 } shared_function_index;
 
 #define COMMUNICATION_AREA_DATA_FIELDS \
+    uint32_t fw_errno; \
     void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
     unsigned char endpoint_unique_id[EUID_LENGTH]; \
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \

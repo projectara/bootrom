@@ -139,15 +139,18 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
     ffff_element_descriptor * element;
     bool end_of_elements = false;
 
+    /*****/dbgprintx32("FFFF hdr len ", header->header_size, "\n");
     /* Check for leading and trailing sentinels */
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->sentinel_value[i] != ffff_sentinel_value[i]) {
+            /*****/dbgprint("FFFF bad sentinel (H)\n");
             set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }
     }
     for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
         if (header->trailing_sentinel_value[i] != ffff_sentinel_value[i]) {
+            /*****/dbgprint("FFFF bad sentinel (T)\n");
             set_last_error(BRE_FFFF_SENTINEL);
             return -1;
         }

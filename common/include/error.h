@@ -33,14 +33,6 @@
 //#include <stddef.h>
 #include "debug.h"
 
-/*
- * A global bootrom-specific "errno" into which we can put qualification
- * information about an error condition. The low-order 24 bits of this
- * will be OR'd in with the bootrom status in the DME_DDBL2_INIT_STATUS
- * register
- */
-extern uint32_t br_errno;
-
 #define BRE_OK                      ((uint32_t)0x000000)
 
 /* These are used to divide the 24-bits of errno pushed to BOOT_STATUS */
@@ -136,19 +128,7 @@ extern uint32_t br_errno;
 /**
  * @brief Bootloader-specific "set-errno" wrapper initializer
  */
-static inline void init_last_error(void) {
-    /*
-     * 1st level fw will erase all erro fields. Subsequent levels
-     * will only erase their level's field.
-     */
-#if BOOT_STAGE == 1
-    br_errno = BRE_OK;
-#elif BOOT_STAGE == 2
-    br_errno &= ~BRE_L2_FW_MASK;
-#elif BOOT_STAGE == 3
-    br_errno &= ~BRE_L3_FW_MASK;
-#endif
-}
+void init_last_error(void);
 
 
 /**
@@ -166,8 +146,26 @@ void set_last_error(uint32_t err);
  *
  * @returns The last BRE_xxx error code saved.
  */
-static inline uint32_t get_last_error(void) {
-    return br_errno;//
-}
+uint32_t get_last_error(void);
+
+
+/**
+ * @brief Merge the bootrom "errno" and the boot status
+ *
+ *
+ * @param boot_status The boot_status to push out to the DME variable
+ * @return The merged boot_status variable
+ */
+uint32_t merge_errno_with_boot_status(uint32_t boot_status);
+
+
+/**
+ * @brief Wrapper to set the boot status and stop
+ *
+ * This is a terminal execution node. All passengers must disembark
+ *
+ * @param errno A BRE_xxx error code to save
+ */
+void halt_and_catch_fire(uint32_t boot_status);
 
 #endif /* __COMMON_INCLUDE_ERROR_H */

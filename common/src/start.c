@@ -47,10 +47,6 @@
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
 
-uint32_t br_errno;
-
-uint32_t merge_errno_with_boot_status(uint32_t boot_status);
-
 
 /**
  * @brief Bootloader "C" entry point
@@ -68,10 +64,10 @@ void bootrom_main(void) {
     bool        fallback_boot_unipro = false;
     uint32_t    is_secure_image;
 
+    chip_init();
+
     /* Ensure that we start each boot with an assumption of success */
     init_last_error();
-
-    chip_init();
 
     dbginit();
 
@@ -154,7 +150,7 @@ void bootrom_main(void) {
                 }
 
                 /* Log that we're starting the boot-from-SPIROM */
-                chip_advertise_boot_status(boot_status);
+                chip_advertise_boot_status(merge_errno_with_boot_status(boot_status));
                 /* TA-16 jump to SPI code (BOOTRET_o = 0 && SPIBOOT_N = 0) */
                 jump_to_image();
             }
@@ -234,108 +230,4 @@ void bootrom_main(void) {
      * ahead...
      */
     halt_and_catch_fire(boot_status);
-}
-
-
-/**
- * @brief Merge the bootrom "errno" and the boot status
- *
- *
- * @param boot_status The boot_status to push out to the DME variable
- * @return The merged boot_status variable
- */
-uint32_t merge_errno_with_boot_status(uint32_t boot_status) {
-    /* Since the boot has failed, add in the "boot failed" bit and the
-     * global bootrom "errno", containing the details of the failure to
-     * whatever boot status we've reached thus far, publish it via DME
-     * and stop.
-     */
-    return (boot_status & ~INIT_STATUS_ERROR_CODE_MASK) |
-           (get_last_error() & INIT_STATUS_ERROR_CODE_MASK);
-}
-
-
-/**
- * @brief Wrapper to set the boot status and stop
- *
- * This is a terminal execution node. All passengers must disembark
- *
- * @param errno A BRE_xxx error code to save
- */
-void halt_and_catch_fire(uint32_t boot_status) {
-    /* Since the boot has failed, add in the "boot failed" bit and the
-     * global bootrom "errno", containing the details of the failure to
-     * whatever boot status we've reached thus far, publish it via DME
-     * and stop.
-     */
-    boot_status = merge_errno_with_boot_status(boot_status) |
-                  INIT_STATUS_FAILED;
-    dbgprintx32("Boot failed (", boot_status, ") halt\n");
-    dbgflush();
-    /* NOTE: NO FURTHER DEBUG MESSAGES BETWEEN HERE AND FUNCTION END! */
-
-    if (!boot_status_offline) {
-        chip_advertise_boot_status(boot_status);
-    }
-
-#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
-    /*
-     * Indicate failure with GPIO 18 showing a '1' and execute a handshake
-     * cycle on GPIO 16,17
-     */
-    chip_handshake_boot_status(boot_status);
-#endif
-    while(1);
-}
-
-
-/**
- * @brief Wrapper to set the bootloader-specific "errno" value
- *
- * Note: The first error is sticky (subsequent settings are ignored)
- *
- * @param errno A BRE_xxx error code to save
- */
-void set_last_error(uint32_t err) {
-    if (br_errno == BRE_OK) {
-
-        /* Automatically shift and mask the error based on BOOT_STAGE */
-#if BOOT_STAGE == 1
-        err = (err << BRE_L1_FW_SHIFT) & BRE_L1_FW_MASK;
-#elif BOOT_STAGE == 2
-        err = (err << BRE_L2_FW_SHIFT) & BRE_L2_FW_MASK;
-#elif BOOT_STAGE == 3
-        err = (err << BRE_L3_FW_SHIFT) & BRE_L3_FW_MASK;
-#endif
-
-        /* Save the first error in each L1,2,3 reporting zone */
-        if (err & BRE_L1_FW_MASK) {
-            /* level 1 error */
-            if ((br_errno & BRE_L1_FW_MASK) == 0) {
-                br_errno |= err & BRE_L1_FW_MASK;
-            }
-            uint32_t    err_group = err & BRE_GROUP_MASK;
-            /* Print out the error */
-            dbgprintx32((err_group == BRE_EFUSE_BASE)? "L1 e-Fuse err: ":
-                        (err_group == BRE_TFTF_BASE)? "L1 TFTF err: ":
-                        (err_group == BRE_FFFF_BASE)? "L1 FFFF err: " :
-                        (err_group == BRE_CRYPTO_BASE)? "L1 Crypto err: " :
-                                "L1 error: ",
-                                err, "\n");
-
-        } else if (err & BRE_L2_FW_MASK) {
-            /* level 2 error */
-            if ((br_errno & BRE_L2_FW_MASK) == 0) {
-                br_errno |= err & BRE_L2_FW_MASK;
-                dbgprintx32("L2 err: ", err, "\n");
-            }
-       } else  {
-            /* level 3 error */
-           if ((br_errno & BRE_L3_FW_MASK) == 0) {
-               br_errno |= err & BRE_L3_FW_MASK;
-               dbgprintx32("L3 err: ", err, "\n");
-           }
-        }
-
-    }
 }
