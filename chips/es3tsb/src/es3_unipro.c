@@ -33,6 +33,8 @@
 #include "data_loading.h"
 #include "greybus.h"
 
+/*#define DME_LOGGING*/
+
 /**
  * @brief perform a DME access
  * @param attr attribute to access
@@ -92,6 +94,15 @@ int chip_unipro_attr_write(uint16_t attr,
                            uint16_t selector,
                            int peer)
 {
+#if (defined DME_LOGGING) && (defined _DEBUG)
+    /* Log all DME writes except those related to UniPro boot handshake. */
+    if ((attr != TSB_MAILBOX) && (attr != TSB_INTERRUPTSTATUS) &&
+        (attr != ES3_SYSTEM_STATUS_15) && (attr != MBOX_ACK_ATTR))
+    {
+        dbgprintx16("ID=", attr, NULL);
+        dbgprintx32(", WrVal=", val, "\n");
+    }
+#endif
     return unipro_attr_access(attr, &val, selector, peer, 1);
 }
 
