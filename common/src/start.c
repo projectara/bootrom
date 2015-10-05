@@ -66,10 +66,10 @@ void bootrom_main(void) {
 
     chip_init();
 
+    dbginit();
+
     /* Ensure that we start each boot with an assumption of success */
     init_last_error();
-
-    dbginit();
 
     crypto_init();
 

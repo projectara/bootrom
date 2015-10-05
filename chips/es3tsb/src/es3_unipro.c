@@ -33,7 +33,13 @@
 #include "data_loading.h"
 #include "greybus.h"
 
-/*#define DME_LOGGING*/
+#ifndef _PRODUCTION
+ /*
+  *  DME_LOGGING is a temporary insert for extracting DME response files. Make
+  *  sure that this is suppressed in Production builds
+  */
+/* #define DME_LOGGING */
+#endif
 
 /**
  * @brief perform a DME access

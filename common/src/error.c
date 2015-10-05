@@ -44,30 +44,39 @@
 #include "crypto.h"
 #include "bootrom.h"
 
+static uint32_t fw_errno;
+
 
 /**
  * @brief Bootloader-specific "errno" wrapper initializer
  */
 void init_last_error(void) {
-    communication_area *p = (communication_area *)&_communication_area;
-
     /*
      * 1st level fw will erase all errno fields. Subsequent levels
      * will only erase their level's field.
      */
 #if BOOT_STAGE == 1
-    p->fw_errno = BRE_OK;
+    fw_errno = BRE_OK;
 #else
+    {
+        if (chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &fw_errno, 0,
+                                  ATTR_LOCAL) != 0)
+        {
+            dbgprint("L2/L3: init_last_error: can't read Boot Status\n");
+            fw_errno = BRE_OK;
+        }
+    }
     /* strip off any DME status... */
-    p->fw_errno &= INIT_STATUS_ERROR_CODE_MASK;
+    fw_errno &= INIT_STATUS_ERROR_CODE_MASK;
 
     /* ...and ensure that this level's field is cleared. */
 #if BOOT_STAGE == 2
-    p->fw_errno &= ~BRE_L2_FW_MASK;
+    fw_errno &= ~BRE_L2_FW_MASK;
 #elif BOOT_STAGE == 3
-    p->fw_errno &= ~BRE_L3_FW_MASK;
+    fw_errno &= ~BRE_L3_FW_MASK;
 #endif
 #endif
+   dbgprintx32("init_last_error fw_errno=", fw_errno, "\n");
 }
 
 
@@ -79,33 +88,29 @@ void init_last_error(void) {
  * @param errno A BRE_xxx error code to save
  */
 void set_last_error(uint32_t err) {
-    communication_area *p = (communication_area *)&_communication_area;
     uint32_t error_mask;
+    uint32_t shift;
 #if BOOT_STAGE == 1
     error_mask = BRE_L1_FW_MASK;
+    shift = BRE_L1_FW_SHIFT;
 #elif BOOT_STAGE == 2
     error_mask = BRE_L2_FW_MASK;
+    shift = BRE_L2_FW_SHIFT;
 #elif BOOT_STAGE == 3
     error_mask = BRE_L3_FW_MASK;
+    shift = BRE_L3_FW_SHIFT;
 #endif
 
-    if ((p->fw_errno & error_mask) == BRE_OK) {
+    if ((fw_errno & error_mask) == BRE_OK) {
+        /*
+         * Shift and mask the error based on BOOT_STAGE
+         * and save the first error in each L1,2,3 reporting zone
+         */
+        fw_errno |= (err << shift) & error_mask;
 
-        /* Automatically shift and mask the error based on BOOT_STAGE */
-#if BOOT_STAGE == 1
-        err = (err << BRE_L1_FW_SHIFT) & error_mask;
-#elif BOOT_STAGE == 2
-        err = (err << BRE_L2_FW_SHIFT) & error_mask;
-#elif BOOT_STAGE == 3
-        err = (err << BRE_L3_FW_SHIFT) & error_mask;
-#endif
-
+#ifdef _DEBUG
         /* Save the first error in each L1,2,3 reporting zone */
         if (err & BRE_L1_FW_MASK) {
-            /* level 1 error */
-            if ((p->fw_errno & BRE_L1_FW_MASK) == 0) {
-                p->fw_errno |= err & BRE_L1_FW_MASK;
-            }
             uint32_t    err_group = err & BRE_GROUP_MASK;
             /* Print out the error */
             dbgprintx32((err_group == BRE_EFUSE_BASE)? "L1 e-Fuse err: ":
@@ -116,18 +121,11 @@ void set_last_error(uint32_t err) {
                                 err, "\n");
 
         } else if (err & BRE_L2_FW_MASK) {
-            /* level 2 error */
-            if ((p->fw_errno & BRE_L2_FW_MASK) == 0) {
-                p->fw_errno |= err & BRE_L2_FW_MASK;
-                dbgprintx32("L2 err: ", err, "\n");
-            }
-       } else  {
-            /* level 3 error */
-           if ((p->fw_errno & BRE_L3_FW_MASK) == 0) {
-               p->fw_errno |= err & BRE_L3_FW_MASK;
-               dbgprintx32("L3 err: ", err, "\n");
-           }
+             dbgprintx32("L2 err: ", err, "\n");
+        } else  {
+            dbgprintx32("L3 err: ", err, "\n");
         }
+#endif
     }
 }
 
@@ -138,9 +136,7 @@ void set_last_error(uint32_t err) {
  * @returns The last BRE_xxx error code saved.
  */
 uint32_t get_last_error(void) {
-    communication_area *p = (communication_area *)&_communication_area;
-
-    return p->fw_errno;
+    return fw_errno;
 }
 
 /**
