@@ -29,6 +29,11 @@
 #ifndef __COMMON_INCLUDE_DEBUG_H
 #define __COMMON_INCLUDE_DEBUG_H
 
+/* Ensure that debug messages are suppressed in Production builds */
+#ifdef _PRODUCTION
+#undef _DEBUG
+#endif
+
 #include "chipapi.h"
 
 #ifdef _DEBUG
