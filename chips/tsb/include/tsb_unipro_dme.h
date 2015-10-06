@@ -36,6 +36,8 @@
 #define TSB_HIBERNATE_ENTER_REQ    0xd030
 #define TSB_HIBERNATE_ENTER_IND    0xd031
 #define TSB_HIBERNATE_EXIT_REQ     0xd032
+    #define EXIT_REQ_ACCEPTED      (1 << 0)
+    #define EXIT_REQ_DENIED        (1 << 1)
 #define TSB_HIBERNATE_EXIT_IND     0xd033
 
 /* TSB_PowerState */

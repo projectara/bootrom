@@ -79,11 +79,30 @@ int chip_exit_hibern8_client(void) {
 
     tsb_clk_enable(TSB_CLK_UNIPROSYS);
     dbgprint("Try to exit hibernate\n");
-    tempval = 1;
-    rc = chip_unipro_attr_write(TSB_HIBERNATE_EXIT_REQ, tempval, 0,
-                                ATTR_LOCAL);
-    if (rc) {
-        return rc;
+    while(1) {
+        tempval = 1;
+        rc = chip_unipro_attr_write(TSB_HIBERNATE_EXIT_REQ, tempval, 0,
+                                    ATTR_LOCAL);
+        if (rc) {
+            return rc;
+        }
+
+        rc = chip_unipro_attr_read(TSB_HIBERNATE_EXIT_REQ, &tempval, 0,
+                                   ATTR_LOCAL);
+
+        if (rc) {
+            return rc;
+        }
+
+        /**
+         * There are two bits defined in this DME. Bit 0 means the command
+         * was accepted and bit 1 means it is rejected. It is not clear if
+         * other value, such as 0 or 3 is possible when reading this DME.
+         * But Toshiba said that we should re-issue the command if the REQ/CNF
+         * returns EXIT_REQ_DENIED as rejected
+         */
+        if (tempval != EXIT_REQ_DENIED)
+            break;
     }
 
     do {
@@ -195,16 +214,17 @@ void resume_sequence_in_workram(void) {
     /* delay 1.5us or more */
     delay_ns(1500);
 
-    putreg32(0, ISO_FOR_IO_EN);
-
-    putreg32(0, BOOTRET_O);
-
     chip_init();
 
     dbginit();
 
-    dbgprint("Resumed from standby\n");
 #ifdef _STANDBY_WAIT_FOR_SERVER
     chip_exit_hibern8_client();
 #endif
+    putreg32(0, ISO_FOR_IO_EN);
+
+    /* write 1 to clear BOOTRET_o */
+    putreg32(1, BOOTRET_O);
+
+    dbgprint("Resumed from standby\n");
 }

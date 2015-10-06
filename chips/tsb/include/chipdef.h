@@ -116,7 +116,7 @@
 #define WAKEUPSRC       (PMU_BASE + 0x24)
 #define BOOTRET_O       (PMU_BASE + 0x2C)
 #define RETFFSAVE       (PMU_BASE + 0x40)
-#define RETFFSTR        (PMU_BASE + 0x40)
+#define RETFFSTR        (PMU_BASE + 0x44)
 
 #define UNIPRO_CLK_EN               (SYSCTL_BASE + 0x0E10)
 #define SOFTRESETRELEASE1           (SYSCTL_BASE + 0x0104)
