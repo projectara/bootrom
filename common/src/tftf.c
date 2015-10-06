@@ -86,7 +86,7 @@ bool valid_tftf_header(tftf_header * header);
 
 static int load_tftf_header(data_load_ops *ops) {
     tftf_section_descriptor *section;
-    uint32_t unipro_vid = 0;
+    uint32_t unipro_mid = 0;
     uint32_t unipro_pid = 0;
     int rc;
 
@@ -111,7 +111,7 @@ static int load_tftf_header(data_load_ops *ops) {
      * takes place for that VID/PID.
      * TA-12 Read  DME attribute (DDBL1)
      */
-    rc = chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_vid, 0,
+    rc = chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_mid, 0,
                           ATTR_LOCAL);
     if (rc) {
         set_last_error(BRE_EFUSE_UNIPRO_VID_READ);
@@ -122,8 +122,8 @@ static int load_tftf_header(data_load_ops *ops) {
         set_last_error(BRE_EFUSE_UNIPRO_PID_READ);
         return -1;
     }
-    if (((tftf.header.unipro_vid != 0) &&
-         (tftf.header.unipro_vid != unipro_vid)) ||
+    if (((tftf.header.unipro_mid != 0) &&
+         (tftf.header.unipro_mid != unipro_mid)) ||
         ((tftf.header.unipro_pid != 0) &&
          (tftf.header.unipro_pid != unipro_pid)) ||
         ((tftf.header.ara_vid != 0) &&

@@ -83,7 +83,7 @@ typedef struct {
     char firmware_package_name[48];
     uint32_t package_type;  /* Must match FFFF element_type */
     uint32_t start_location;
-    uint32_t unipro_vid;    /* Match to MIPI DME 0x5003, or zero */
+    uint32_t unipro_mid;    /* Match to MIPI DME 0x5003, or zero */
     uint32_t unipro_pid;    /* Match to MIPI DME 0x5004, or zero */
     uint32_t ara_vid;
     uint32_t ara_pid;
