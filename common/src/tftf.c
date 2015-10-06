@@ -354,11 +354,6 @@ bool valid_tftf_section(tftf_section_descriptor * section,
     uint32_t    other_section_end;
     tftf_section_descriptor * other_section;
 
-    if (!valid_tftf_type(section->section_type)) {
-        set_last_error(BRE_TFTF_HEADER_TYPE);
-        return false;
-    }
-
     /* Is this the end-of-table marker? */
     if (section->section_type == TFTF_SECTION_END) {
         *end_of_sections = true;
