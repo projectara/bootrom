@@ -207,6 +207,17 @@ static int discard_section(data_load_ops *ops,
     return 0;
 }
 
+/**
+ * @brief Perform signature processing on a TFTF section
+ *
+ * Note that process_tftf_section relies on load_tftf_header() to reject any
+ * unknown section type as a whole.
+ *
+ * @param ops Pointer to the media access V-table
+ * @param section The TFTF section descriptor to validate
+ *
+ * @returns 0 if successful, -1 otherwise
+ */
 static int process_tftf_section(data_load_ops *ops,
                                 tftf_section_descriptor *section) {
     unsigned char *dest;
@@ -353,6 +364,11 @@ bool valid_tftf_section(tftf_section_descriptor * section,
     uint32_t    other_section_start;
     uint32_t    other_section_end;
     tftf_section_descriptor * other_section;
+
+    if (!valid_tftf_type(section->section_type)) {
+        set_last_error(BRE_TFTF_HEADER_TYPE);
+        return false;
+    }
 
     /* Is this the end-of-table marker? */
     if (section->section_type == TFTF_SECTION_END) {
