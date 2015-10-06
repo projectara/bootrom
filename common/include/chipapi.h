@@ -174,4 +174,9 @@ void chip_delay(uint32_t delay);
 
 #define delay_ns(ns) chip_delay(CHIP_NS_TO_DELAY(ns))
 
+/**
+ * @brief clear the RAM area used as image loading destination
+ */
+void chip_clear_image_loading_ram(void);
+
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

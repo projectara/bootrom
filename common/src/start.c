@@ -160,6 +160,7 @@ void bootrom_main(void) {
         boot_from_spi = false;
         fallback_boot_unipro = true;
 
+        chip_clear_image_loading_ram();
     } else {
         /* (Not boot-from-spi, */
         fallback_boot_unipro = false;

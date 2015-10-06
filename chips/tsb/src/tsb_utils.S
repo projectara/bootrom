@@ -65,3 +65,27 @@ chip_delay:
     bne chip_delay
     bx lr
 
+.globl chip_clear_image_loading_ram
+.type chip_clear_image_loading_ram, %function
+chip_clear_image_loading_ram:
+    push {r0, r8, r9}
+    ldr r0, =0
+    /* Just clear the BootRom .data, .bss, stack and communication region*/
+    ldr r8, =_workram_start
+#if BOOT_STAGE == 1
+    ldr r9, =_bootrom_data_area
+#elif BOOT_STAGE == 2
+    ldr r9, =_bootrom_text_area
+#else
+    pop {r0, r8, r9}
+    bx lr
+#endif
+
+clear_loading_ram:
+    str r0, [r8], #4
+    cmp r8, r9
+    bne clear_loading_ram
+
+    pop {r0, r8, r9}
+    bx lr
+
