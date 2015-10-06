@@ -245,6 +245,11 @@ static int unipro_attr_access(uint16_t attr,
                               int peer,
                               int write) {
     int rc = 0;
+
+    if (attr == ARA_MBOX_ACK_ATTR) {
+        attr = ES2_MBOX_ACK_ATTR;
+    }
+
     uint32_t ctrl = (REG_ATTRACS_CTRL_PEERENA(peer) |
                      REG_ATTRACS_CTRL_SELECT(selector) |
                      REG_ATTRACS_CTRL_WRITE(write) |

@@ -47,7 +47,7 @@ int svc_wait_for_peer_ready(void) {
             dbgprint("Error when waiting for ready\n");
             return -1;
         }
-        if (val != TSB_MAIL_RESET) {
+        if (val != ARA_MAIL_RESET) {
             dbgprintx32("Peer ready: ", val, "\n");
             ack_mailbox(val);
             break;

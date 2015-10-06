@@ -111,7 +111,7 @@ static int server_control_cport_handler(uint32_t cportid,
 int poke_mailbox(uint32_t val, int peer) {
     int rc;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, peer);
+    rc = chip_unipro_attr_write(ARA_MAILBOX, val, 0, peer);
     if (rc) {
         return rc;
     }
@@ -122,14 +122,14 @@ int wait_for_mailbox_ack(uint32_t wval, int peer) {
     int rc;
     uint32_t val = 0;
     do {
-        rc = chip_unipro_attr_read(MBOX_ACK_ATTR, &val, 0, peer);
+        rc = chip_unipro_attr_read(ARA_MBOX_ACK_ATTR, &val, 0, peer);
     } while (!rc && val != wval);
     if (rc) {
         return rc;
     }
 
     val = 0;
-    chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, peer);
+    chip_unipro_attr_write(ARA_MBOX_ACK_ATTR, val, 0, peer);
     return 0;
 }
 

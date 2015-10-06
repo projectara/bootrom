@@ -44,7 +44,7 @@
  */
 int read_mailbox(uint32_t *val) {
     int rc;
-    uint32_t mbox = TSB_MAIL_RESET, irq_status;
+    uint32_t mbox = ARA_MAIL_RESET, irq_status;
 
     if (!val) {
         return -EINVAL;
@@ -58,14 +58,14 @@ int read_mailbox(uint32_t *val) {
      * for a notification from the SVC (supervisory controller).
      */
     do {
-        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+        rc = chip_unipro_attr_read(ARA_INTERRUPTSTATUS, &irq_status, 0,
                                    ATTR_LOCAL);
-    } while (!rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    } while (!rc && !(irq_status & ARA_INTERRUPTSTATUS_MAILBOX));
     if (rc) {
         return rc;
     }
 
-    rc = chip_unipro_attr_read(TSB_MAILBOX, &mbox, 0, ATTR_LOCAL);
+    rc = chip_unipro_attr_read(ARA_MAILBOX, &mbox, 0, ATTR_LOCAL);
     if (rc) {
         return rc;
     }
@@ -85,7 +85,7 @@ int read_mailbox(uint32_t *val) {
  * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
 int ack_mailbox(uint16_t val) {
-    return chip_unipro_attr_write(MBOX_ACK_ATTR, val, 0, ATTR_LOCAL);
+    return chip_unipro_attr_write(ARA_MBOX_ACK_ATTR, val, 0, ATTR_LOCAL);
 }
 
 /**
@@ -97,7 +97,7 @@ int write_mailbox(uint32_t val) {
     int rc;
     uint32_t irq_status = 0;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER);
+    rc = chip_unipro_attr_write(ARA_MAILBOX, val, 0, ATTR_PEER);
     if (rc) {
         return rc;
     }
@@ -107,9 +107,9 @@ int write_mailbox(uint32_t val) {
      * timeout has been included.
      */
     do {
-        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+        rc = chip_unipro_attr_read(ARA_INTERRUPTSTATUS, &irq_status, 0,
                                    ATTR_PEER);
-    } while (!rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    } while (!rc && (irq_status & ARA_INTERRUPTSTATUS_MAILBOX));
 
     return rc;
 }
@@ -132,7 +132,7 @@ int advertise_ready(void) {
      * Write that we're a ready non-AP module to the switch's mailbox
      * attribute.
      */
-    rc = write_mailbox(TSB_MAIL_READY_OTHER);
+    rc = write_mailbox(ARA_MAIL_READY_OTHER);
     if (rc) {
         return rc;
     }

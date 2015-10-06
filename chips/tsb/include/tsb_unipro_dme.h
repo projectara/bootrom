@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Google Inc.
+/*
+ * Copyright (c) 2014 Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ARCH_ARM_SRC_TSB_ES3TSB_ES3_CHIPDEF_H
-#define __ARCH_ARM_SRC_TSB_ES3TSB_ES3_CHIPDEF_H
+#ifndef __ARCH_ARM_SRC_TSB_TSB_UNIPRO_DME_H
+#define __ARCH_ARM_SRC_TSB_TSB_UNIPRO_DME_H
 
-#define WORKRAM_BASE    (0x10000000)
-#define WORKRAM_SIZE    (0x30000)
-#define BUFFRAM_BASE    (0x20000000)
-#define BUFFRAM_SIZE    (0x30000)
+/**
+ * This file defines TSB specific DME attributes
+ */
 
-#define SPI_BASE        (0x40018000)
-#define SPI_SIZE        (0x800)
+#define TSB_HIBERNATE_ENTER_REQ    0xd030
+#define TSB_HIBERNATE_ENTER_IND    0xd031
+#define TSB_HIBERNATE_EXIT_REQ     0xd032
+#define TSB_HIBERNATE_EXIT_IND     0xd033
 
-#endif
+/* TSB_PowerState */
+#define TSB_POWERSTATE             0xd083
+    #define POWERSTATE_DISABLED     (0x00)
+    #define POWERSTATE_LINKDOWN     (0x01)
+    #define POWERSTATE_LINKUP       (0x02)
+    #define POWERSTATE_HIBERNATE    (0x03)
+    #define POWERSTATE_LINKLOST     (0x04)
+    #define POWERSTATE_LINKCFG      (0x05)
+
+#define TSB_MAXSEGMENTCONFIG        0xd089
+
+#endif /* __ARCH_ARM_SRC_TSB_TSB_UNIPRO_DME_H */
+
