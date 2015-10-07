@@ -76,7 +76,6 @@ void init_last_error(void) {
     fw_errno &= ~BRE_L3_FW_MASK;
 #endif
 #endif
-   dbgprintx32("init_last_error fw_errno=", fw_errno, "\n");
 }
 
 
