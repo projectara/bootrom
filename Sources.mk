@@ -54,12 +54,12 @@ CMN_INCFLAGS := -I$(TOPDIR)/common/include
 ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
 CMN_CSRC =  $(CMN_SRCDIR)/gbboot_server_start.c
 CMN_CSRC += $(CMN_SRCDIR)/gbboot_fake_svc.c
-else
-ifeq ($(BOOT_STAGE), 3)
+else ifeq ($(BOOT_STAGE), 3)
 CMN_CSRC =  $(CMN_SRCDIR)/3rdstage_start.c
+else ifeq ($(BOOT_STAGE), 2)
+CMN_CSRC =  $(CMN_SRCDIR)/2ndstage_start.c
 else
 CMN_CSRC =  $(CMN_SRCDIR)/start.c
-endif
 endif
 CMN_CSRC += $(CMN_SRCDIR)/tftf.c
 CMN_CSRC += $(CMN_SRCDIR)/ffff.c

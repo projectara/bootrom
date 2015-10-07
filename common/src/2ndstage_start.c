@@ -49,7 +49,14 @@ extern data_load_ops greybus_ops;
 
 
 /**
- * @brief Bootloader "C" entry point
+ * @brief Stage 2 loader "C" entry point. Started from Stage 1
+ * bootloader. Primary function is to load, validate, and start
+ * executing a stage 3 image. Also will (when fully implemented)
+ * perform startup negotiations with AP, cryptographic initialzations
+ * and tests, module authentication, flash update, and other housekeeping.
+ * Image load and validation are essntially identical to the crresponding
+ * functions in stage 1, although different keys are used for signature
+ * validation.
  *
  * @param none
  *
@@ -73,8 +80,7 @@ void bootrom_main(void) {
 
     crypto_init();
 
-    set_shared_function(SHARED_FUNCTION_ENTER_STANDBY, chip_enter_standby);
-    dbgprint("\nHello world from s1fw\n");
+    dbgprint("\nHello world from s2fw\n");
 
     chip_unipro_init();
 
@@ -111,7 +117,7 @@ void bootrom_main(void) {
          * Do not care about the image length here so pass NULL.
          */
         if (locate_ffff_element_on_storage(&spi_ops,
-                                           FFFF_ELEMENT_STAGE_2_FW,
+                                           FFFF_ELEMENT_STAGE_3_FW,
                                            NULL) == 0) {
             boot_status = INIT_STATUS_SPI_BOOT_STARTED;
             chip_advertise_boot_status(boot_status);

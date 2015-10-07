@@ -85,9 +85,9 @@ void bootrom_main(void) {
 
     chip_init();
 
-    init_last_error();
-
     dbginit();
+
+    init_last_error();
 
     dbgprint("Hello world from s3fw\n");
 

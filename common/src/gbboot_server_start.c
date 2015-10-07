@@ -60,9 +60,9 @@ static void server_loop(void);
 void bootrom_main(void) {
     chip_init();
 
-    init_last_error();
-
     dbginit();
+
+    init_last_error();
 
     dbgprint("gbboot Server\n");
 
