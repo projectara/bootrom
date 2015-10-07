@@ -63,6 +63,7 @@ endif
 ifeq ($(_SIMULATION),1)
 XCFLAGS += -D_SIMULATION
 XAFLAGS += -D_SIMULATION
+include $(TOPDIR)/simulation.mk
 endif
 
 #  _NOBOU==1:  Suppress Boot-Over-Unipro code 

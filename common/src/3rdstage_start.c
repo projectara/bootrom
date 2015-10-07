@@ -94,7 +94,9 @@ void bootrom_main(void) {
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating trying to enter standby */
     chip_handshake_boot_status(0);
+#ifdef _STANDBY_TEST
     enter_standby();
+#endif
 #endif
     /* Our work is done */
     while(1);

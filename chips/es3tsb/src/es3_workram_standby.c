@@ -152,9 +152,9 @@ int standby_sequence(void) {
     int status;
 
     putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
-
+#ifdef _STANDBY_WAIT_FOR_SERVER
     chip_enter_hibern8_client();
-
+#endif
     while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
     tsb_clk_disable(TSB_CLK_UNIPROSYS);
 
@@ -204,5 +204,7 @@ void resume_sequence_in_workram(void) {
     dbginit();
 
     dbgprint("Resumed from standby\n");
+#ifdef _STANDBY_WAIT_FOR_SERVER
     chip_exit_hibern8_client();
+#endif
 }
