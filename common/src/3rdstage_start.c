@@ -42,7 +42,68 @@
 #include "ffff.h"
 #include "crypto.h"
 #include "bootrom.h"
+#include "utils.h"
 
+void tsb_get_cms(uint8_t * buf, uint32_t size);
+void tsb_enable_ims_access(void);
+void tsb_enable_cms_access(void);
+
+void check_ims_cms_access(void) {
+    int i;
+    unsigned char ims[TSB_ISAA_NUM_IMS_BYTES];
+    unsigned char cms[TSB_ISAA_NUM_CMS_BYTES];
+    tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
+    if (is_constant_fill(ims, TSB_ISAA_NUM_IMS_BYTES, 0)) {
+        dbgprint("IMS reads all zero\n");
+    } else {
+        dbgprint("IMS reads NOT all zero\n");
+        dbgprint("   ");
+        for (i = 0; i < TSB_ISAA_NUM_IMS_BYTES; i++) {
+            dbgprinthex8(ims[i]);
+        }
+        dbgprint("\n");
+    }
+
+    tsb_get_cms(cms, TSB_ISAA_NUM_CMS_BYTES);
+    if (is_constant_fill(cms, TSB_ISAA_NUM_CMS_BYTES, 0)) {
+        dbgprint("CMS reads all zero\n");
+    } else {
+        dbgprint("CMS reads NOT all zero\n");
+        dbgprint("   ");
+        for (i = 0; i < TSB_ISAA_NUM_CMS_BYTES; i++) {
+            dbgprinthex8(cms[i]);
+        }
+        dbgprint("\n");
+    }
+
+    dbgprint("Try to enable access to IMS/CMS\n");
+    tsb_enable_ims_access();
+    tsb_enable_cms_access();
+
+    tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
+    if (is_constant_fill(ims, TSB_ISAA_NUM_IMS_BYTES, 0)) {
+        dbgprint("IMS reads all zero after trying to enable access\n");
+    } else {
+        dbgprint("IMS reads NOT all zero after trying to enable access\n");
+        dbgprint("   ");
+        for (i = 0; i < TSB_ISAA_NUM_IMS_BYTES; i++) {
+            dbgprinthex8(ims[i]);
+        }
+        dbgprint("\n");
+    }
+
+    tsb_get_cms(cms, TSB_ISAA_NUM_CMS_BYTES);
+    if (is_constant_fill(cms, TSB_ISAA_NUM_CMS_BYTES, 0)) {
+        dbgprint("CMS reads all zero after trying to enable access\n");
+    } else {
+        dbgprint("CMS reads NOT all zero after trying to enable access\n");
+        dbgprint("   ");
+        for (i = 0; i < TSB_ISAA_NUM_CMS_BYTES; i++) {
+            dbgprinthex8(cms[i]);
+        }
+        dbgprint("\n");
+    }
+}
 
 #ifdef _SIMULATION
 int chip_enter_hibern8_client(void);
@@ -57,6 +118,7 @@ void resume_point(void) {
      */
     resume_sequence_in_workram();
 
+    check_ims_cms_access();
     /* handshake with test controller to indicate success */
     chip_handshake_boot_status(0);
     while(1);
@@ -90,6 +152,8 @@ void bootrom_main(void) {
     init_last_error();
 
     dbgprint("Hello world from s3fw\n");
+
+    check_ims_cms_access();
 
 #ifdef _SIMULATION
     /* Handshake with the controller, indicating trying to enter standby */

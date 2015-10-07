@@ -186,6 +186,26 @@ void tsb_disable_cms_access(void) {
     isaa_write(TSB_ISAA_DISABLE_CMS_ACCESS, TSB_DISABLE_CMS_ACCESS);
 }
 
+/* Those functions are not used in boot ROM, explicitly exclude them */
+#if BOOT_STAGE != 1
+void tsb_get_cms(uint8_t * buf, uint32_t size) {
+    if (size > TSB_ISAA_NUM_CMS_BYTES) {
+        size = TSB_ISAA_NUM_CMS_BYTES;
+    }
+    isaa_read_n(TSB_ISAA_CMS0, buf, size);
+}
+
+
+void tsb_enable_ims_access(void) {
+    isaa_write(TSB_ISAA_DISABLE_IMS_ACCESS, 0);
+}
+
+
+void tsb_enable_cms_access(void) {
+    isaa_write(TSB_ISAA_DISABLE_CMS_ACCESS, 0);
+}
+#endif
+
 
 void tsb_jtag_disable(void) {
     isaa_write(TSB_ISAA_JTAG_DISABLE, TSB_JTAG_DISABLE);
