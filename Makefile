@@ -101,7 +101,8 @@ _dummy := $(foreach d,$(SRCDIRS), \
 
 ELF = $(OUTROOT)/bootrom
 BIN = $(ELF).bin
-HEX = $(ELF).hex
+HEXAP = $(OUTROOT)/bromcAP.dat
+HEXGP = $(OUTROOT)/bromcGP.dat
 
 MANIFEST_OUTDIR = $(OUTROOT)/$(MANIFEST_SRCDIR)
 
@@ -113,7 +114,7 @@ AFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
 
 COBJS += $(MANIFEST_OUTDIR)/manifest.o $(MANIFEST_OUTDIR)/public_keys.o
 
-all: $(HEX)
+all: $(HEXAP) $(HEXGP)
 
 $(MANIFEST_OUTDIR)/%.o: $(MANIFEST_OUTDIR)/%.c
 	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
@@ -140,10 +141,14 @@ $(BIN): $(ELF)
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@
 
 # TBD: figure out the "version"
-# also, the "--gpb" seems not needed because we are not differentiating
-# the apbridge and gpbridge in the boot ROM
-$(HEX): $(BIN)
-	$(Q) tools/bin2verilog --input $< --out $@ --version 1 --gpb --size 0x4000
+HEXVER=0
+$(HEXGP): $(BIN)
+	$(Q) tools/bin2verilog --input $< --out $@ \
+		--version $(HEXVER) --gpb --size 0x4000
+
+$(HEXAP): $(BIN)
+	$(Q) tools/bin2verilog --input $< --out $@ \
+		--version $(HEXVER) --apb --size 0x4000
 
 -include $(COBJS:.o=.d) $(AOBJS:.o=.d)
 

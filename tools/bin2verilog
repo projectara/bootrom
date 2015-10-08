@@ -78,7 +78,7 @@ def validate_args(args):
     if args.size < 0 or args.size > 0xffffffff:
         error("--start is out of range")
         success = False
-    if args.version < 1 or args.version > 9:
+    if args.version > 9:
         error("--version is out of range")
         success = False
     return success
@@ -121,11 +121,11 @@ def filter_file(infilename, outfilename, load, rom_size, version,
             timestamp = strftime("%y%m%d", gmtime())
             timestamp += "{0:d}{1:d}".format(is_ap_bridge, version)
             outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
-                          address, ord(timestamp[0]), ord(timestamp[1]),
-                          ord(timestamp[2]), ord(timestamp[3])))
+                          address, ord(timestamp[3]), ord(timestamp[2]),
+                          ord(timestamp[1]), ord(timestamp[0])))
             outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
-                          address+1, ord(timestamp[4]), ord(timestamp[5]),
-                          ord(timestamp[6]), ord(timestamp[7])))
+                          address+1, ord(timestamp[7]), ord(timestamp[6]),
+                          ord(timestamp[5]), ord(timestamp[4])))
 
 
 def main():
