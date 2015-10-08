@@ -56,8 +56,12 @@ XFLAGS =
 ifeq ($(_PRODUCTION),1)
 XCFLAGS += -D_PRODUCTION
 XAFLAGS += -D_PRODUCTION
+else
+# Non-production builds: testing switches allowed
+include $(TOPDIR)/testing.mk
 endif
 
+<<<<<<< HEAD
 #  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
 #  _SIMULATION!=1:  Use memory clearing and real crypto
 ifeq ($(_SIMULATION),1)
@@ -65,13 +69,16 @@ XCFLAGS += -D_SIMULATION
 XAFLAGS += -D_SIMULATION
 include $(TOPDIR)/simulation.mk
 endif
+=======
+>>>>>>> Bootrom: Revamped ifdefs to support ornamented builds
 
-#  _NOBOU==1:  Suppress Boot-Over-Unipro code 
-#  _NOBOU!=1:  Enable Boot-Over-Unipro code
-ifeq ($(_NOBOU),1)
-XCFLAGS += -D_NO_BOOT_OVER_UNIPRO
-XAFLAGS += -D_NO_BOOT_OVER_UNIPRO
-endif
+
+##  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
+##  _SIMULATION!=1:  Use memory clearing and real crypto
+#ifeq ($(_SIMULATION),1)
+#XCFLAGS += -D_SIMULATION
+#XAFLAGS += -D_SIMULATION
+#endif
 
 ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
 XCFLAGS += -DBUILD_FOR_GBBOOT_SERVER

@@ -107,7 +107,7 @@ void set_last_error(uint32_t err) {
          */
         fw_errno |= (err << shift) & error_mask;
 
-#ifdef _DEBUG
+#ifdef _DEBUGMSGS
         /* Save the first error in each L1,2,3 reporting zone */
         if (err & BRE_L1_FW_MASK) {
             uint32_t    err_group = err & BRE_GROUP_MASK;
@@ -179,12 +179,10 @@ void halt_and_catch_fire(uint32_t boot_status) {
         chip_advertise_boot_status(boot_status);
     }
 
-#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
     /*
      * Indicate failure with GPIO 18 showing a '1' and execute a handshake
      * cycle on GPIO 16,17
      */
     chip_handshake_boot_status(boot_status);
-#endif
     while(1);
 }

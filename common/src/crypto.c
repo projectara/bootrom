@@ -40,7 +40,7 @@ void (*sha256_process_func)(sha256 *sh,int byte);
 void (*sha256_hash_func)(sha256 *sh,char hash[32]);
 int (*rsa2048_verify_func)(char digest[], char signature[], char public_key[]);
 
-#ifndef _SIMULATION
+#ifndef _NOCRYPTO
 static sha256 shctx;
 #endif
 
@@ -52,7 +52,7 @@ static sha256 shctx;
  * @returns Nothing
  */
 void hash_start(void) {
-#ifndef _SIMULATION
+#ifndef _NOCRYPTO
     sha256_init_func(&shctx);
 #endif
 }
@@ -67,7 +67,7 @@ void hash_start(void) {
  * @returns Nothing
  */
 void hash_update(unsigned char *data, uint32_t datalen) {
-#ifndef _SIMULATION
+#ifndef _NOCRYPTO
     uint32_t i;
     for (i = 0; i < datalen; i++) {
         sha256_process_func(&shctx, data[i]);
@@ -84,7 +84,7 @@ void hash_update(unsigned char *data, uint32_t datalen) {
  * @returns Nothing
  */
 void hash_final(unsigned char *digest) {
-#ifndef _SIMULATION
+#ifndef _NOCRYPTO
     sha256_hash_func(&shctx,(char*)digest);
 #endif
 }
@@ -129,7 +129,7 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
  * @returns 0 if the digest verifies, non-zero otherwise
  */
 int verify_signature(unsigned char *digest, tftf_signature *signature) {
-#ifdef _SIMULATION
+#ifdef _NOCRYPTO
 /* little ending 32bit word for "FAIL" */
 #define _SIM_KEYNAME_FAILURE_SENTINEL 0x4C494146
     uint32_t *pname = (uint32_t *)(signature->key_name);

@@ -352,8 +352,7 @@ static void server_loop(void) {
 
     gb_control();
     gbboot_process();
-
-#ifdef _SIMULATION
+#ifdef _GBBOOT_SERVER_STANDBY
     if (stage_to_load == FFFF_ELEMENT_STAGE_2_FW)
         chip_enter_hibern8_server();
 #endif

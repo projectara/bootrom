@@ -31,7 +31,7 @@
 #include "debug.h"
 #include "tsb_scm.h"
 
-#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+#ifdef _HANDSHAKE
 /* See: T6WU0XBG-0001 APBridge Functional Specification for pinshare bits */
 #define GPIO_REQ 16
 #define GPIO_RESP 17
@@ -58,7 +58,7 @@ void chip_init(void) {
 #ifdef CONFIG_GPIO
     chip_gpio_init();
 #endif
-#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+#ifdef _HANDSHAKE
     tsb_clr_pinshare(HANDSHAKE_GPIO_CLR_BITS);
     tsb_set_pinshare(HANDSHAKE_GPIO_SET_BITS);
     chip_gpio_direction_in(GPIO_RESP);
@@ -83,7 +83,7 @@ int chip_validate_data_load_location(void *base, uint32_t length) {
     return 0;
 }
 
-#if defined(_SIMULATION) && ((BOOT_STAGE == 1) || (BOOT_STAGE == 3))
+#ifdef _HANDSHAKE
  /**
   * @brief Perform a handshake with the external simulation controller
   *

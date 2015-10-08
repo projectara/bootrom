@@ -20,7 +20,7 @@ _stack_top = DEFINED(_stack_top) ?
 
 /**
  * & 0xFFFFFFE0 to make sure it is aligned with 32 bytes
- * so code in boot.S for _SIMULATION can work correctly
+ * so code in boot.S for _CLEAR_MIN_MEMORY can work correctly
  */
 _bootrom_data_area = DEFINED(_bootrom_data_area) ?
                      _bootrom_data_area :

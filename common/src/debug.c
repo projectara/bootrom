@@ -30,7 +30,7 @@
 #include "debug.h"
 #include "bootrom.h"
 
-#ifdef _DEBUG
+#ifdef _DEBUGMSGS
 
 
 /**
@@ -187,4 +187,4 @@ void dbgprintx64(char * s1, uint64_t num, char * s2) {
     dbgprint(s2);
 }
 
-#endif  /* #ifdef _DEBUG */
+#endif  /* _DEBUGMSGS */

@@ -34,7 +34,7 @@ CHIPCFLAGS += -fno-builtin -ffunction-sections
 
 CHIPWARNINGS = -Wall -Wstrict-prototypes -Wshadow
 
-ifeq ($(_SIMULATION),1)
+ifeq ($(_DEBUGMSGS),1)
 CONFIG_GPIO = y
 CONFIG_UART_CLOCK_DIVIDER = 4
 endif

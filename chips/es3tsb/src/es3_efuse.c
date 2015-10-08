@@ -319,11 +319,12 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             dbgprint("efuse_init: Invalid IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
-#ifdef _SIMULATION
-            /* some fake value for simulation build */
+#ifdef _NOCRYPTO
+            /* Some fake value for simulation build */
             endpoint_id->low = 0x12345678;
             endpoint_id->high = 0x9ABCDEF0;
 #else
+            /* Calculate a real value from the IMS */
             int i;
             /**
              * The algorithm used to calculate Endpoint Unique ID is:

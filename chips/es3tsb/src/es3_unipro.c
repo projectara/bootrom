@@ -100,7 +100,7 @@ int chip_unipro_attr_write(uint16_t attr,
                            uint16_t selector,
                            int peer)
 {
-#if (defined DME_LOGGING) && (defined _DEBUG)
+#if (defined DME_LOGGING) && (defined _DEBUGMSGS)
     /* Log all DME writes except those related to UniPro boot handshake. */
     if ((attr != TSB_MAILBOX) && (attr != TSB_INTERRUPTSTATUS) &&
         (attr != ES3_SYSTEM_STATUS_15) && (attr != MBOX_ACK_ATTR))

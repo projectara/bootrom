@@ -31,12 +31,12 @@
 
 /* Ensure that debug messages are suppressed in Production builds */
 #ifdef _PRODUCTION
-#undef _DEBUG
+#undef _DEBUGMSGS
 #endif
 
 #include "chipapi.h"
 
-#ifdef _DEBUG
+#ifdef _DEBUGMSGS
     void dbginit(void);
     void dbgputc(int x);
     void dbgprint(char *str);
@@ -60,6 +60,6 @@
     static inline void dbgprintx32(char * s1, uint32_t num, char * s2) { }
     static inline void dbgprintx64(char * s1, uint64_t num, char * s2) { }
     static inline void dbgflush(void) { }
-#endif /* _DEBUG */
+#endif /* _DEBUGMSGS */
 
 #endif /* __COMMON_INCLUDE_DEBUG_H */

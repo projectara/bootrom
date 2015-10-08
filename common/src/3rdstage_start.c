@@ -105,7 +105,7 @@ void check_ims_cms_access(void) {
     }
 }
 
-#ifdef _SIMULATION
+#ifdef _GBBOOT_SERVER_STANDBY
 int chip_enter_hibern8_client(void);
 int chip_exit_hibern8_client(void);
 
@@ -155,7 +155,7 @@ void bootrom_main(void) {
 
     check_ims_cms_access();
 
-#ifdef _SIMULATION
+#ifdef _GBBOOT_SERVER_STANDBY
     /* Handshake with the controller, indicating trying to enter standby */
     chip_handshake_boot_status(0);
 #ifdef _STANDBY_TEST

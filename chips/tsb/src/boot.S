@@ -49,7 +49,7 @@ Reset_Handler:
 chip_jump_to_image:
     mov r10, r0
 
-#ifndef _SIMULATION
+#ifndef _CLEAR_MIN_MEMORY
     ldr r0, =0
     mov r1, r0
     mov r2, r0
@@ -134,7 +134,7 @@ cold_boot:
     ldr sp, =_stack_top
 #endif
 
-#ifdef _SIMULATION
+#ifdef _CLEAR_MIN_MEMORY
     ldr r0, =0
     /* Just clear the BootRom .data, .bss, stack and communication region*/
     ldr r8, =_bootrom_data_area
