@@ -71,4 +71,10 @@ int switch_cport_disconnect(struct fake_switch *sw,
 int switch_cport_connect(struct fake_switch *sw,
                          struct unipro_connection *c);
 
+void switch_gear_change(uint32_t gear,
+                        uint32_t termination,
+                        uint32_t hsseries,
+                        uint32_t num_of_lanes,
+                        uint32_t powermode);
+
 #endif /* __COMMON_INCLUDE_GBBOOT_FAKE_SVC_H */

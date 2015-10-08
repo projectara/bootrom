@@ -169,9 +169,26 @@
 #define PA_TXTRAILINGCLOCKS            0x1564
 #define PA_TXPWRSTATUS                 0x1567
 #define PA_TXGEAR                      0x1568
+    #define GEAR_PWM_G1                   (1)
+    #define GEAR_PWM_G2                   (2)
+    #define GEAR_PWM_G3                   (3)
+    #define GEAR_PWM_G4                   (4)
+    #define GEAR_HS_G1                    (1)
+    #define GEAR_HS_G2                    (2)
+    #define GEAR_HS_G3                    (3)
 #define PA_TXTERMINATION               0x1569
+    #define TERMINATION_OFF               (0)
+    #define TERMINATION_ON                (1)
 #define PA_HSSERIES                    0x156a
+    #define HS_MODE_A                     (1)
+    #define HS_MODE_B                     (2)
 #define PA_PWRMODE                     0x1571
+    #define POWERMODE_FAST                (1)
+    #define POWERMODE_SLOW                (2)
+    #define POWERMODE_FASTAUTO            (4)
+    #define POWERMODE_SLOWAUTO            (5)
+    #define POWERMODE_UNCHANGED           (7)
+    #define POWERMODE_RX_SHIFT            4
 #define PA_ACTIVERXDATALANES           0x1580
 #define PA_CONNECTEDRXDATALANES        0x1581
 #define PA_RXPWRSTATUS                 0x1582

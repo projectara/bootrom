@@ -200,6 +200,15 @@ static int gbboot_get_firmware_size(uint32_t cportid,
     rc = locate_ffff_element_on_storage(&spi_ops, stage_to_load, &size);
 
     dbgprintx32("image size: ", size, "\n");
+
+#ifdef _GEAR_CHANGE_TEST
+    switch_gear_change(GEAR_HS_G2,
+                       TERMINATION_ON,
+                       HS_MODE_A,
+                       1,
+                       POWERMODE_FAST);
+#endif
+
     return greybus_op_response(cportid,
                                op_header,
                                (rc == 0) ? GB_OP_SUCCESS : GB_OP_UNKNOWN_ERROR,
@@ -232,6 +241,13 @@ static int gbboot_ready_to_boot(uint32_t cportid,
     dbgprintx32("ready-to-boot, status: ", *payload, "\n");
 
     image_download_finished = true;
+#ifdef _GEAR_CHANGE_TEST
+    switch_gear_change(GEAR_HS_G3,
+                       TERMINATION_ON,
+                       HS_MODE_A,
+                       2,
+                       POWERMODE_FAST);
+#endif
     return greybus_op_response(cportid,
                                op_header,
                                (*payload != 0) ? GB_OP_SUCCESS : GB_OP_UNKNOWN_ERROR,
@@ -265,6 +281,13 @@ static int gbboot_cport_handler(uint32_t cportid,
         break;
     case GB_BOOT_OP_GET_FIRMWARE:
         rc = gbboot_get_firmware(cportid, op_header);
+#ifdef _GEAR_CHANGE_TEST
+    switch_gear_change(GEAR_HS_G2,
+                       TERMINATION_ON,
+                       HS_MODE_A,
+                       2,
+                       POWERMODE_FAST);
+#endif
         break;
     case GB_BOOT_OP_READY_TO_BOOT:
         rc = gbboot_ready_to_boot(cportid, op_header);
@@ -314,6 +337,14 @@ static void server_loop(void) {
         return;
     }
 
+#ifdef _GEAR_CHANGE_TEST
+    switch_gear_change(GEAR_HS_G1,
+                       TERMINATION_ON,
+                       HS_MODE_A,
+                       2,
+                       POWERMODE_FAST);
+#endif
+
     switch_if_dev_id_set(NULL, PEER_PORT_ID, PEER_DEV_ID);
 
     create_connection(&conn[0]);
@@ -321,6 +352,7 @@ static void server_loop(void) {
 
     gb_control();
     gbboot_process();
+
 #ifdef _SIMULATION
     if (stage_to_load == FFFF_ELEMENT_STAGE_2_FW)
         chip_enter_hibern8_server();

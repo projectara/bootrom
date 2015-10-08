@@ -401,3 +401,132 @@ int switch_set_local_dev_id(struct fake_switch *sw,
 
     return 0;
 }
+
+void switch_gear_change(uint32_t gear,
+                        uint32_t termination,
+                        uint32_t hsseries,
+                        uint32_t num_of_lanes,
+                        uint32_t powermode) {
+    uint32_t val;
+    int rc;
+
+    chip_unipro_attr_write(PA_TXGEAR,
+                           gear,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_TXTERMINATION,
+                           termination,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_HSSERIES,
+                           hsseries,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_ACTIVETXDATALANES,
+                           num_of_lanes,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_RXGEAR,
+                           gear,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_RXTERMINATION,
+                           termination,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_ACTIVERXDATALANES,
+                           num_of_lanes,
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_FC0PROTECTIONTIMEOUTVAL,
+                           0x1FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_TC0REPLAYTIMEOUTVAL,
+                           0xFFFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_AFC0REQTIMEOUTVAL,
+                           0x7FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_FC1PROTECTIONTIMEOUTVAL,
+                           0x1FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_TC1REPLAYTIMEOUTVAL,
+                           0xFFFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(DME_AFC1REQTIMEOUTVAL,
+                           0x7FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA0,
+                           0x1FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA1,
+                           0xFFFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA2,
+                           0x7FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA3,
+                           0x1FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA4,
+                           0xFFFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODEUSERDATA5,
+                           0x7FFF, /* default value from TSB spec */
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    chip_unipro_attr_write(PA_PWRMODE,
+                           powermode | (powermode << POWERMODE_RX_SHIFT),
+                           UNIPRO_SELINDEX_NULL,
+                           ATTR_LOCAL);
+
+    do {
+        rc = chip_unipro_attr_read(DME_POWERMODEIND,
+                                   &val,
+                                   UNIPRO_SELINDEX_NULL,
+                                   ATTR_LOCAL);
+        switch(val) {
+        case TSB_DME_POWERMODEIND_LOCAL:
+           dbgprint("Power mode changed\n");
+           return;
+        case TSB_DME_POWERMODEIND_NONE:
+        case TSB_DME_POWERMODEIND_REMOTE:
+            break;
+        default:
+            dbgprintx32("ERROR: power mode ind: ", val, "\n");
+            while(1);
+        }
+    } while (!rc);
+    dbgprint("ERROR: failed to read DME_POWERMODEIND\n");
+    while(1);
+}
