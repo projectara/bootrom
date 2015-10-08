@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 void chip_init(void);
 
@@ -178,5 +179,12 @@ void chip_delay(uint32_t delay);
  * @brief clear the RAM area used as image loading destination
  */
 void chip_clear_image_loading_ram(void);
+
+/**
+ * @brief check if untrusted image is allowed
+ * @return false if only trusted image is allowed
+ *         true if trusted image is allowed
+ */
+bool chip_is_untrusted_image_allowed(void);
 
 #endif /* __COMMON_INCLUDE_CHIPAPI_H */

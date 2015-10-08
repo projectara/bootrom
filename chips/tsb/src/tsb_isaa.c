@@ -38,6 +38,7 @@
  * Author: Morgan Girling <morgang@bsquare.com>
  */
 
+#include <stdbool.h>
 #include "tsb_isaa.h"
 
 
@@ -83,6 +84,14 @@
 #define TSB_ISAA_SN0                        0x00000300
 #define TSB_ISAA_SN1                        0x00000304
 #define TSB_ISAA_SCR                        0x00000308
+    #define TSB_ISAA_ROM_KEY_0_INVALID        (1 << 0)
+    #define TSB_ISAA_ROM_KEY_1_INVALID        (1 << 1)
+    #define TSB_ISAA_ROM_KEY_2_INVALID        (1 << 2)
+    #define TSB_ISAA_ROM_KEY_3_INVALID        (1 << 3)
+    #define TSB_ISAA_TRUSTED_ONLY             (1 << 4)
+    #define TSB_ISAA_DISABLE_HARDWARE_CRYPTO  (1 << 7)
+    #define TSB_ISAA_ROM_KEY_VALIDITY         0x0f
+    #define TSB_ISAA_SCR_RESERVED             0x60
 #define TSB_ISAA_RETEST                     0x0000030c
 #define TSB_ISAA_DISABLE_IMS_ACCESS         0x00000400
 #define TSB_ISAA_DISABLE_CMS_ACCESS         0x00000404
@@ -220,6 +229,14 @@ int chip_is_key_revoked(int index) {
     }
 #endif
     return 0;
+}
+
+bool chip_is_untrusted_image_allowed(void) {
+#if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
+    uint32_t scr = isaa_read(TSB_ISAA_SCR);
+    return !(scr & TSB_ISAA_TRUSTED_ONLY);
+#endif
+    return true;
 }
 
 uint32_t tsb_get_scr(void) {

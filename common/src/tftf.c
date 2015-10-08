@@ -319,6 +319,12 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
         return -1;
     }
 
+    if (!tftf.contain_signature && !chip_is_untrusted_image_allowed()) {
+        /* untrusted image is not allowed */
+        set_last_error(BRE_TFTF_UNTRUSTED_NOT_ALLOWED);
+        return -1;
+    }
+
     return 0;
 }
 

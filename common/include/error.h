@@ -76,6 +76,7 @@
 #define BRE_TFTF_START_NOT_IN_CODE  ((uint32_t)(BRE_TFTF_BASE + 13))
 #define BRE_TFTF_IMAGE_CORRUPTED    ((uint32_t)(BRE_TFTF_BASE + 14))
 #define BRE_TFTF_LOAD_DATA          ((uint32_t)(BRE_TFTF_BASE + 15))
+#define BRE_TFTF_UNTRUSTED_NOT_ALLOWED    ((uint32_t)(BRE_TFTF_BASE + 16))
 
 #define BRE_FFFF_BASE               ((uint32_t)0x000040)
 #define BRE_FFFF_LOAD_HEADER        ((uint32_t)(BRE_FFFF_BASE + 0))
