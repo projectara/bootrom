@@ -61,24 +61,7 @@ else
 include $(TOPDIR)/testing.mk
 endif
 
-<<<<<<< HEAD
-#  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
-#  _SIMULATION!=1:  Use memory clearing and real crypto
-ifeq ($(_SIMULATION),1)
-XCFLAGS += -D_SIMULATION
-XAFLAGS += -D_SIMULATION
-include $(TOPDIR)/simulation.mk
-endif
-=======
->>>>>>> Bootrom: Revamped ifdefs to support ornamented builds
 
-
-##  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
-##  _SIMULATION!=1:  Use memory clearing and real crypto
-#ifeq ($(_SIMULATION),1)
-#XCFLAGS += -D_SIMULATION
-#XAFLAGS += -D_SIMULATION
-#endif
 
 ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
 XCFLAGS += -DBUILD_FOR_GBBOOT_SERVER

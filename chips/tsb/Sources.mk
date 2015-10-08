@@ -30,7 +30,14 @@ CHIP_SRCDIR = chips/$(CONFIG_ARCH_CHIP)/src
 
 CHIP_CSRC =  $(CHIP_SRCDIR)/tsb_chipapi.c
 CHIP_CSRC += $(CHIP_SRCDIR)/tsb_scm.c
+need_dbguart =
 ifeq ($(CONFIG_DEBUG),y)
+  need_dbguart= yes
+endif
+ifeq ($(_DBGPRINT),1)
+  need_dbguart= yes
+endif
+ifdef need_dbguart
 CHIP_CSRC +=  $(CHIP_SRCDIR)/tsb_dbguart.c
 endif
 ifeq ($(CONFIG_GPIO),y)

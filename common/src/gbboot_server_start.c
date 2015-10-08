@@ -97,7 +97,6 @@ static int server_control_cport_handler(uint32_t cportid,
                                         void *data,
                                         size_t len) {
     dbgprint("server ctrl cport Rx:");
-    unsigned char *p = (unsigned char *)data;
     int i;
     for(i = 0; i < len; i++) {
         if ((i & 0xF) == 0) dbgprint("\n    ");
@@ -259,7 +258,6 @@ static int gbboot_cport_handler(uint32_t cportid,
                               void *data,
                               size_t len) {
     dbgprint("gbboot cport Rx:");
-    unsigned char *p = (unsigned char *)data;
     int i;
     for(i = 0; i < len; i++) {
         if ((i & 0xF) == 0) dbgprint("\n    ");

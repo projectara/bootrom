@@ -49,17 +49,17 @@
     void dbgprintx64(char * s1, uint64_t num, char * s2);
     #define dbgflush() chip_dbgflush()
 #else
-    static inline void dbginit(void) { }
-    static inline void dbgputc(int x) { }
-    static inline void dbgprint(char *str) { }
-    static inline void dbgprinthex8(uint8_t num) { }
-    static inline void dbgprinthex16(uint16_t num) { }
-    static inline void dbgprinthex32(uint32_t num) { }
-    static inline void dbgprinthex64(uint64_t num) { }
-    static inline void dbgprintx16(char * s1, uint16_t num, char * s2) { }
-    static inline void dbgprintx32(char * s1, uint32_t num, char * s2) { }
-    static inline void dbgprintx64(char * s1, uint64_t num, char * s2) { }
-    static inline void dbgflush(void) { }
+    #define dbginit()
+    #define dbgputc(x)
+    #define dbgprint(str)
+    #define dbgprinthex8(num)
+    #define dbgprinthex16(num)
+    #define dbgprinthex32(num)
+    #define dbgprinthex64(num)
+    #define dbgprintx16(s1,num,s2)
+    #define dbgprintx32(s1,num,s2)
+    #define dbgprintx64(cs1,num,s2)
+    #define dbgflush()
 #endif /* _DEBUGMSGS */
 
 #endif /* __COMMON_INCLUDE_DEBUG_H */

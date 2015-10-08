@@ -155,7 +155,7 @@ void bootrom_main(void) {
 
     check_ims_cms_access();
 
-#ifdef _GBBOOT_SERVER_STANDBY
+#ifdef _HANDSHAKE
     /* Handshake with the controller, indicating trying to enter standby */
     chip_handshake_boot_status(0);
 #ifdef _STANDBY_TEST
