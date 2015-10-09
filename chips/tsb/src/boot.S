@@ -49,7 +49,6 @@ Reset_Handler:
 chip_jump_to_image:
     mov r10, r0
 
-#ifndef _CLEAR_MIN_MEMORY
     ldr r0, =0
     mov r1, r0
     mov r2, r0
@@ -72,7 +71,6 @@ clear_bufram_before_jump:
     stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
     cmp r8, r9
     bmi clear_bufram_before_jump
-#endif
 
     orr r10, #1    /* set Thumb mode for bx */
     bx r10
@@ -134,16 +132,6 @@ cold_boot:
     ldr sp, =_stack_top
 #endif
 
-#ifdef _CLEAR_MIN_MEMORY
-    ldr r0, =0
-    /* Just clear the BootRom .data, .bss, stack and communication region*/
-    ldr r8, =_bootrom_data_area
-    ldr r9, =_workram_end
-clear_workram:
-    str r0, [r8], #4  /* no gurantee it would be 32 bytes aligned as below */
-    cmp r8, r9
-    bmi clear_workram
-#else
     /* Clear workram
      *
      * WARNING!!!: Assumption here is that workram will always be
@@ -179,7 +167,6 @@ clear_bufram:
     stmia r8!, {r0, r1, r2, r3, r4, r5, r6, r7}
     cmp r8, r9
     bmi clear_bufram
-#endif
 
     /* initialize .data section */
     ldr r1, =_data_in_rom
