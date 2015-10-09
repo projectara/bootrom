@@ -57,11 +57,28 @@ XCFLAGS += -D_DEBUGMSGS
 XAFLAGS += -D_DEBUGMSGS
 endif
 
+ifeq ($(_GBBOOT_SERVER_STANDBY),1)
+XCFLAGS += -D_GBBOOT_SERVER_STANDBY
+XAFLAGS += -D_GBBOOT_SERVER_STANDBY
+# this test depends on the _STANDBY_TEST
+_STANDBY_TEST = 1
+endif
+
+ifeq ($(_STANDBY_TEST),1)
+XCFLAGS += -D_STANDBY_TEST
+XAFLAGS += -D_STANDBY_TEST
+# this test depends on _HANDSHAKE
+_HANDSHAKE = 1
+endif
+
 #  _HANDSHAKE==1:  GPIO handshake with simulation/test controller
 #  _HANDSHAKE!=1:  No GPIO handshake with simulation/test controller
 ifeq ($(_HANDSHAKE),1)
 XCFLAGS += -D_HANDSHAKE
 XAFLAGS += -D_HANDSHAKE
+
+# HANDSHAKE depends on CONFIG_GPIO
+CONFIG_GPIO = y
 
 #  _TEST_HANDSHAKE defined:  Special handshake (via DME variable) with simulation/test controller
 #  otherwise:  No Special handshake (via DME variable)  with simulation/test controller
@@ -81,27 +98,9 @@ XCFLAGS += -D_CLEAR_MIN_MEMORY
 XAFLAGS += -D_CLEAR_MIN_MEMORY
 endif
 
-#  _DISABLE_TIME_CONSUMING_DELAY==1:  Disable a 100 ms delay after loading from SPI
-#  _DISABLE_TIME_CONSUMING_DELAY!=1:  Enable a 100 ms delay after loading from SPI
-ifeq ($(_DISABLE_TIME_CONSUMING_DELAY),1)
-XCFLAGS += -D_DISABLE_TIME_CONSUMING_DELAY
-XAFLAGS += -D_DISABLE_TIME_CONSUMING_DELAY
-endif
-
-
-ifeq ($(_STANDBY_TEST),1)
-XCFLAGS += -D_STANDBY_TEST
-XAFLAGS += -D_STANDBY_TEST
-endif
-
-ifeq ($(_STANDBY_WAIT_FOR_SERVER),1)
-XCFLAGS += -D_STANDBY_WAIT_FOR_SERVER
-XAFLAGS += -D_STANDBY_WAIT_FOR_SERVER
-endif
-
-ifeq ($(_GBBOOT_SERVER_STANDBY),1)
-XCFLAGS += -D_GBBOOT_SERVER_STANDBY
-XAFLAGS += -D_GBBOOT_SERVER_STANDBY
+ifeq ($(_GEAR_CHANGE_TEST),1)
+XCFLAGS += -D_GEAR_CHANGE_TEST
+XAFLAGS += -D_GEAR_CHANGE_TEST
 endif
 
 ## deprecate _SIMULATION!

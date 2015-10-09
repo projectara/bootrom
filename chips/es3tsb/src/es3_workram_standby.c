@@ -171,7 +171,7 @@ int standby_sequence(void) {
     int status;
 
     putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
-#ifdef _STANDBY_WAIT_FOR_SERVER
+#ifdef _GBBOOT_SERVER_STANDBY
     chip_enter_hibern8_client();
 #endif
     while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
@@ -218,7 +218,7 @@ void resume_sequence_in_workram(void) {
 
     dbginit();
 
-#ifdef _STANDBY_WAIT_FOR_SERVER
+#ifdef _GBBOOT_SERVER_STANDBY
     chip_exit_hibern8_client();
 #endif
     putreg32(0, ISO_FOR_IO_EN);

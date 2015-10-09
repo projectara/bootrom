@@ -105,7 +105,7 @@ void check_ims_cms_access(void) {
     }
 }
 
-#ifdef _GBBOOT_SERVER_STANDBY
+#ifdef _STANDBY_TEST
 int chip_enter_hibern8_client(void);
 int chip_exit_hibern8_client(void);
 

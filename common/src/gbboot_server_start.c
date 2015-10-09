@@ -100,7 +100,7 @@ static int server_control_cport_handler(uint32_t cportid,
     int i;
     for(i = 0; i < len; i++) {
         if ((i & 0xF) == 0) dbgprint("\n    ");
-        dbgprinthex8(p[i]);dbgprint(" ");
+        dbgprinthex8(((unsigned char *)data)[i]);dbgprint(" ");
     }
     dbgprint("\n");
 
@@ -261,7 +261,7 @@ static int gbboot_cport_handler(uint32_t cportid,
     int i;
     for(i = 0; i < len; i++) {
         if ((i & 0xF) == 0) dbgprint("\n    ");
-        dbgprinthex8(p[i]);dbgprint(" ");
+        dbgprinthex8(((unsigned char *)data)[i]);dbgprint(" ");
     }
     dbgprint("\n");
 
