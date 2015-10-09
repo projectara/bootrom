@@ -36,12 +36,18 @@
 
 from __future__ import print_function
 from time import gmtime, strftime
-from struct import unpack_from
+from struct import unpack_from, pack_into
+import os
 import sys
 import argparse
 import errno
 
 DEFAULT_ROM_SIZE = 148 * 1024
+
+# Length of the serial number
+SERNO_LENGTH = 8
+
+SIZEOF_ULONG = 4
 
 
 def warning(*objs):
@@ -88,44 +94,66 @@ def filter_file(infilename, outfilename, load, rom_size, version,
                 is_ap_bridge):
     """Filter the .bin file into a Verilog download file
 
-    Create the Verilog download file and filter the bin file into it.
-    The Verilog download file is padded out with FFFFFFFF up to the last
-    2 ULONGs, which contain the serial number.
+    Create an extended .bin file containing the original .bin contents
+    padded out with FFFFFFFF up to the last 2 ULONGs, which contain the
+    serial number.
+
+    Create the Verilog download file (essentially a hex dump) from the
+    extended .bin file.
+
+    Create a .bitcount file, containing the count of "1" bits in the
+    extended .bin file. This is an ASCII decimal number.
     """
+    file_length = os.path.getsize(infilename)
+    if file_length > (rom_size - SERNO_LENGTH):
+        raise ValueError("Bin file too big")
+
     # Convert the rom size from bytes to ULONGs
-    rom_size /= 4
+    buffer = bytearray(rom_size)
     with open(infilename, "rb") as infile:
-        with open(outfilename, "w") as outfile:
-            # Read the input file and pad as needed to be DWORD-aligned
-            buffer = infile.read()
-            padding = len(buffer) % 4
-            if padding > 0:
-                while padding < 4:
-                    buffer += "\0"
-                    padding += 1
-            address = load
+        # Read the input file and pad as needed to be DWORD-aligned
+        infile.readinto(buffer)
 
-            # Write the file out as "@addr ULONG" in hex.
-            for offset in range(0, (rom_size - 2) * 4, 4):
-                if offset < len(buffer):
-                    # Get the next ULONG
-                    unpacked_data = unpack_from("<L", buffer, offset)
-                    data = unpacked_data[0]
-                else:
-                    # Pad with 0xFFFFFFFF
-                    data = 0xffffffff
-                outfile.write("@{0:x} {1:08x}\n".format(address, data))
-                address += 1
+    offset = file_length
+    if (offset % SIZEOF_ULONG) != 0:
+        # Zero-pad as needed to become ULONG-aligned. (Since the
+        # buffer was pre-zeroed, we need only bump the offset up.
+        offset += SIZEOF_ULONG - (offset % SIZEOF_ULONG)
 
-            # Append the 8-character serial number
-            timestamp = strftime("%y%m%d", gmtime())
-            timestamp += "{0:d}{1:d}".format(is_ap_bridge, version)
-            outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
-                          address, ord(timestamp[3]), ord(timestamp[2]),
-                          ord(timestamp[1]), ord(timestamp[0])))
-            outfile.write("@{0:x} {1:02x}{2:02x}{3:02x}{4:02x}\n".format(
-                          address+1, ord(timestamp[7]), ord(timestamp[6]),
-                          ord(timestamp[5]), ord(timestamp[4])))
+    # Pad with 0xffffffff up to the start of the serial number
+    while offset < (rom_size - SERNO_LENGTH):
+        pack_into("<L", buffer, offset, 0xffffffff)
+        offset += SIZEOF_ULONG
+
+    # Finish the buffer off with the 8-byte serial number, derived from the
+    # date, time and version.
+    timestamp = strftime("%y%m%d", gmtime())
+    timestamp += "{0:d}{1:d}".format(is_ap_bridge, version)
+    pack_into("<bbbbbbbb", buffer, offset,
+              ord(timestamp[0]), ord(timestamp[1]),
+              ord(timestamp[2]), ord(timestamp[3]),
+              ord(timestamp[4]), ord(timestamp[5]),
+              ord(timestamp[6]), ord(timestamp[7]))
+
+    # Write the .dat hex file (typically bromcAP.dat or bromcGP.dat)
+    with open(outfilename, "w") as outfile:
+        # Write the file out as "@addr ULONG" in hex.
+        address = load
+        for offset in range(0, rom_size, SIZEOF_ULONG):
+            unpacked_data = unpack_from("<L", buffer, offset)
+            data = unpacked_data[0]
+            outfile.write("@{0:x} {1:08x}\n".format(address, data))
+            address += 1
+
+    # Write the corresponding bin file (typically bromcAP.bin or bromcGP.bin)
+    root, ext = os.path.splitext(outfilename)
+    with open(root + ".bin", "wb") as outfile:
+        outfile.write(buffer)
+
+    # Write the corresponding bitcount file (typically bromcAP.bitcount or
+    # bromcGP.bitcount)
+    with open(root + ".bitcount", "wb") as outfile:
+        print(sum(bin(b).count("1") for b in buffer), file=outfile)
 
 
 def main():
@@ -150,6 +178,15 @@ def main():
             Designate the target as an AP bridge
         --gpb
             Designate the target as a GP bridge
+
+    The typical --out is either bromcAP.dat or bromcGP.dat. This application
+    also generates corresponding .bin and .bitcount files:
+    - bromcAP.bin/bromcGP.bin
+         The original input.bin, padded with 0xff and ending with the 8-byte
+         serial number.
+    - bromcAP.bitcount/bromcGP.bitcount
+         Contain an ASCII decimal number which is the count of "1" bits in the
+         generated bromcAP.bin/bromcGP.bin file.
     """
     parser = argparse.ArgumentParser()
 
