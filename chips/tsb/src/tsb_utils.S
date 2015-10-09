@@ -72,9 +72,9 @@ chip_clear_image_loading_ram:
     ldr r0, =0
     /* Just clear the BootRom .data, .bss, stack and communication region*/
     ldr r8, =_workram_start
-#if BOOT_STAGE == 1
+#if (CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3) && (BOOT_STAGE == 1)
     ldr r9, =_bootrom_data_area
-#elif BOOT_STAGE == 2
+#elif (CONFIG_CHIP_REVISION <= CHIP_REVISION_ES1) || (BOOT_STAGE == 2)
     ldr r9, =_bootrom_text_area
 #else
     pop {r0, r8, r9}
