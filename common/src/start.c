@@ -190,7 +190,7 @@ void bootrom_main(void) {
                 boot_status = fallback_boot_unipro ?
                     INIT_STATUS_FALLLBACK_UNTRUSTED_UNIPRO_BOOT_FINISHED :
                     INIT_STATUS_UNTRUSTED_UNIPRO_BOOT_FINISHED;
-                dbgprintx32("UP Trusted: (",
+                dbgprintx32("UP Untrusted: (",
                             merge_errno_with_boot_status(boot_status),
                             ")\n");
 
