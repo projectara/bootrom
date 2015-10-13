@@ -129,7 +129,8 @@ def filter_file(infilename, outfilename, load, rom_size, version,
     # date, time and version.
     timestamp = strftime("%y%m%d", gmtime())
     timestamp += "{0:d}{1:d}".format(is_ap_bridge, version)
-    pack_into("<bbbbbbbb", buffer, offset,
+    serno_offset = offset
+    pack_into("<bbbbbbbb", buffer, serno_offset,
               ord(timestamp[0]), ord(timestamp[1]),
               ord(timestamp[2]), ord(timestamp[3]),
               ord(timestamp[4]), ord(timestamp[5]),
@@ -154,6 +155,17 @@ def filter_file(infilename, outfilename, load, rom_size, version,
     # bromcGP.bitcount)
     with open(root + ".bitcount", "wb") as outfile:
         print(sum(bin(b).count("1") for b in buffer), file=outfile)
+
+    # Write the .hex file (for historical backward compatability)
+    root, ext = os.path.splitext(infilename)
+    with open(root + ".hex", "w") as outfile:
+        # Write the file out as "@addr ULONG" in hex.
+        address = load
+        for offset in range(0, rom_size, SIZEOF_ULONG):
+            unpacked_data = unpack_from("<L", buffer, offset)
+            data = unpacked_data[0]
+            outfile.write("@{0:x} {1:08x}\n".format(address, data))
+            address += 1
 
 
 def main():
