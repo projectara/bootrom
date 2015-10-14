@@ -43,6 +43,7 @@
 #include "crypto.h"
 #include "bootrom.h"
 #include "utils.h"
+#include "special_test.h"
 
 void tsb_get_cms(uint8_t * buf, uint32_t size);
 void tsb_enable_ims_access(void);
@@ -105,7 +106,7 @@ void check_ims_cms_access(void) {
     }
 }
 
-#ifdef _STANDBY_TEST
+#if (_SPECIAL_TEST == SPECIAL_STANDBY_TEST) || (_SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY)
 int chip_enter_hibern8_client(void);
 int chip_exit_hibern8_client(void);
 
@@ -134,7 +135,7 @@ int enter_standby(void) {
 
     return standby_sequence();
 }
-#endif
+#endif /* _SPECIAL_TESTs */
 
 /**
  * @brief Bootloader "C" entry point
@@ -158,7 +159,7 @@ void bootrom_main(void) {
 #ifdef _HANDSHAKE
     /* Handshake with the controller, indicating trying to enter standby */
     chip_handshake_boot_status(0);
-#ifdef _STANDBY_TEST
+#if (_SPECIAL_TEST == SPECIAL_STANDBY_TEST) || (_SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY)
     enter_standby();
 #endif
 #endif

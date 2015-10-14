@@ -104,17 +104,5 @@ XCFLAGS += -D_CLEAR_MIN_MEMORY
 XAFLAGS += -D_CLEAR_MIN_MEMORY
 endif
 
-ifeq ($(_GEAR_CHANGE_TEST),1)
-XCFLAGS += -D_GEAR_CHANGE_TEST
-XAFLAGS += -D_GEAR_CHANGE_TEST
-endif
-
-## deprecate _SIMULATION!
-##  _SIMULATION==1:  Simulate memory clearing and crypto for HW simulation
-##  _SIMULATION!=1:  Use memory clearing and real crypto
-#ifeq ($(_SIMULATION),1)
-#XCFLAGS += -D_SIMULATION
-#XAFLAGS += -D_SIMULATION
-#endif
 endif # _TESTING
 

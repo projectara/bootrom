@@ -43,6 +43,7 @@
 #include "debug.h"
 #include "utils.h"
 #include "tsb_scm.h"
+#include "special_test.h"
 
 int chip_enter_hibern8_client(void) {
     uint32_t tx_reset_offset, rx_reset_offset;
@@ -171,7 +172,8 @@ int standby_sequence(void) {
     int status;
 
     putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
-#ifdef _GBBOOT_SERVER_STANDBY
+#if _SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY
+
     chip_enter_hibern8_client();
 #endif
     while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
@@ -218,7 +220,7 @@ void resume_sequence_in_workram(void) {
 
     dbginit();
 
-#ifdef _GBBOOT_SERVER_STANDBY
+#if _SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY
     chip_exit_hibern8_client();
 #endif
     putreg32(0, ISO_FOR_IO_EN);

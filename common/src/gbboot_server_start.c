@@ -39,6 +39,7 @@
 #include "utils.h"
 #include "gbboot.h"
 #include "chipdef.h"
+#include "special_test.h"
 
 extern data_load_ops spi_ops;
 
@@ -200,7 +201,7 @@ static int gbboot_get_firmware_size(uint32_t cportid,
 
     dbgprintx32("image size: ", size, "\n");
 
-#ifdef _GEAR_CHANGE_TEST
+#if _SPECIAL_TEST == SPECIAL_GEAR_CHANGE_TEST
     switch_gear_change(GEAR_HS_G2,
                        TERMINATION_ON,
                        HS_MODE_A,
@@ -240,7 +241,7 @@ static int gbboot_ready_to_boot(uint32_t cportid,
     dbgprintx32("ready-to-boot, status: ", *payload, "\n");
 
     image_download_finished = true;
-#ifdef _GEAR_CHANGE_TEST
+#if _SPECIAL_TEST == SPECIAL_GEAR_CHANGE_TEST
     switch_gear_change(GEAR_HS_G3,
                        TERMINATION_ON,
                        HS_MODE_A,
@@ -279,7 +280,7 @@ static int gbboot_cport_handler(uint32_t cportid,
         break;
     case GB_BOOT_OP_GET_FIRMWARE:
         rc = gbboot_get_firmware(cportid, op_header);
-#ifdef _GEAR_CHANGE_TEST
+#if _SPECIAL_TEST == SPECIAL_GEAR_CHANGE_TEST
     switch_gear_change(GEAR_HS_G2,
                        TERMINATION_ON,
                        HS_MODE_A,
@@ -335,7 +336,7 @@ static void server_loop(void) {
         return;
     }
 
-#ifdef _GEAR_CHANGE_TEST
+#if _SPECIAL_TEST == SPECIAL_GEAR_CHANGE_TEST
     switch_gear_change(GEAR_HS_G1,
                        TERMINATION_ON,
                        HS_MODE_A,
@@ -350,7 +351,7 @@ static void server_loop(void) {
 
     gb_control();
     gbboot_process();
-#ifdef _GBBOOT_SERVER_STANDBY
+#if _SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY
     if (stage_to_load == FFFF_ELEMENT_STAGE_2_FW)
         chip_enter_hibern8_server();
 #endif
