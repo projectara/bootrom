@@ -249,10 +249,11 @@ static int process_tftf_section(data_load_ops *ops,
         hash_loaded_data = true;
     }
 
-    if ((uint32_t)dest == DATA_ADDRESS_TO_BE_IGNORED &&
-        discard_section(ops, section, hash_loaded_data)) {
-        set_last_error(BRE_TFTF_LOAD_DATA);
-        return -1;
+    if ((uint32_t)dest == DATA_ADDRESS_TO_BE_IGNORED) {
+        if (discard_section(ops, section, hash_loaded_data)) {
+            set_last_error(BRE_TFTF_LOAD_DATA);
+            return -1;
+        }
     }
     else if (ops->load(dest, section->section_length, hash_loaded_data)) {
         set_last_error(BRE_TFTF_LOAD_DATA);
