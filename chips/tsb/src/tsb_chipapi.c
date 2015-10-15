@@ -92,6 +92,7 @@ int chip_validate_data_load_location(void *base, uint32_t length) {
   * @returns Nothing.
   */
 void chip_handshake_with_test_controller(void) {
+    dbgflush();
     while (chip_gpio_get_value(GPIO_RESP) != 0);
     chip_gpio_set_value(GPIO_REQ, 1);
     while (chip_gpio_get_value(GPIO_RESP) == 0);
