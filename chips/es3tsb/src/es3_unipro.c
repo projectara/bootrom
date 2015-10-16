@@ -33,13 +33,6 @@
 #include "data_loading.h"
 #include "greybus.h"
 
-#ifndef _PRODUCTION
- /*
-  *  DME_LOGGING is a temporary insert for extracting DME response files. Make
-  *  sure that this is suppressed in Production builds
-  */
-/* #define DME_LOGGING */
-#endif
 
 /**
  * @brief perform a DME access
@@ -100,10 +93,10 @@ int chip_unipro_attr_write(uint16_t attr,
                            uint16_t selector,
                            int peer)
 {
-#if (defined DME_LOGGING) && (defined _DEBUGMSGS)
+#if (defined _DME_LOGGING) && (defined _DEBUGMSGS)
     /* Log all DME writes except those related to UniPro boot handshake. */
-    if ((attr != TSB_MAILBOX) && (attr != TSB_INTERRUPTSTATUS) &&
-        (attr != ES3_SYSTEM_STATUS_15) && (attr != MBOX_ACK_ATTR))
+    if ((attr != ARA_MAILBOX) && (attr != ARA_INTERRUPTSTATUS) &&
+        (attr != ARA_INTERRUPTSTATUS_MAILBOX) && (attr != ARA_MBOX_ACK_ATTR))
     {
         dbgprintx16("ID=", attr, NULL);
         dbgprintx32(", Val=", val, "\n");

@@ -55,6 +55,12 @@ endif
 ifeq ($(_DBGPRINT),1)
 XCFLAGS += -D_DEBUGMSGS
 XAFLAGS += -D_DEBUGMSGS
+
+# If _DME_LOGGING==1, DME writes are logged to dbgserial
+ifeq ($(_DME_LOGGING),1)
+XCFLAGS += -D_DME_LOGGING
+XAFLAGS += -D_DME_LOGGING
+endif
 endif
 
 ifeq ($(_GBBOOT_SERVER_STANDBY),1)
