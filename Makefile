@@ -69,6 +69,15 @@ XAFLAGS += -DBUILD_FOR_GBBOOT_SERVER
 CONFIG_DEBUG = y
 endif
 
+
+ifeq ($(BUILD_FOR_SIGN_VERIFY),1)
+XCFLAGS += -DBUILD_FOR_SIGN_VERIFY
+XAFLAGS += -DBUILD_FOR_SIGN_VERIFY
+CONFIG_DEBUG = y
+endif
+
+
+
 include $(TOPDIR)/.config
 
 CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
@@ -165,6 +174,10 @@ second_stage:
 third_stage:
 	@ echo "Building for third stage boot firmware"
 	$(Q) VERBOSE=$(VERBOSE) BOOT_STAGE=3 make --no-print-directory
+
+sign_verify:
+	@ echo "Building special sign-verify image"
+	$(Q) VERBOSE=$(VERBOSE) BUILD_FOR_SIGN_VERIFY=1 make --no-print-directory
 
 gbboot_server:
 	@ echo "Building server for downloading FW over UniPro"

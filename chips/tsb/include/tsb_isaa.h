@@ -73,6 +73,17 @@ uint64_t tsb_get_serial_no(void);
  */
 void tsb_get_ims(uint8_t * buf, uint32_t size);
 
+/**
+ * @brief Read the CMS value
+ *
+ * @param buf Points to the buffer to which the CMS will be copied.
+ * @param size The size in bytes of buf.
+ *
+ * @returns Nothing
+ */
+void tsb_get_cms(uint8_t * buf, uint32_t size);
+
+
 
 /**
  * @brief Disable IMS access (cleared on h/w reset)

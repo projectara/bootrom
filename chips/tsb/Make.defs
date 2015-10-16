@@ -46,7 +46,16 @@ CHIPOPTIMIZATION = -Os
 
 CHIPLINKFLAGS = --gc-sections
 
-ifeq ($(BOOT_STAGE),1)
+# NOTE: If you have scripts that are independant of BOOT_STAGE, place them
+# before the "else ifeq ($(BOOT_STAGE),1)" line. (BOOT_STAGE defaults to 1
+# in Makefile)
+ifeq ($(BUILD_FOR_SIGN_VERIFY),1)
+  ifneq ("$(wildcard $(ARCH_EXTRA_DIR)/scripts/ld_signverify.script)","")
+    LDSCRIPT = $(ARCH_EXTRA_DIR)/scripts/ld_signverify.script
+  else
+    LDSCRIPT = $(CHIP_DIR)/scripts/ld_signverify.script
+  endif
+else ifeq ($(BOOT_STAGE),1)
   ifneq ("$(wildcard $(ARCH_EXTRA_DIR)/scripts/ld.script)","")
     LDSCRIPT = $(ARCH_EXTRA_DIR)/scripts/ld.script
   else

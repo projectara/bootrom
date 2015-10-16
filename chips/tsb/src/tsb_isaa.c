@@ -196,7 +196,7 @@ void tsb_disable_cms_access(void) {
 }
 
 /* Those functions are not used in boot ROM, explicitly exclude them */
-#if BOOT_STAGE != 1
+#if BOOT_STAGE != 1 || defined BUILD_FOR_SIGN_VERIFY
 void tsb_get_cms(uint8_t * buf, uint32_t size) {
     if (size > TSB_ISAA_NUM_CMS_BYTES) {
         size = TSB_ISAA_NUM_CMS_BYTES;
