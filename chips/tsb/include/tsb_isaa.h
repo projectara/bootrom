@@ -86,6 +86,17 @@ void tsb_get_cms(uint8_t * buf, uint32_t size);
 
 
 /**
+ * @brief Read the Disable IMS access register
+ *
+ * @param None.
+ *
+ * @returns The contents of the disable_ims_access register
+ */
+uint32_t tsb_get_disable_ims_access(void);
+
+
+
+/**
  * @brief Disable IMS access (cleared on h/w reset)
  *
  * @param None.
@@ -93,6 +104,16 @@ void tsb_get_cms(uint8_t * buf, uint32_t size);
  * @returns Nothing
  */
 void tsb_disable_ims_access(void);
+
+
+/**
+ * @brief Read the disable_cmd_access register
+ *
+ * @param None.
+ *
+ * @returns The contents of the disable_cmd_access register
+ */
+uint32_t tsb_get_disable_cms_access(void);
 
 
 /**

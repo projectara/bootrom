@@ -49,6 +49,15 @@
 #include "utils.h"
 #include "string.h"
 
+union large_uint {
+  struct {
+    uint32_t low;
+    uint32_t high;
+  };
+  uint64_t quad;
+  uint8_t buffer[8];
+};
+
 void tsb_get_ims(uint8_t * buf, uint32_t size);
 void tsb_get_cms(uint8_t * buf, uint32_t size);
 
@@ -63,6 +72,11 @@ void check_ims_cms_access(void);
  * @returns Nothing. Will launch/restart image if successful, halt if not.
  */
 void bootrom_main(void) {
+    communication_area *comm_area = (communication_area *)&_communication_area;
+    union large_uint eid;
+
+    memcpy(&eid.buffer, comm_area->endpoint_unique_id, sizeof(eid.buffer));
+
     chip_init();
 
     dbginit();
@@ -71,7 +85,8 @@ void bootrom_main(void) {
 
     dbgprint("sign-verify running...\n");
     check_ims_cms_access();
-    dbgprint("sign-verify running done\n");
+    dbgprintx64("endpoint ID: ", eid.quad, "\n");
+    dbgprint("sign-verify done\n");
 
     /* Our work is done */
     while(1);
@@ -100,14 +115,17 @@ void check_ims_cms_access(void) {
     memset(cms, 0, sizeof(cms));
 
     /* Now that they've been cleared, we can issue debug messages */
-    if (zero_ims) {
-        dbgprint("IMS reads all zero\n");
-    } else {
-        dbgprint("IMS reads non-zero\n");
-    }
-    if (zero_cms) {
-        dbgprint("CMS reads all zero\n");
-    } else {
-        dbgprint("CMS reads non-zero\n");
-    }
+    dbgprint("IMS access ");
+    dbgprint((tsb_get_disable_ims_access() == 0)? "en" : "dis");
+    dbgprint("abled\n");
+    dbgprint("IMS reads ");
+    dbgprint(zero_ims? "" : "non-");
+    dbgprint("zero\n");
+
+    dbgprint("CMS access ");
+    dbgprint((tsb_get_disable_cms_access() == 0)? "en" : "dis");
+    dbgprint("abled\n");
+    dbgprint("CMS reads ");
+    dbgprint(zero_cms? "" : "non-");
+    dbgprint("zero\n");
 }

@@ -185,8 +185,18 @@ void tsb_get_ims(uint8_t * buf, uint32_t size) {
 }
 
 
+uint32_t tsb_get_disable_ims_access(void) {
+    return isaa_read(TSB_ISAA_DISABLE_IMS_ACCESS);
+}
+
+
 void tsb_disable_ims_access(void) {
     isaa_write(TSB_ISAA_DISABLE_IMS_ACCESS, TSB_DISABLE_IMS_ACCESS);
+}
+
+
+uint32_t tsb_get_disable_cms_access(void) {
+    return isaa_read(TSB_ISAA_DISABLE_CMS_ACCESS);
 }
 
 
