@@ -54,9 +54,9 @@ void check_ims_cms_access(void) {
     unsigned char cms[TSB_ISAA_NUM_CMS_BYTES];
     tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
     if (is_constant_fill(ims, TSB_ISAA_NUM_IMS_BYTES, 0)) {
-        dbgprint("IMS reads all zero\n");
+        dbgprint("IMS reads zero\n");
     } else {
-        dbgprint("IMS reads NOT all zero\n");
+        dbgprint("IMS reads non-zero\n");
         dbgprint("   ");
         for (i = 0; i < TSB_ISAA_NUM_IMS_BYTES; i++) {
             dbgprinthex8(ims[i]);
@@ -66,9 +66,9 @@ void check_ims_cms_access(void) {
 
     tsb_get_cms(cms, TSB_ISAA_NUM_CMS_BYTES);
     if (is_constant_fill(cms, TSB_ISAA_NUM_CMS_BYTES, 0)) {
-        dbgprint("CMS reads all zero\n");
+        dbgprint("CMS reads zero\n");
     } else {
-        dbgprint("CMS reads NOT all zero\n");
+        dbgprint("CMS reads non-zero\n");
         dbgprint("   ");
         for (i = 0; i < TSB_ISAA_NUM_CMS_BYTES; i++) {
             dbgprinthex8(cms[i]);
@@ -76,15 +76,15 @@ void check_ims_cms_access(void) {
         dbgprint("\n");
     }
 
-    dbgprint("Try to enable access to IMS/CMS\n");
+    dbgprint("Try to enable IMS/CMS access\n");
     tsb_enable_ims_access();
     tsb_enable_cms_access();
 
     tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
     if (is_constant_fill(ims, TSB_ISAA_NUM_IMS_BYTES, 0)) {
-        dbgprint("IMS reads all zero after trying to enable access\n");
+        dbgprint("IMS reads zero after enable access\n");
     } else {
-        dbgprint("IMS reads NOT all zero after trying to enable access\n");
+        dbgprint("IMS reads non-zero after enable access\n");
         dbgprint("   ");
         for (i = 0; i < TSB_ISAA_NUM_IMS_BYTES; i++) {
             dbgprinthex8(ims[i]);
@@ -94,9 +94,9 @@ void check_ims_cms_access(void) {
 
     tsb_get_cms(cms, TSB_ISAA_NUM_CMS_BYTES);
     if (is_constant_fill(cms, TSB_ISAA_NUM_CMS_BYTES, 0)) {
-        dbgprint("CMS reads all zero after trying to enable access\n");
+        dbgprint("CMS reads zero after enable access\n");
     } else {
-        dbgprint("CMS reads NOT all zero after trying to enable access\n");
+        dbgprint("CMS reads non-zero after enable access\n");
         dbgprint("   ");
         for (i = 0; i < TSB_ISAA_NUM_CMS_BYTES; i++) {
             dbgprinthex8(cms[i]);

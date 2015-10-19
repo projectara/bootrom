@@ -66,25 +66,25 @@ static int tsb_unipro_reset_cport(uint32_t cportid) {
 
     rc = chip_unipro_attr_write(T_CONNECTIONSTATE, 0, cportid, ATTR_LOCAL);
     if (rc) {
-        dbgprint("error resetting T_CONNECTIONSTATE\n");
+        dbgprint("Can't reset T_CONNECTIONSTATE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_LOCALBUFFERSPACE, 0, cportid, ATTR_LOCAL);
     if (rc) {
-        dbgprint("error resetting T_LOCALBUFFERSPACE\n");
+        dbgprint("Can't reset T_LOCALBUFFERSPACE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_PEERBUFFERSPACE, 0, cportid, ATTR_LOCAL);
     if (rc) {
-        dbgprint("error resetting T_PEERBUFFERSPACE\n");
+        dbgprint("Can't reset T_PEERBUFFERSPACE\n");
         return -EIO;
     }
 
     rc = chip_unipro_attr_write(T_CREDITSTOSEND, 0, cportid, ATTR_LOCAL);
     if (rc) {
-        dbgprint("error resetting T_CREDITSTOSEND\n");
+        dbgprint("Can't reset T_CREDITSTOSEND\n");
         return -EIO;
     }
 
@@ -102,11 +102,11 @@ int tsb_reset_all_cports(void) {
     for (i = 0; i < CPORT_MAX; i++) {
         rc = tsb_unipro_reset_cport(i);
         if (rc) {
-            dbgprintx32("Failed to reset cport 0x", i, "\n");
+            dbgprintx32("Can't reset cport 0x", i, "\n");
             return rc;
         }
     }
-    dbgprint("Reset all cports.\n");
+    dbgprint("Reset all cports\n");
 
     return 0;
 }

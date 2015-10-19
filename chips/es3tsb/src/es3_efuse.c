@@ -100,7 +100,7 @@ int efuse_init(void) {
      */
     register_val = tsb_get_eccerror();
     if ((register_val & TSB_ECCERROR_ECC_ERROR) != 0) {
-        dbgprint("efuse_init: Efuse ECC error\n");
+        dbgprint("Efuse ECC error\n");
         set_last_error(BRE_EFUSE_ECC);
         return -1;
     }
@@ -125,14 +125,14 @@ int efuse_init(void) {
      */
     ara_vid = tsb_get_vid();
     if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
-        dbgprintx32("efuse_init: Invalid Ara VID: ", ara_vid, "\n");
+        dbgprintx32("Bad Ara VID: ", ara_vid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
     }
 
     ara_pid = tsb_get_pid();
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
-        dbgprintx32("efuse_init: Invalid Ara PID: ", ara_pid, "\n");
+        dbgprintx32("Bad Ara PID: ", ara_pid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_PID);
         return -1;
     }
@@ -151,7 +151,7 @@ int efuse_init(void) {
             return -1;
         }
     } else {
-        dbgprintx64("efuse_init: endpoint ID: ", endpoint_id.quad, "\n");
+        dbgprintx64("Endpoint ID: ", endpoint_id.quad, "\n");
         urc = chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
                                 ATTR_LOCAL);
         if (urc) {
@@ -166,7 +166,7 @@ int efuse_init(void) {
         }
     }
 
-    dbgprint("efuse_init: OK\n");
+    dbgprint("efuse OK\n");
     return 0;
 }
 
@@ -316,7 +316,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
         /* Compute Endpoint Unique ID */
         if (!valid_hamming_weight((uint8_t *)ims_value,
                                   IMS_MEANINGFUL_LENGTH)) {
-            dbgprint("efuse_init: Invalid IMS\n");
+            dbgprint("Bad IMS\n");
             set_last_error(BRE_EFUSE_BAD_IMS);
         } else {
 #ifdef _NOCRYPTO

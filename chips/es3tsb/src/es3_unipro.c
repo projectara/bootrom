@@ -164,11 +164,11 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
         eot_bit = (1 << cportid);
 
         if ((eom & eom_err_bit) != 0) {
-            dbgprint("UniPro RX error\n");
+            dbgprint("UniPro Rx err\n");
             return -1;
         }
         if ((eot & eot_bit) != 0) {
-            dbgprint("data received exceeded max length\n");
+            dbgprint("Rx data overflow\n");
             return -1;
         }
         if ((eom & eom_nom_bit) != 0) {
@@ -180,7 +180,7 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
                 if(0 != handler(cportid,
                                 cport->rx_buf,
                                 bytes_received)) {
-                    dbgprint("RX handler returned error\n");
+                    dbgprint("Rx handler err\n");
                     return -1;
                 }
             }
@@ -193,7 +193,7 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
 
 void chip_unipro_init(void) {
     tsb_reset_all_cports();
-    dbgprint("Unipro enabled!\n");
+    dbgprint("Unipro enabled\n");
 }
 
 int chip_unipro_init_cport(uint32_t cportid) {

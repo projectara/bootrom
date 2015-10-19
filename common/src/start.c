@@ -75,6 +75,9 @@ void bootrom_main(void) {
 
     set_shared_function(SHARED_FUNCTION_ENTER_STANDBY, chip_enter_standby);
     dbgprint("\nHello world from s1fw\n");
+#ifdef _NOCRYPTO
+    dbgprint("* NO Crypto *\n");
+#endif
 
     chip_unipro_init();
 
