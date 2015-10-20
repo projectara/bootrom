@@ -110,13 +110,13 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
             }
         }
         if (i >= size) {
-            dbgprint("Found pub. key for this sig.\n");
+            dbgprint("Found pub. key\n");
             *key = public_keys[k].key;
             return 0;
         }
     }
 
-    dbgprint("Failed to find pub. key for this sig.\n");
+    dbgprint("Failed to find pub. key\n");
     return -1;
 }
 

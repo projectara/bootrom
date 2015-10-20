@@ -90,7 +90,7 @@ static int gbboot_firmware_size(uint8_t stage, uint32_t *size) {
 static int gbboot_firmware_size_response(gb_operation_header *head, void *data,
                                        uint32_t len) {
     if(len < sizeof(struct gbboot_firmware_size_response)) {
-        dbgprint("gbboot_firmware_size_response: bad response size\n");
+        dbgprint("gbboot_firmware_size_response: bad resp. size\n");
         return GB_BOOT_ERR_INVALID;
     }
     memcpy(&firmware_size_response, data, sizeof(firmware_size_response));
@@ -125,7 +125,7 @@ static int gbboot_get_firmware(uint32_t offset, uint32_t size, void *data,
         return rc;
     }
     if (responded_op != (GB_BOOT_OP_GET_FIRMWARE | GB_TYPE_RESPONSE)) {
-        dbgprint("Response wasn't get-FW response\n");
+        dbgprint("Response wasn't get-FW\n");
         return -ENODEV;
     }
 
@@ -136,11 +136,11 @@ static int gbboot_get_firmware_response(gb_operation_header *header, void *data,
                                       uint32_t len) {
     if (header->size - sizeof(gb_operation_header) != len ||
         len != fw_get_firmware_buff.size) {
-        dbgprint("gbboot_get_firmware_response(): incorrect response size\n");
+        dbgprint("gbboot_get_firmware_response(): wrong response size\n");
         return GB_BOOT_ERR_INVALID;
     }
     if (header->status) {
-        dbgprint("gbboot_get_firmware_response(): got error status\n");
+        dbgprint("gbboot_get_firmware_response(): err status\n");
         return -header->status;
     }
     memcpy(fw_get_firmware_buff.buffer, data, fw_get_firmware_buff.size);
@@ -167,7 +167,7 @@ static int gbboot_ready_to_boot(uint8_t status) {
 static int gbboot_ready_to_boot_response(gb_operation_header *header, void *data,
                                        uint32_t len) {
     if (header->status) {
-        dbgprint("gbboot_ready_to_boot_response(): got error status\n");
+        dbgprint("gbboot_ready_to_boot_response(): err status\n");
         return -header->status;
     }
     return 0;
@@ -176,17 +176,17 @@ static int gbboot_ready_to_boot_response(gb_operation_header *header, void *data
 int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
     int rc = 0;
     if (cportid != gbboot_cportid) {
-        dbgprint("fw_cport_handler: incorrect CPort #");
+        dbgprint("fw_cport_handler: wrong CPort #");
         return GB_BOOT_ERR_INVALID;
     }
     if (len < sizeof(gb_operation_header)) {
-        dbgprint("fw_cport_handler: RX data length error\n");
+        dbgprint("fw_cport_handler: RX data length err\n");
         return GB_BOOT_ERR_INVALID;
     }
 
     gb_operation_header *op_header = (gb_operation_header *)data;
     if(op_header->size < len) {
-        dbgprint("fw_cport_handler: nonsense message.\n");
+        dbgprint("fw_cport_handler: nonsense msg\n");
         return GB_BOOT_ERR_INVALID;
     }
     if (op_header->type & GB_TYPE_RESPONSE && op_header->status) {
@@ -271,7 +271,7 @@ static int data_load_greybus_init(void) {
         }
     }
     if (!manifest_fetched_by_ap()) {
-        dbgprint("Greybus Control CPort timed out\n");
+        dbgprint("Greybus Control CPort timeout\n");
         return -ETIMEDOUT;
     }
 
@@ -305,11 +305,11 @@ static int data_load_greybus_init(void) {
         }
     }
     if(responded_op != GB_BOOT_OP_AP_READY) {
-        dbgprint("Greybus FW CPort timed out\n");
+        dbgprint("Greybus FW CPort timeout\n");
         return -ETIMEDOUT;
     }
 
-    dbgprint("Beginning Greybus FW download.\n");
+    dbgprint("Beginning Greybus FW download\n");
 
     /* Fetch the firmware size. */
     rc = gbboot_firmware_size(NEXT_BOOT_STAGE, &firmware_size);
@@ -376,7 +376,7 @@ static int data_load_greybus_finish(bool valid, bool is_secure_image) {
 
     rc = gbboot_ready_to_boot(status);
 
-    dbgprint("Finished Greybus FW download.\n");
+    dbgprint("Finished Greybus FW download\n");
 
     firmware_size = offset = -1;
     cport_connected = 0;
