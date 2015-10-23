@@ -17,6 +17,6 @@ ENTRY(__start)
 
 REGION_ALIAS("REGION_TEXT", sram);
 
-_bootrom_text_area = _bootrom_data_area - _text_size;
+_bootrom_text_area = ((_bootrom_data_area - _text_size) & 0xfffffffc);
 
 INCLUDE chips/tsb/scripts/common.ld
