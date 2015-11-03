@@ -26,6 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include "chip.h"
 #include "unipro.h"
@@ -33,8 +34,6 @@
 #include "chipapi.h"
 #include "error.h"
 #include "bootrom.h"
-
-uint32_t boot_status_offline = 0;
 
 /**
  * @brief advertise the boot status
@@ -44,7 +43,11 @@ uint32_t boot_status_offline = 0;
  *         status
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
+    static bool boot_status_offline = false;
     int status = 0;
+
+    if (!boot_status_offline)
+        return;
 
     status = chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                                     ATTR_LOCAL);
@@ -53,8 +56,8 @@ void chip_advertise_boot_status(uint32_t boot_status) {
      */
     if (status != 0) {
         /*
-         * Set this flag so that halt_and_catch_fire doesn't try to
-         * recursively call us to advertise the boot status.
+         * Set this flag so we can exit the recursive call from
+         * halt_and_catch_fire
          */
         boot_status_offline = true;
         halt_and_catch_fire(boot_status);

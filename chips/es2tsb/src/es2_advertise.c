@@ -26,6 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include "chip.h"
 #include "chipapi.h"
@@ -35,8 +36,6 @@
 #include "error.h"
 #include "utils.h"
 
-uint32_t boot_status_offline = 0;
-
 /**
  * @brief advertise the boot status
  * @param boot_status
@@ -45,6 +44,10 @@ uint32_t boot_status_offline = 0;
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
     int rc;
+    static bool boot_status_offline = false;
+
+    if (!boot_status_offline)
+        return;
 
     rc = chip_unipro_attr_write(T_TSTSRCINCREMENT, ES2_INIT_STATUS(boot_status),
                                 0, ATTR_LOCAL);
@@ -53,8 +56,8 @@ void chip_advertise_boot_status(uint32_t boot_status) {
      */
     if (rc) {
         /*
-         * Set this flag so that halt_and_catch_fire doesn't try to
-         * recursively call us to advertise the boot status.
+         * Set this flag so we can exit the recursive call from
+         * halt_and_catch_fire
          */
         boot_status_offline = true;
         halt_and_catch_fire(boot_status);

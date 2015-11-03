@@ -153,7 +153,7 @@ void chip_reset_before_ready(void);
  * @return 0 indicates the key is NOT revoked
  *         1 indicates the key has been revoked so should not be used.
  */
-int chip_is_key_revoked(int index);
+int chip_is_key_revoked(uint32_t index);
 
 /*
  * @brief wait for UniPro link up sequence to finish

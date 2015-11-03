@@ -90,26 +90,21 @@ void hash_final(unsigned char *digest) {
 }
 
 static int find_public_key(tftf_signature *signature, const unsigned char **key) {
-    uint32_t *ps, *pk;
-    int i, k;
-    uint32_t size = (sizeof(public_keys[0]) -
-                     sizeof(public_keys[0].key)) /
-                    sizeof(uint32_t);
-
-    ps = (uint32_t *)&(signature->type);
+    uint32_t k;
 
     for (k = 0; k < number_of_public_keys; k++) {
         if (chip_is_key_revoked(k)) {
             dbgprintx32("Key ", k, " revoked\n");
             continue;
         }
-        pk = (uint32_t *)&public_keys[k];
-        for (i = 0; i < size; i++) {
-            if (ps[i] != pk[i]) {
-                break;
-            }
+
+        if (public_keys[k].type != signature->type) {
+            continue;
         }
-        if (i >= size) {
+
+        if (!strncmp(public_keys[k].key_name,
+                     signature->key_name,
+                     sizeof(public_keys[k].key_name))) {
             dbgprint("Found pub. key\n");
             *key = public_keys[k].key;
             return 0;
@@ -130,10 +125,10 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
  */
 int verify_signature(unsigned char *digest, tftf_signature *signature) {
 #ifdef _NOCRYPTO
-/* little ending 32bit word for "FAIL" */
-#define _SIM_KEYNAME_FAILURE_SENTINEL 0x4C494146
-    uint32_t *pname = (uint32_t *)(signature->key_name);
-    if (*pname == _SIM_KEYNAME_FAILURE_SENTINEL) {
+#define _SIM_KEYNAME_FAILURE_SENTINEL "no_crypto_fake_failure_key"
+    if (strncmp(signature->key_name,
+                _SIM_KEYNAME_FAILURE_SENTINEL,
+                sizeof(signature->key_name))) {
         return -1;
     }
     return 0;

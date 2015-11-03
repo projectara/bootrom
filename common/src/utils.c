@@ -64,6 +64,25 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
+int strncmp(const char *s1, const char *s2, size_t n) {
+    size_t i;
+
+    /*
+     * Parameter validation is skipped here, since this is used internally
+     * only and the paramters are expected to be vailidated by caller
+     */
+    for (i = 0; i < n; i++, s1++, s2++) {
+        if (*s1 != *s2) {
+            return *s1 - *s2;
+        }
+        if (*s1 == 0) {
+            break;
+        }
+    }
+
+    return 0;
+}
+
 /**
  * @brief Determine if a value is a power of 2
  *

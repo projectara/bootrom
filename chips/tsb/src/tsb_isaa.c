@@ -230,11 +230,17 @@ void tsb_jtag_disable(void) {
     isaa_write(TSB_ISAA_JTAG_DISABLE, TSB_JTAG_DISABLE);
 }
 
-int chip_is_key_revoked(int index) {
+int chip_is_key_revoked(uint32_t index) {
+    uint32_t bit = (1 << index);
+
+    if ((bit & TSB_ISAA_ROM_KEY_VALIDITY) == 0) {
+        return 1;
+    }
+
 #if CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3
     uint32_t scr = isaa_read(TSB_ISAA_SCR);
 
-    if ((scr & (1 << index)) != 0) {
+    if ((scr & bit) != 0) {
         return 1;
     }
 #endif

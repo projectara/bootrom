@@ -249,7 +249,8 @@ int control_cport_handler(uint32_t cportid,
         rc = gbctrl_disconnected(cportid, op_header);
         break;
     default:
-        /*** TODO: Do we treat this as an error, or explicitly ignore it? */
+        /* treat unknown operations as error */
+        rc = -1;
         break;
     }
 
