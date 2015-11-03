@@ -38,15 +38,16 @@
 #include "utils.h"
 #include "error.h"
 
-#define NEW_VALIDATION
-
 /**
  * Crypto state is used when parsing TFTF image:
  * 1. When start to parse a TFTF image, the crypto state is set to INIT
  * 2. When the first unsigned section is found in the TFTF header, the crypto
  *    state is set to HASHING and the data in header (up to but not include
  *    the first unsigned section) is hashed. And in this state, data of all
- *    sections loaded were hashed, until the first unsigned section
+ *    sections loaded were hashed, until the first unsigned section.
+ *    The hashing operation is done by the data loading function (eg.
+ *    ops->load). The reason for this is to allow doing hashing for previous
+ *    loaded data while waiting for the next block to come, if applicable.
  * 3. Before the first unsigned section data is loaded, the crypto state is
  *    set to HASHED, and hash digest is retrieved.
  * 4. After crypto state becomes HASHED, each signature section is used to
@@ -64,13 +65,12 @@ typedef enum {
 
 typedef struct {
     tftf_header header;
+    unsigned char *header_end;
     crypto_processing_state crypto_state;
     unsigned char hash[SHA256_HASH_DIGEST_SIZE];
     tftf_signature signature;
     bool contain_signature;
 } tftf_processing_state;
-
-static const char tftf_sentinel[] = TFTF_SENTINEL_VALUE;
 
 static tftf_processing_state tftf;
 
@@ -89,14 +89,40 @@ static int load_tftf_header(data_load_ops *ops) {
     uint32_t unipro_mid = 0;
     uint32_t unipro_pid = 0;
     int rc;
+    tftf_header * header = &tftf.header;
 
     tftf.crypto_state = CRYPTO_STATE_INIT;
     tftf.contain_signature = false;
 
-    if (ops->load(&tftf.header, TFTF_HEADER_SIZE, false)) {
+    /* load the beginning of the TFTF header */
+    if (ops->load(&header->buffer[0], TFTF_HEADER_SIZE_MIN, false)) {
         set_last_error(BRE_TFTF_LOAD_HEADER);
         return -1;
     }
+
+    /* Verify the sentinel */
+    if (memcmp(header->sentinel_value, tftf_sentinel, TFTF_SENTINEL_SIZE)) {
+        set_last_error(BRE_TFTF_SENTINEL);
+        return false;
+    }
+
+    if (header->header_size < TFTF_HEADER_SIZE_MIN ||
+        header->header_size > MAX_TFTF_HEADER_SIZE_SUPPORTED) {
+        set_last_error(BRE_TFTF_HEADER_SIZE);
+        return false;
+    }
+
+    if (header->header_size != TFTF_HEADER_SIZE_MIN) {
+        /* load the rest of the TFTF header */
+        if (ops->load(&header->buffer[TFTF_HEADER_SIZE_MIN],
+                      header->header_size - TFTF_HEADER_SIZE_MIN,
+                      false)) {
+            set_last_error(BRE_TFTF_LOAD_HEADER);
+            return -1;
+        }
+    }
+
+    tftf.header_end = header->buffer + header->header_size;
 
     if (!valid_tftf_header(&tftf.header)) {
         /* (valid_tftf_header took care of error reporting) */
@@ -140,8 +166,14 @@ static int load_tftf_header(data_load_ops *ops) {
       */
     section = &tftf.header.sections[0];
     while(1) {
-        if ((uint32_t)section - (uint32_t)&tftf.header >= TFTF_HEADER_SIZE) {
-            set_last_error(BRE_TFTF_HEADER_SIZE);
+        if (is_section_out_of_range(header, section)) {
+            /*
+             * This should never been reached.
+             * valid_tftf_header should have verified there is
+             * TFTF_SECTION_END within the section table
+             * should have already verified this
+             */
+            set_last_error(BRE_TFTF_NO_TABLE_END);
             return -1;
         }
 
@@ -164,7 +196,8 @@ static int load_tftf_header(data_load_ops *ops) {
                  */
                 hash_start();
                 tftf.crypto_state = CRYPTO_STATE_HASHING;
-                header_hash_len = (uint32_t)section - (uint32_t)&tftf.header;
+                header_hash_len = (unsigned char *)section -
+                                  (unsigned char *)&tftf.header;
                 hash_update((unsigned char *)&tftf.header, header_hash_len);
             }
             break;
@@ -197,7 +230,7 @@ static int discard_section(data_load_ops *ops,
     uint32_t blk_len;
 
     while (len) {
-        blk_len = (len > TEMP_BUFFER_SIZE) ? TEMP_BUFFER_SIZE : len;
+        blk_len = (len > sizeof(temp)) ? sizeof(temp) : len;
         if (ops->load(temp, blk_len, hash_section)) {
             return -1;
         }
@@ -220,11 +253,10 @@ static int discard_section(data_load_ops *ops,
  */
 static int process_tftf_section(data_load_ops *ops,
                                 tftf_section_descriptor *section) {
-    unsigned char *dest;
+    uint32_t dest;
     bool hash_loaded_data = false;
 
-    if ((section->section_type == TFTF_SECTION_SIGNATURE ||
-         section->section_type == TFTF_SECTION_CERTIFICATE) &&
+    if (!is_section_hashed(section) &&
         tftf.crypto_state == CRYPTO_STATE_HASHING) {
         hash_final(tftf.hash);
         tftf.crypto_state = CRYPTO_STATE_HASHED;
@@ -243,23 +275,24 @@ static int process_tftf_section(data_load_ops *ops,
         return 0;
     }
 
-    dest = (unsigned char*)section->section_load_address;
+    dest = section->section_load_address;
 
     if (tftf.crypto_state == CRYPTO_STATE_HASHING) {
         hash_loaded_data = true;
     }
 
-    if ((uint32_t)dest == DATA_ADDRESS_TO_BE_IGNORED) {
+    if (dest == DATA_ADDRESS_TO_BE_IGNORED) {
         if (discard_section(ops, section, hash_loaded_data)) {
             set_last_error(BRE_TFTF_LOAD_DATA);
             return -1;
         }
     }
-    else if (ops->load(dest, section->section_length, hash_loaded_data)) {
+    else if (ops->load(CHIP_IMAGE_LOADING_DEST(dest),
+                       section->section_length,
+                       hash_loaded_data)) {
         set_last_error(BRE_TFTF_LOAD_DATA);
         return -1;
     }
-
 
     return 0;
 }
@@ -275,7 +308,13 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
     }
 
     section = &tftf.header.sections[0];
-    while(section->section_type != TFTF_SECTION_END) {
+    /**
+     * checking is_section_out_of_range here is redudant, just to be safe
+     * valid_tftf_header should have verified there is TFTF_SECTION_END
+     * within the section table
+     */
+    while(!is_section_out_of_range(&tftf.header, section) &&
+          section->section_type != TFTF_SECTION_END) {
         if (process_tftf_section(ops, section)) {
             /* (process_tftf_section took care of error reporting)
              */
@@ -301,6 +340,7 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
                                 sizeof(p->firmware_package_name)) ?
                                1 : -1];
     #pragma GCC diagnostic pop
+
     memcpy(p->build_timestamp,
            tftf.header.build_timestamp,
            sizeof(p->build_timestamp));
@@ -342,7 +382,7 @@ void jump_to_image(void) {
  *
  * @returns True if a valid section type, false otherwise
  */
-bool valid_tftf_type(uint32_t section_type) {
+bool known_tftf_type(uint32_t section_type) {
      return (((section_type >= TFTF_SECTION_RAW_CODE) &&
               (section_type <= TFTF_SECTION_MANIFEST)) ||
              (section_type == TFTF_SECTION_SIGNATURE) ||
@@ -372,7 +412,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
     uint32_t    other_section_end;
     tftf_section_descriptor * other_section;
 
-    if (!valid_tftf_type(section->section_type)) {
+    if (!known_tftf_type(section->section_type)) {
         set_last_error(BRE_TFTF_HEADER_TYPE);
         return false;
     }
@@ -423,7 +463,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
      * Overlap is determined to be "non-disjoint" sections
      */
     for (other_section = section + 1;
-         ((other_section < &header->sections[TFTF_MAX_SECTIONS]) &&
+         (!is_section_out_of_range(header, other_section) &&
           (other_section->section_type != TFTF_SECTION_END) &&
           (other_section->section_load_address != DATA_ADDRESS_TO_BE_IGNORED));
          other_section++) {
@@ -452,24 +492,10 @@ bool valid_tftf_header(tftf_header * header) {
     tftf_section_descriptor * section;
     bool section_contains_start = false;
     bool end_of_sections = false;
-    int i;
-
-    /* Verify the sentinel */
-    for (i = 0; i < TFTF_SENTINEL_SIZE; i++) {
-        if (header->sentinel_value[i] != tftf_sentinel[i]) {
-            set_last_error(BRE_TFTF_SENTINEL);
-            return false;
-        }
-    }
-
-    if (header->header_size != TFTF_HEADER_SIZE) {
-        set_last_error(BRE_TFTF_HEADER_SIZE);
-        return false;
-    }
 
     /* Verify all of the sections */
     for (section = &header->sections[0];
-         (section < &header->sections[TFTF_MAX_SECTIONS]) && !end_of_sections;
+         !is_section_out_of_range(header, section) && !end_of_sections;
          section++) {
         if (!valid_tftf_section(section, header, &section_contains_start,
                                 &end_of_sections)) {
@@ -485,17 +511,6 @@ bool valid_tftf_header(tftf_header * header) {
     /* Verify that, if this TFTF has a start address, it falls in one of our code sections. */
     if ((header->start_location != 0) && !section_contains_start) {
         set_last_error(BRE_TFTF_START_NOT_IN_CODE);
-        return false;
-    }
-
-    /*
-     * Verify that the remainder of the header (i.e., unused section
-     * descriptors and the padding) is zero-filled
-     */
-    if (!is_constant_fill((uint8_t *)section,
-                          (uint32_t)&header[1] - (uint32_t)section,
-                          0x00)) {
-        set_last_error(BRE_TFTF_NON_ZERO_PAD);
         return false;
     }
 

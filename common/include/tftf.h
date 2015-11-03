@@ -31,11 +31,17 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "chipcfg.h"
 
-#define TFTF_HEADER_SIZE                  512
-/* following values are derived from TFTF_HEADER_SIZE */
-#define TFTF_MAX_SECTIONS                 20
-#define TFTF_RESERVED                     4
+#define TFTF_HEADER_SIZE_MIN              512
+#define TFTF_HEADER_SIZE_MAX              32768
+
+#if MAX_TFTF_HEADER_SIZE_SUPPORTED < TFTF_HEADER_SIZE_MIN || \
+    MAX_TFTF_HEADER_SIZE_SUPPORTED > TFTF_HEADER_SIZE_MAX
+#error "Invalid MAX_TFTF_HEADER_SIZE_SUPPORTED"
+#endif
+
+#define TFTF_NUM_RESERVED                 4
 
 /**
  * @brief TFTF Sentinel value "TFTF"
@@ -44,10 +50,10 @@
  * endian dump.
  */
 #define TFTF_SENTINEL_SIZE                4
-#define TFTF_SENTINEL_VALUE               "TFTF"
+static const char tftf_sentinel[] = "TFTF";
 /* Compile-time test to verify consistency of _SIZE and _VALUE */
 typedef char ___tftf_sentinel_test[(TFTF_SENTINEL_SIZE ==
-                                    sizeof(TFTF_SENTINEL_VALUE) - 1) ?
+                                    sizeof(tftf_sentinel) - 1) ?
                                    1 : 0];
 
 /* Section types */
@@ -74,23 +80,41 @@ typedef struct {
 /* Compile-time test hack to verify that the element descriptor is 20 bytes */
 typedef char ___tftf_section_test[(TFTF_SECTION_SIZE == 20) ? 1 : -1];
 
+static inline bool is_section_hashed(tftf_section_descriptor *section) {
+    return !(section->section_type & (1 << 7));
+}
 
-typedef struct {
-    char sentinel_value[TFTF_SENTINEL_SIZE];
-    uint32_t header_size;
-    char build_timestamp[16];
-    char firmware_package_name[48];
-    uint32_t package_type;  /* Must match FFFF element_type */
-    uint32_t start_location;
-    uint32_t unipro_mid;    /* Match to MIPI DME 0x5003, or zero */
-    uint32_t unipro_pid;    /* Match to MIPI DME 0x5004, or zero */
-    uint32_t ara_vid;
-    uint32_t ara_pid;
-    uint32_t reserved[TFTF_RESERVED];
-    tftf_section_descriptor sections[TFTF_MAX_SECTIONS];
-} __attribute__ ((packed)) tftf_header;
-/* Compile-time test hack to verify the header is TFTF_HEADER_SIZE bytes */
-typedef char ___tftf_header_test[(sizeof (tftf_header) == TFTF_HEADER_SIZE) ?
+typedef union {
+    struct __attribute__ ((packed)) {
+        char sentinel_value[TFTF_SENTINEL_SIZE];
+        uint32_t header_size;
+        char build_timestamp[16];
+        char firmware_package_name[48];
+        uint32_t package_type;  /* Must match FFFF element_type */
+        uint32_t start_location;
+        uint32_t unipro_mid;    /* Match to MIPI DME 0x5003, or zero */
+        uint32_t unipro_pid;    /* Match to MIPI DME 0x5004, or zero */
+        uint32_t ara_vid;
+        uint32_t ara_pid;
+        uint32_t reserved[TFTF_NUM_RESERVED];
+        tftf_section_descriptor sections[];
+    };
+    unsigned char buffer[MAX_TFTF_HEADER_SIZE_SUPPORTED];
+} tftf_header;
+
+static inline bool is_section_out_of_range(tftf_header *header,
+                                           tftf_section_descriptor *section) {
+    return ((unsigned char *)section >= header->buffer +
+                                        header->header_size -
+                                        sizeof(tftf_section_descriptor));
+}
+
+/**
+ * Compile-time test hack to verify that the header is
+ * MAX_TFTF_HEADER_SIZE_SUPPORTED bytes
+ */
+typedef char ___tftf_header_test[(sizeof(tftf_header) ==
+                                 MAX_TFTF_HEADER_SIZE_SUPPORTED) ?
                                  1 : -1];
 
 typedef struct {

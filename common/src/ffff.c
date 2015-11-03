@@ -29,6 +29,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "ffff.h"
 #include "utils.h"
 #include "debug.h"
@@ -43,29 +44,34 @@ typedef struct {
 } ffff_processing_state;
 
 static ffff_processing_state ffff;
-static const char ffff_sentinel_value[] = FFFF_SENTINEL_VALUE;
 
 /**
  * @brief Validate an FFFF element
  *
  * @param section The FFFF element descriptor to validate
  * @param header (The RAM-address of) the FFFF header to which it belongs
- * @param rom_address The address in SPIROM of the header
  * @param end_of_elements Pointer to a flag that will be set if the element
  *        type is the FFFF_ELEMENT_END marker. (Untouched if not)
  *
  * @returns True if valid element, false otherwise
  */
 bool valid_ffff_element(ffff_element_descriptor * element,
-                        ffff_header * header, uint32_t rom_address,
+                        ffff_header * header,
                         bool *end_of_elements) {
     ffff_element_descriptor * other_element;
-    uint32_t element_location_min = rom_address + header->erase_block_size;
+    uint32_t element_location_min;
     uint32_t element_location_max = header->flash_image_length;
     uint32_t this_start;
     uint32_t this_end;
     uint32_t that_start;
     uint32_t that_end;
+
+    /* there are two headers in FFFF */
+    if (header->erase_block_size < header->header_size) {
+        element_location_min = (header->header_size << 1);
+    } else {
+        element_location_min = (header->erase_block_size << 1);
+    }
 
     /*
      * Because we don't *know* the real length of the Flash, it is possible to
@@ -103,7 +109,7 @@ bool valid_ffff_element(ffff_element_descriptor * element,
      * they don't duplicate or collide with us.
      */
     for (other_element = element + 1;
-         ((other_element < &header->elements[FFFF_MAX_ELEMENTS]) &&
+         (!is_element_out_of_range(header, other_element) &&
           (other_element->element_type != FFFF_ELEMENT_END));
          other_element++) {
         /* (a) check for collision */
@@ -134,23 +140,19 @@ bool valid_ffff_element(ffff_element_descriptor * element,
     return true;
 }
 
-static int validate_ffff_header(ffff_header *header, uint32_t address) {
-    int i;
+static int validate_ffff_header(ffff_header *header) {
     ffff_element_descriptor * element;
     bool end_of_elements = false;
+    char *trailing_sentinel_value;
 
-    /* Check for leading and trailing sentinels */
-    for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
-        if (header->sentinel_value[i] != ffff_sentinel_value[i]) {
-            set_last_error(BRE_FFFF_SENTINEL);
-            return -1;
-        }
-    }
-    for (i = 0; i < FFFF_SENTINEL_SIZE; i++) {
-        if (header->trailing_sentinel_value[i] != ffff_sentinel_value[i]) {
-            set_last_error(BRE_FFFF_SENTINEL);
-            return -1;
-        }
+    trailing_sentinel_value = get_trailing_sentinel_addr(header);
+
+    /* Check for trailing sentinels */
+    if (memcmp(trailing_sentinel_value,
+               ffff_sentinel_value,
+               FFFF_SENTINEL_SIZE)) {
+        set_last_error(BRE_FFFF_SENTINEL);
+        return -1;
     }
 
     if (header->erase_block_size > FFFF_ERASE_BLOCK_SIZE_MAX) {
@@ -168,16 +170,11 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
         return -1;
     }
 
-    if (header->header_size != FFFF_HEADER_SIZE) {
-        set_last_error(BRE_FFFF_HEADER_SIZE);
-       return -1;
-    }
-
     /* Validate the FFFF elements */
     for (element = &header->elements[0];
-         (element < &header->elements[FFFF_MAX_ELEMENTS]) && !end_of_elements;
+         !is_element_out_of_range(header, element) && !end_of_elements;
          element++) {
-        if (!valid_ffff_element(element, header, address, &end_of_elements)) {
+        if (!valid_ffff_element(element, header, &end_of_elements)) {
             /* (valid_ffff_element took care of error reporting) */
             return -1;
         }
@@ -187,25 +184,67 @@ static int validate_ffff_header(ffff_header *header, uint32_t address) {
         return -1;
     }
 
-    /*
-     * Verify that the remainder of the header (i.e., unused section
-     * descriptors and the padding) is zero-filled
-     */
-    if (!is_constant_fill((uint8_t *)element,
-                          (uint32_t)&header->trailing_sentinel_value -
-                              (uint32_t)element,
-                          0x00)) {
-        set_last_error(BRE_FFFF_NON_ZERO_PAD);
+    /* No errors found! */
+    return 0;
+}
+
+/**
+ * @brief try to load FFFF header from ROM at addr
+ * @param ops data loading operation structure
+ * @param buf buffer to store the header
+ * @param addr address on storage media to load the header
+ * @param valid_header indicates whether the header at the specified addr
+ *                     is valid FFFF header or not.
+ * @return -1 for fatal error, the whole operation should fail
+ *          0 for able to load something, *valid_header indicates if
+ *            it is a valid FFFF header
+ */
+static int load_ffff_header(data_load_ops *ops,
+                            unsigned char *buf,
+                            uint32_t addr,
+                            bool *valid_header) {
+    ffff_header *header = (ffff_header *)buf;
+    *valid_header = false;
+
+    if (ops->read(buf, addr, FFFF_HEADER_SIZE_MIN)) {
+        set_last_error(BRE_FFFF_LOAD_HEADER);
         return -1;
     }
 
-    /* No errors found! */
+    /* Check for leading sentinels */
+    if (memcmp(header->sentinel_value,
+               ffff_sentinel_value,
+               FFFF_SENTINEL_SIZE)) {
+        set_last_error(BRE_FFFF_SENTINEL);
+        return 0;
+    }
+
+    if (header->header_size < FFFF_HEADER_SIZE_MIN ||
+        header->header_size > MAX_FFFF_HEADER_SIZE_SUPPORTED) {
+        set_last_error(BRE_FFFF_HEADER_SIZE);
+       return 0;
+    }
+
+    if (header->header_size != FFFF_HEADER_SIZE_MIN) {
+        if (ops->read(&buf[FFFF_HEADER_SIZE_MIN],
+                      addr + FFFF_HEADER_SIZE_MIN,
+                      header->header_size - FFFF_HEADER_SIZE_MIN)) {
+            set_last_error(BRE_FFFF_LOAD_HEADER);
+            return -1;
+        }
+    }
+
+    if (!validate_ffff_header(header)) {
+        *valid_header = true;
+    }
+
     return 0;
 }
 
 static int locate_ffff_table(data_load_ops *ops)
 {
     uint32_t address = 0;
+    bool valid_header;
 
     ffff.cur_header = &ffff.header1;
 
@@ -225,18 +264,19 @@ static int locate_ffff_table(data_load_ops *ops)
      **/
 
     /* First look for header at beginning of the storage */
-    if (ops->read(&ffff.header1, address, sizeof(ffff_header))) {
-        set_last_error(BRE_FFFF_LOAD_HEADER);
+    if (load_ffff_header(ops, ffff.header1.buffer, address, &valid_header)) {
         return -1;
-    } else if (validate_ffff_header(&ffff.header1, address)) {
+    } else if (!valid_header) {
         /* There is no valid FFFF table at address 0, this means the first
            copy of FFFF table is corrupted. So look for the second copy only */
-        address = FFFF_HEADER_SIZE;
+        address = FFFF_HEADER_SIZE_MIN;
         while(address < FFFF_ERASE_BLOCK_SIZE_MAX * 2) {
-            if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
-                set_last_error(BRE_FFFF_LOAD_HEADER);
+            if (load_ffff_header(ops,
+                                 ffff.header2.buffer,
+                                 address,
+                                 &valid_header)) {
                 return -1;
-            } else if(!validate_ffff_header(&ffff.header2, address)) {
+            } else if(valid_header) {
                 ffff.cur_header = &ffff.header2;
                 reset_last_error();
                 return 0;
@@ -252,10 +292,9 @@ static int locate_ffff_table(data_load_ops *ops)
     if (address < ffff.header1.header_size) {
         address = ffff.header1.header_size;
     }
-    if (ops->read(&ffff.header2, address, sizeof(ffff_header))) {
-        set_last_error(BRE_FFFF_LOAD_HEADER);
+    if (load_ffff_header(ops, ffff.header2.buffer, address, &valid_header)) {
         return -1;
-    } else if(validate_ffff_header(&ffff.header2, address)) {
+    } else if(!valid_header) {
         /* Did not find the second copy, so use the first one */
         reset_last_error();
         return 0;

@@ -30,24 +30,31 @@
 #define __COMMON_INCLUDE_FFFF_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "chipcfg.h"
 
-#define FFFF_HEADER_SIZE                  4096
+#define FFFF_HEADER_SIZE_MIN              512
+#define FFFF_HEADER_SIZE_MAX              32768
+
+#if MAX_FFFF_HEADER_SIZE_SUPPORTED < FFFF_HEADER_SIZE_MIN || \
+    MAX_FFFF_HEADER_SIZE_SUPPORTED > FFFF_HEADER_SIZE_MAX
+#error "Invalid MAX_FFFF_HEADER_SIZE_SUPPORTED"
+#endif
+
+
 #define FFFF_ERASE_BLOCK_SIZE_MAX         (1024 * 512)
 
 #define FFFF_SENTINEL_SIZE                16
-#define FFFF_SENTINEL_VALUE               "FlashFormatForFW"
+static const char ffff_sentinel_value[] = "FlashFormatForFW";
 /**
  * Compile-time test hack to verify that the sentinel value is
  * FFFF_SENTINEL_SIZE bytes
  */
-typedef char ___ffff_sentinel_test[((sizeof(FFFF_SENTINEL_VALUE) -1) ==
+typedef char ___ffff_sentinel_test[((sizeof(ffff_sentinel_value) -1) ==
                                     FFFF_SENTINEL_SIZE) ?
                                    1 : -1];
 
-/* following values are derived from FFFF_HEADER_SIZE */
-#define FFFF_MAX_ELEMENTS                 198
-#define FFFF_RESERVED                     4
-#define FFFF_PADDING                      1
+#define FFFF_NUM_RESERVED                 4
 
 /* Element types */
 #define FFFF_ELEMENT_STAGE_2_FW           0x01
@@ -70,26 +77,40 @@ typedef struct {
 /* Compile-time test hack to verify that the element descriptor is 20 bytes */
 typedef char ___ffff_element_test[(FFFF_ELEMENT_SIZE == 20) ? 1 : -1];
 
-typedef struct {
-    char sentinel_value[FFFF_SENTINEL_SIZE];
-    char build_timestamp[16];
-    char flash_image_name[48];
-    uint32_t flash_capacity;
-    uint32_t erase_block_size;
-    uint32_t header_size;
-    uint32_t flash_image_length;
-    uint32_t header_generation;
-    uint32_t reserved[FFFF_RESERVED];
-    ffff_element_descriptor elements[FFFF_MAX_ELEMENTS];
-    uint32_t padding[FFFF_PADDING];
-    char trailing_sentinel_value[FFFF_SENTINEL_SIZE];
-} __attribute__ ((packed)) ffff_header;
+typedef union {
+    struct __attribute__ ((packed)) {
+        char sentinel_value[FFFF_SENTINEL_SIZE];
+        char build_timestamp[16];
+        char flash_image_name[48];
+        uint32_t flash_capacity;
+        uint32_t erase_block_size;
+        uint32_t header_size;
+        uint32_t flash_image_length;
+        uint32_t header_generation;
+        uint32_t reserved[FFFF_NUM_RESERVED];
+        ffff_element_descriptor elements[];
+    };
+    unsigned char buffer[MAX_FFFF_HEADER_SIZE_SUPPORTED];
+} ffff_header;
+
+static inline char *get_trailing_sentinel_addr(ffff_header *header) {
+    return (char *)header->buffer + header->header_size - FFFF_SENTINEL_SIZE;
+}
+
+static inline bool is_element_out_of_range(ffff_header *header,
+                                           ffff_element_descriptor *element) {
+    return ((unsigned char *)element >= header->buffer +
+                                        header->header_size -
+                                        (FFFF_SENTINEL_SIZE +
+                                         sizeof(ffff_element_descriptor)));
+}
 
 /**
  * Compile-time test hack to verify that the header is
- * FFFF_HEADER_SIZE bytes
+ * MAX_FFFF_HEADER_SIZE_SUPPORTED bytes
  */
-typedef char ___ffff_header_test[(sizeof (ffff_header) == FFFF_HEADER_SIZE) ?
+typedef char ___ffff_header_test[(sizeof(ffff_header) ==
+                                 MAX_FFFF_HEADER_SIZE_SUPPORTED) ?
                                  1 : -1];
 
 #endif /* __COMMON_INCLUDE_FFFF_H */

@@ -26,27 +26,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_BOOTROM_H
-#define __COMMON_INCLUDE_BOOTROM_H
-
-#include <stdint.h>
-#include "debug.h"
-#include "data_loading.h"
-#include "communication_area.h"
-
-/*
- * Globals shared by source files, but not part of the communication area:
+/**
+ * This file defines some chip specific macros that would used by common code
  */
-extern uint32_t ara_vid;
-extern uint32_t ara_pid;
 
-int locate_ffff_element_on_storage(data_load_ops *ops,
-                                   uint32_t type,
-                                   uint32_t *length);
+#ifndef __ARCH_ARM_TSB_CHIPCFG_H
+#define __ARCH_ARM_TSB_CHIPCFG_H
+/**
+ * the code in tsb_utils.S implemented the chip_delay for 200ns
+ * The +1 here makes sure we delay no shorter than expected
+ */
+#define CHIP_NS_TO_DELAY(n) ((n / 200) + 1)
 
-typedef void (*image_entry_func)(void);
+/**
+ * This macro is used by tftf.c. This allow different chip to convert
+ * the specified code/data address in TFTF header to chip specific address.
+ * For example, on TSB chip this would be a direct type cast, but for
+ * code running on AP or PC to verify the TFTF image, this could be converted
+ * to an address in a buffer allocated for containing the code/data.
+ */
+#define CHIP_IMAGE_LOADING_DEST(addr) ((unsigned char *)addr)
 
-int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image);
-void jump_to_image(void);
+#define MAX_TFTF_HEADER_SIZE_SUPPORTED 4096
+#define MAX_FFFF_HEADER_SIZE_SUPPORTED 4096
 
-#endif /* __COMMON_INCLUDE_BOOTROM_H */
+#endif /* __ARCH_ARM_TSB_CHIPCFG_H */

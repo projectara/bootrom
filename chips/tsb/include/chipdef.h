@@ -128,11 +128,6 @@
 #define _JTAG_DISABLE               (ISAA_BASE + 0x0000040c)
 #define DISABLE_JTAG_IMS_CMS_ACCESS (0x00000001)
 
-
-/**
- * the code in tsb_utils.S implemented the chip_delay for 200ns
- * The +1 here makes sure we delay no shorter than expected
- */
-#define CHIP_NS_TO_DELAY(n) ((n / 200) + 1)
+#include "chipcfg.h"
 
 #endif /* __ARCH_ARM_TSB_CHIPDEF_H */

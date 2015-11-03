@@ -64,6 +64,25 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
+int memcmp(const void *s1, const void *s2, size_t n) {
+    size_t i;
+    unsigned char *p1 = (unsigned char *)s1;
+    unsigned char *p2 = (unsigned char *)s2;
+
+    /*
+     * Parameter validation is skipped here, since this is used internally
+     * only and the paramters are expected to be vailidated by caller
+     */
+
+    for (i = 0; i < n; i++) {
+        if (p1[i] != p2[i]) {
+            return p1[i] - p2[i];
+        }
+    }
+
+    return 0;
+}
+
 int strncmp(const char *s1, const char *s2, size_t n) {
     size_t i;
 
