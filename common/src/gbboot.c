@@ -112,6 +112,7 @@ static int gbboot_get_firmware(uint32_t offset, uint32_t size, void *data,
         return rc;
     }
 
+    /* prev_len is set only when hash is required */
     if (prev_len > 0) {
         hash_update((unsigned char*)prev, prev_len);
     }

@@ -30,7 +30,6 @@
 #define __COMMON_INCLUDE_FFFF_H
 
 #include <stdint.h>
-#include "data_loading.h"
 
 #define FFFF_HEADER_SIZE                  4096
 #define FFFF_ERASE_BLOCK_SIZE_MAX         (1024 * 512)
@@ -93,7 +92,4 @@ typedef struct {
 typedef char ___ffff_header_test[(sizeof (ffff_header) == FFFF_HEADER_SIZE) ?
                                  1 : -1];
 
-int locate_ffff_element_on_storage(data_load_ops *ops,
-                                   uint32_t type,
-                                   uint32_t *length);
 #endif /* __COMMON_INCLUDE_FFFF_H */

@@ -67,14 +67,18 @@ chip_delay:
 
 .globl chip_clear_image_loading_ram
 .type chip_clear_image_loading_ram, %function
+/**
+ * Clear the RAM area used to load FW image
+ * This function is called when loading from SPI failed, and before
+ * start loading from unipro.
+ */
 chip_clear_image_loading_ram:
     push {r0, r8, r9}
     ldr r0, =0
-    /* Just clear the BootRom .data, .bss, stack and communication region*/
     ldr r8, =_workram_start
 #if (CONFIG_CHIP_REVISION >= CHIP_REVISION_ES3) && (BOOT_STAGE == 1)
     ldr r9, =_bootrom_data_area
-#elif (CONFIG_CHIP_REVISION <= CHIP_REVISION_ES1) || (BOOT_STAGE == 2)
+#elif (CONFIG_CHIP_REVISION <= CHIP_REVISION_ES2) || (BOOT_STAGE == 2)
     ldr r9, =_bootrom_text_area
 #else
     pop {r0, r8, r9}

@@ -209,7 +209,21 @@ static int locate_ffff_table(data_load_ops *ops)
 
     ffff.cur_header = &ffff.header1;
 
-    /*** TODO: Fix wording */
+    /**
+     * This function sets ffff.cur_header to point to the static buffer
+     * containing the newest FFFF header structure in the FFFF storage.
+     * Each FFFF storage normally has two identical (and consecutive) copies
+     * of the FFFF header at the beginning of the storage, but those can
+     * become damaged or out of sync if an update operation is interrupted.
+     * This code looks for the first header, then looks for a second one.
+     * If it finds the first header, that tells it where the second header
+     * will be; otherwise, it searches on power-of-two boundaries to locate
+     * a second header. It is an error (failure) if no valid headers can be
+     * found. If only one is found, it is used as ffff.cur_header. If two are
+     * found, the newest one (based on header_generation) is used as
+     * ffff.cur_header.
+     **/
+
     /* First look for header at beginning of the storage */
     if (ops->read(&ffff.header1, address, sizeof(ffff_header))) {
         set_last_error(BRE_FFFF_LOAD_HEADER);

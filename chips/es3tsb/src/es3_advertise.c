@@ -31,7 +31,7 @@
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "chipapi.h"
-#include "common.h"
+#include "error.h"
 #include "bootrom.h"
 
 uint32_t boot_status_offline = 0;

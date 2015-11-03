@@ -32,16 +32,26 @@
 #include <stdint.h>
 #include <tftf.h>
 
-#define HASH_DIGEST_SIZE 32
-#define PUBLIC_KEY_SIZE 256
+#define SHA256_HASH_DIGEST_SIZE 32
+#define RSA2048_PUBLIC_KEY_SIZE 256
 
 #define ALGORITHM_TYPE_RSA2048_SHA256 0x01
 
 typedef struct {
     uint32_t type;
     char key_name[96];
-    unsigned char key[PUBLIC_KEY_SIZE];
+    unsigned char key[RSA2048_PUBLIC_KEY_SIZE];
 } __attribute__ ((packed)) crypto_public_key;
+
+/** 
+ * Compile-time test hack to verify the key_name in two different struct
+ * have the same size
+ **/
+static tftf_signature ___test_signature;
+static crypto_public_key  ___test_key;
+typedef char ___key_name_test[(sizeof (___test_signature.key_name) ==
+                               sizeof (___test_key.key_name)) ?
+                              1 : -1];
 
 extern const crypto_public_key public_keys[];
 extern const uint32_t number_of_public_keys;

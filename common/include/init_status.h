@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Google Inc.
+/*
+ * Copyright (c) 2014 Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_BOOTROM_H
-#define __COMMON_INCLUDE_BOOTROM_H
+#ifndef __COMMON_INCLUDE_INIT_STATUS_H
+#define __COMMON_INCLUDE_INIT_STATUS_H
 
-#include <stdint.h>
-#include "debug.h"
-#include "data_loading.h"
-#include "communication_area.h"
+#define INIT_TYPE_TOSHIBA                                    (0x01260001)
 
-/*
- * Globals shared by source files, but not part of the communication area:
- */
-extern uint32_t ara_vid;
-extern uint32_t ara_pid;
-/* This is set to non-zero if chip_advertise_boot_status can't write to DME) */
-extern uint32_t boot_status_offline;
+#define INIT_STATUS_UNINITIALIZED                            (0x000000000)
+#define INIT_STATUS_OPERATING                                (1 << 24)
+#define INIT_STATUS_SPI_BOOT_STARTED                         (2 << 24)
+#define INIT_STATUS_TRUSTED_SPI_FLASH_BOOT_FINISHED          (3 << 24)
+#define INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED        (4 << 24)
+#define INIT_STATUS_UNIPRO_BOOT_STARTED                      (6 << 24)
+#define INIT_STATUS_TRUSTED_UNIPRO_BOOT_FINISHED             (7 << 24)
+#define INIT_STATUS_UNTRUSTED_UNIPRO_BOOT_FINISHED           (8 << 24)
+#define INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED            (9 << 24)
+#define INIT_STATUS_FALLLBACK_TRUSTED_UNIPRO_BOOT_FINISHED   (10 << 24)
+#define INIT_STATUS_FALLLBACK_UNTRUSTED_UNIPRO_BOOT_FINISHED (11 << 24)
+#define INIT_STATUS_RESUMED_FROM_STANDBY                     (12 << 24)
+#define INIT_STATUS_FAILED                                   (0x80000000)
+#define INIT_STATUS_ERROR_MASK                               (0x80000000)
+#define INIT_STATUS_STATUS_MASK                              (0x7f000000)
+#define INIT_STATUS_ERROR_CODE_MASK                          (0x00ffffff)
 
-int locate_ffff_element_on_storage(data_load_ops *ops,
-                                   uint32_t type,
-                                   uint32_t *length);
+#endif /* __COMMON_INCLUDE_INIT_STATUS_H */
 
-typedef void (*image_entry_func)(void);
 
-int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image);
-void jump_to_image(void);
-
-#endif /* __COMMON_INCLUDE_BOOTROM_H */

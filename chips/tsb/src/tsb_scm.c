@@ -31,6 +31,9 @@
  *         Fabien Parent <fparent@baylibre.com>
  */
 
+/**
+ * This file is dereived from nuttx code
+ */
 #include "tsb_scm.h"
 
 

@@ -29,29 +29,10 @@
 #ifndef __COMMON_INCLUDE_UNIPRO_H
 #define __COMMON_INCLUDE_UNIPRO_H
 
-#include "unipro_dme.h"
-#include "ara_unipro_dme.h"
+#include "mipi_dme.h"
+#include "ara_tsb_dme.h"
+#include "ara_mailbox.h"
 
-/**
- * @brief Synchronously read from local mailbox.
- * @return 0 on success, <0 on internal error, >0 on UniPro error
- */
-int read_mailbox(uint32_t *val);
-/**
- * @brief Acknowledge that we've read local mailbox, clearing it.
- * @return 0 on success, <0 on internal error, >0 on UniPro error
- */
-int ack_mailbox(uint16_t val);
-/**
- * @brief Synchronously write to the peer mailbox, polling for it to be cleared
- * once we've written it.
- * @return 0 on success, <0 on internal error, >0 on UniPro error
- */
-int write_mailbox(uint32_t val);
-
-/**
- * @brief Abstract out the chip-common parts of advertising readiness.
- */
-int advertise_ready(void);
+#include "init_status.h"
 
 #endif /* __COMMON_INCLUDE_UNIPRO_H */

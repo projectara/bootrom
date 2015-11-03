@@ -40,7 +40,6 @@
 #include "debug.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
-#include "common.h"
 #include "bootrom.h"
 #include "error.h"
 #include "unipro.h"
@@ -170,7 +169,14 @@ int efuse_init(void) {
     return 0;
 }
 
-
+/**
+ * JTAG is not at any time during Boot ROM operation, but has not been
+ * permanently disabled. The Stage 2 firmware can choose to leave JTAG
+ * disabled, enable JTAG, or permanently disable JTAG (until next RESET).
+ *
+ * On the other hand, IMS/CMS access should be permanently disabled (until
+ * reset) for untrusted images
+ **/
 void efuse_rig_for_untrusted(void) {
     /* TA-21 Lock function with register (IMS, CMS) */
     tsb_disable_ims_access();
@@ -332,9 +338,9 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
              * Z0 = sha256(Y1 || copy(0x01, 32))
              * EP_UID[0:7] = sha256(Z0)[0:7]
              */
-            unsigned char EP_UID[HASH_DIGEST_SIZE];
-            unsigned char Y1[HASH_DIGEST_SIZE];
-            unsigned char Z0[HASH_DIGEST_SIZE];
+            unsigned char EP_UID[SHA256_HASH_DIGEST_SIZE];
+            unsigned char Y1[SHA256_HASH_DIGEST_SIZE];
+            unsigned char Z0[SHA256_HASH_DIGEST_SIZE];
             uint32_t temp;
             uint32_t *pims = (uint32_t *)ims_value;
 
@@ -347,7 +353,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             hash_final(Y1);
 
             hash_start();
-            hash_update(Y1, HASH_DIGEST_SIZE);
+            hash_update(Y1, SHA256_HASH_DIGEST_SIZE);
             temp = 0x01010101;
             for (i = 0; i < 8; i++) {;
                 hash_update((unsigned char *)&temp, 1);
@@ -355,7 +361,7 @@ static bool get_endpoint_id(union large_uint * endpoint_id) {
             hash_final(Z0);
 
             hash_start();
-            hash_update(Z0, HASH_DIGEST_SIZE);
+            hash_update(Z0, SHA256_HASH_DIGEST_SIZE);
             hash_final(EP_UID);
 
             memcpy(endpoint_id, EP_UID, 8);

@@ -31,6 +31,24 @@
 
 #include "chipdef.h"
 
+/**
+ * This file contains standby/resume code implemented in the ROM.
+ *
+ * chip_enter_standby is exposed by boot ROM in communication area
+ * so later stage FW can call it to put the chip into standby mode.
+ * This part of code is included in ROM because it cannot run in the
+ * workram (workram would be put into retention mode as a result of
+ * this part of code).
+ *
+ * resume_from_standby is to resume the chip from standby mode.
+ * This part of code is branched from __start in boot.S when resume
+ * from standby.
+ *
+ * The code is implemented according to section 4.1.4.4 (modified
+ * based on discussion with Toshiba), and section 4.1.4.2 from
+ * ARA_ES3_APBridge_rev091.pdf.
+ * Both implemented the part that has to be outside workram.
+ */
 #define EBUSY       16
 
 .text

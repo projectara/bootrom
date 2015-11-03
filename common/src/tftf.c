@@ -65,7 +65,7 @@ typedef enum {
 typedef struct {
     tftf_header header;
     crypto_processing_state crypto_state;
-    unsigned char hash[HASH_DIGEST_SIZE];
+    unsigned char hash[SHA256_HASH_DIGEST_SIZE];
     tftf_signature signature;
     bool contain_signature;
 } tftf_processing_state;

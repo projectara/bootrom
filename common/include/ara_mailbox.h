@@ -26,29 +26,29 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_BOOTROM_H
-#define __COMMON_INCLUDE_BOOTROM_H
+#ifndef __COMMON_INCLUDE_ARA_MAILBOX_H
+#define __COMMON_INCLUDE_ARA_MAILBOX_H
 
-#include <stdint.h>
-#include "debug.h"
-#include "data_loading.h"
-#include "communication_area.h"
-
-/*
- * Globals shared by source files, but not part of the communication area:
+/**
+ * @brief Synchronously read from local mailbox.
+ * @return 0 on success, <0 on internal error, >0 on UniPro error
  */
-extern uint32_t ara_vid;
-extern uint32_t ara_pid;
-/* This is set to non-zero if chip_advertise_boot_status can't write to DME) */
-extern uint32_t boot_status_offline;
+int read_mailbox(uint32_t *val);
+/**
+ * @brief Acknowledge that we've read local mailbox, clearing it.
+ * @return 0 on success, <0 on internal error, >0 on UniPro error
+ */
+int ack_mailbox(uint16_t val);
+/**
+ * @brief Synchronously write to the peer mailbox, polling for it to be cleared
+ * once we've written it.
+ * @return 0 on success, <0 on internal error, >0 on UniPro error
+ */
+int write_mailbox(uint32_t val);
 
-int locate_ffff_element_on_storage(data_load_ops *ops,
-                                   uint32_t type,
-                                   uint32_t *length);
+/**
+ * @brief Abstract out the chip-common parts of advertising readiness.
+ */
+int advertise_ready(void);
 
-typedef void (*image_entry_func)(void);
-
-int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image);
-void jump_to_image(void);
-
-#endif /* __COMMON_INCLUDE_BOOTROM_H */
+#endif /* __COMMON_INCLUDE_ARA_MAILBOX_H */

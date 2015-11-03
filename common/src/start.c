@@ -31,7 +31,6 @@
 #include "chipapi.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
-#include "common.h"
 #include "bootrom.h"
 #include "error.h"
 #include "efuse.h"
@@ -97,11 +96,9 @@ void bootrom_main(void) {
         halt_and_catch_fire(boot_status);
     }
 
-    /* determine if we're booting from flash or unipro */
+    /* determine if we're booting from flash or UniPro */
     register_val = tsb_get_bootselector();
-#ifndef BOOT_OVER_UNIPRO
-    register_val = 0;
-#endif
+
    /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
     boot_from_spi = ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0);
     if (boot_from_spi) {
@@ -131,10 +128,6 @@ void bootrom_main(void) {
                                 merge_errno_with_boot_status(boot_status),
                                 ")\n");
 
-                    /*
-                     *  Disable IMS, CMS access before starting untrusted image.
-                     *  NB. JTAG continues to be not enabled at this point
-                     */
                     efuse_rig_for_untrusted();
                 }
 

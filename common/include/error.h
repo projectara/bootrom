@@ -29,8 +29,6 @@
 #ifndef __COMMON_INCLUDE_ERROR_H
 #define __COMMON_INCLUDE_ERROR_H
 
-//include <stdint.h>
-//#include <stddef.h>
 #include "debug.h"
 
 #define BRE_OK                      ((uint32_t)0x000000)

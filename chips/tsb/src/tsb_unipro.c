@@ -41,7 +41,10 @@ struct cport cporttable[4] = {
 };
 
 #define CPORT_SW_RESET_BITS 3
-/*** TODO: Cross-reference table in spec about what steps need to be done. */
+/**
+ * CPort Reset Proceedure, implemented according to section 5.7.8.5
+ * from ARA_ES3_APBridge_rev091.pdf
+ */
 static int tsb_unipro_reset_cport(uint32_t cportid) {
     int rc;
     uint32_t tx_reset_offset, rx_reset_offset;

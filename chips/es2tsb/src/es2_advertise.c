@@ -32,7 +32,7 @@
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "debug.h"
-#include "common.h"
+#include "error.h"
 #include "utils.h"
 
 uint32_t boot_status_offline = 0;

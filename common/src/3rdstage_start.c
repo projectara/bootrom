@@ -31,7 +31,6 @@
 #include "chipapi.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
-#include "common.h"
 #include "error.h"
 #include "efuse.h"
 #include "unipro.h"

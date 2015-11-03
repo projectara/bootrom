@@ -96,7 +96,7 @@ static int data_load_spi_load(void *dest, uint32_t length, bool hash) {
     if (count > 0xFFFF) {
         /* Maximum frame count is 64k (32bit frame). This would never be
            exceeded on the Toshiba bridge chip, since we only have 192kB
-           continous ram. The chip_validate_data_load_location would take care
+           continous RAM. The chip_validate_data_load_location would take care
            of that when validating image length. This check here is just in
            case the chip design is changed some day. */
         return -1;

@@ -33,7 +33,7 @@
 #include "unipro.h"
 
 #include "tsb_unipro_hw.h"
-#include "tsb_unipro_dme.h"
+#include "tsb_dme.h"
 
 /**
  * Definitions for the TSB UniPro handling FW

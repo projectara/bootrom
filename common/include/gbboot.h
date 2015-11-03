@@ -26,6 +26,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * This file defines specific stuff for bootrom protocol on Greybus
+ */
 #ifndef __COMMON_INCLUDE_GBFIRMWARE_H
 #define __COMMON_INCLUDE_GBFIRMWARE_H
 

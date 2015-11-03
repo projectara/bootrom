@@ -31,6 +31,9 @@
  *         Fabien Parent <fparent@baylibre.com>
  */
 
+/**
+ * This file is dereived from nuttx code
+ */
 #ifndef __ARCH_ARM_SRC_TSB_TSB_SCM_H
 #define __ARCH_ARM_SRC_TSB_TSB_SCM_H
 

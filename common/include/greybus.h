@@ -26,6 +26,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * This file defines greybus operation data structures and functions
+ * used by both core greybus operation and bootrom protocol.
+ * Bootrom protocol specific stuff are defined in gbboot.h
+ */
 #ifndef __COMMON_INCLUDE_GREYBUS_H
 #define __COMMON_INCLUDE_GREYBUS_H
 

@@ -31,7 +31,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "data_loading.h"
 
 #define TFTF_HEADER_SIZE                  512
 /* following values are derived from TFTF_HEADER_SIZE */
@@ -100,10 +99,5 @@ typedef struct {
     char key_name[96];
     unsigned char signature[256];
 } __attribute__ ((packed)) tftf_signature;
-
-typedef void (*image_entry_func)(void);
-
-int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image);
-void jump_to_image(void);
 
 #endif /* __COMMON_INCLUDE_TFTF_H */

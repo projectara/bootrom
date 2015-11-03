@@ -28,7 +28,6 @@
 
 #include <stdint.h>
 #include "chipapi.h"
-#include "common.h"
 #include "unipro.h"
 #include "debug.h"
 #include "data_loading.h"

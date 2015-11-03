@@ -51,5 +51,20 @@
 
 #define TSB_MAXSEGMENTCONFIG        0xd089
 
+#define DME_POWERMODEIND            0xd040
+    #define TSB_DME_POWERMODEIND_NONE       (0) // no new value since last read
+    #define TSB_DME_POWERMODEIND_OK         (1 << 0)
+    #define TSB_DME_POWERMODEIND_LOCAL      (1 << 1)
+    #define TSB_DME_POWERMODEIND_REMOTE     (1 << 2)
+    #define TSB_DME_POWERMODEIND_BUSY       (1 << 3)
+    #define TSB_DME_POWERMODEIND_CAP_ERR    (1 << 4)
+    #define TSB_DME_POWERMODEIND_FATAL_ERR  (1 << 5)
+#define DME_FC0PROTECTIONTIMEOUTVAL 0xd041
+#define DME_TC0REPLAYTIMEOUTVAL     0xd042
+#define DME_AFC0REQTIMEOUTVAL       0xd043
+#define DME_FC1PROTECTIONTIMEOUTVAL 0xd044
+#define DME_TC1REPLAYTIMEOUTVAL     0xd045
+#define DME_AFC1REQTIMEOUTVAL       0xd046
+
 #endif /* __ARCH_ARM_SRC_TSB_TSB_UNIPRO_DME_H */
 

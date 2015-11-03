@@ -45,6 +45,18 @@
 #include "tsb_scm.h"
 #include "special_test.h"
 
+/**
+ * Code to handle standby and resume in workram.
+ * The code is implemented according to section 4.1.4.4 (modified
+ * based on discussion with Toshiba), and section 4.1.4.2 from
+ * ARA_ES3_APBridge_rev091.pdf.
+ * The part of sequence can run in workram is implemented here. It calls
+ * function in ROM to enter standby and being called by ROM code upon resume.
+ *
+ * This file is not part of boot ROM code. Instead, it is an example
+ * of how later stage FW should implement standby/resume function
+ */
+
 int chip_enter_hibern8_client(void) {
     uint32_t tx_reset_offset, rx_reset_offset;
     uint32_t cportid;

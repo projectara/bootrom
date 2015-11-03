@@ -28,7 +28,6 @@
 
 #include <stdint.h>
 #include "chipapi.h"
-#include "common.h"
 #include "unipro.h"
 #include "error.h"
 #include "greybus.h"
@@ -138,7 +137,7 @@ int create_connection(struct unipro_connection *c) {
 
     /**
      * This part (poking local mailbox) is not part of the greybus spec.
-     * It is here so we can re-use the existing unipro code
+     * It is here so we can re-use the existing UniPro code
      */
     poke_mailbox(c->cport_id0 + 1, 0);
     chip_unipro_init_cport(c->cport_id0);
