@@ -116,12 +116,16 @@ resume_from_standby:
     str r0, [r2]
 
     /* delay 0.1us or more */
-    /**
-     * This is running in boot ROM, we have stack on the bufram
-     * so it is OK to call other functions
-     */
-    ldr r0, =CHIP_NS_TO_DELAY(100)
-    bl chip_delay
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
     ldr r2, =RETSRAMCLKCONT
     ldr r1, =1
