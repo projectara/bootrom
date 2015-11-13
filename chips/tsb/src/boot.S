@@ -189,6 +189,16 @@ end_init_data_sec:
 .globl bootstrap
 .extern copy_to_ram
 
+/**
+ * Under all chips prior to ES3, the bootrom is located in slow memory-mapped
+ * SPI flash, and has to load itself into work RAM for performance.  The
+ * bootstrap section is thus first copied into RAM, and then the CPU jumps into
+ * the loaded bootstrap code.
+ *
+ * To support this, chip configurations es1tsb and es2tsb define the
+ * BOOT_FROM_SLOW_ROM variable, which will include and build the bootstrap.
+ */
+
 bootstrap:
     ldr r0, =_bootstrap_lma
     ldr r1, =_bootstrap_size

@@ -31,6 +31,17 @@
 
 .extern _bootstrap_lma, _bootstrap_vma, _bootstrap_size
 
+/**
+ * Under all chips prior to ES3, the bootrom is located in slow memory-mapped
+ * SPI flash, and has to load itself into work RAM for performance.  Once this
+ * bootstrap section has been loaded into RAM, the CPU jumps into it, and it
+ * loads the rest of the bootrom into RAM.  The CPU then finally jumps into the
+ * real bootrom.
+ *
+ * This code is located in a separate file due to its being in a separate linker
+ * section.
+ */
+
 .section .bootstrap, "ax"
 .align 4
 
