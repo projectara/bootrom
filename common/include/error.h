@@ -34,15 +34,15 @@
 #define BRE_OK                      ((uint32_t)0x000000)
 
 /* These are used to divide the 24-bits of errno pushed to BOOT_STATUS */
-#define BRE_L1_FW_MASK              0x000000ff
-#define BRE_L2_FW_MASK              0x0000ff00
-#define BRE_L3_FW_MASK              0x00ff0000
-#define BRE_L1_FW_SHIFT             0
-#define BRE_L2_FW_SHIFT             8
-#define BRE_L3_FW_SHIFT             16
+#define BRE_S1_PAIMARY_MASK         0x000000ff
+#define BRE_S1_FALLBACK_MASK        0x0000ff00
+#define BRE_S2_FW_MASK              0x00ff0000
+#define BRE_S1_PRIMARY_SHIFT        0
+#define BRE_S1_FALLBACK_SHIFT       8
+#define BRE_S2_FW_SHIFT             16
 
 /*
- * Level 1 Firmware error codes
+ * Stage 1 Firmware error codes
  * (Error groups go up by 0x00000020)
  */
 #define BRE_GROUP_MASK              0x0000e0
@@ -98,20 +98,11 @@
 
 
 /*
- * Level 2 Firmware error codes
+ * Stage 2 Firmware error codes
  * (Note that these will be automatically shifted into the correct bit-field
  * by "set_last_error". Do not pre-shift them in your definitions!)
  */
 /* TBD */
-
-
-/*
- * Level 3 Firmware error codes
- * (Note that these will be automatically shifted into the correct bit-field
- * by "set_last_error". Do not pre-shift them in your definitions!)
- */
-/* TBD */
-
 
 /* Syntactic sugar */
 #define reset_last_error()  init_last_error()

@@ -43,6 +43,10 @@
 #include "crypto.h"
 #include "bootrom.h"
 
+#if BOOT_STAGE != 1 && BOOT_STAGE != 2
+#error Error reporting via DME is only supported for first two stage of boot
+#endif
+
 static uint32_t fw_errno;
 
 
@@ -61,7 +65,7 @@ void init_last_error(void) {
         if (chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &fw_errno, 0,
                                   ATTR_LOCAL) != 0)
         {
-            dbgprint("L2/L3: init_last_error: can't read Boot Status\n");
+            dbgprint("S2: init_last_error: can't read Boot Status\n");
             fw_errno = BRE_OK;
         }
     }
@@ -69,11 +73,7 @@ void init_last_error(void) {
     fw_errno &= INIT_STATUS_ERROR_CODE_MASK;
 
     /* ...and ensure that this level's field is cleared. */
-#if BOOT_STAGE == 2
-    fw_errno &= ~BRE_L2_FW_MASK;
-#elif BOOT_STAGE == 3
-    fw_errno &= ~BRE_L3_FW_MASK;
-#endif
+    fw_errno &= ~BRE_S2_FW_MASK;
 #endif
 }
 
@@ -89,14 +89,20 @@ void set_last_error(uint32_t err) {
     uint32_t error_mask;
     uint32_t shift;
 #if BOOT_STAGE == 1
-    error_mask = BRE_L1_FW_MASK;
-    shift = BRE_L1_FW_SHIFT;
+    uint32_t boot_status;
+    boot_status = chip_get_boot_status();
+
+    boot_status &= INIT_STATUS_STATUS_MASK | INIT_STATUS_ERROR_MASK;
+    if (boot_status == INIT_STATUS_FALLLBACK_UNIPRO_BOOT_STARTED) {
+        error_mask = BRE_S1_FALLBACK_MASK;
+        shift = BRE_S1_FALLBACK_SHIFT;
+    } else {
+        error_mask = BRE_S1_PAIMARY_MASK;
+        shift = BRE_S1_PRIMARY_SHIFT;
+    }
 #elif BOOT_STAGE == 2
-    error_mask = BRE_L2_FW_MASK;
-    shift = BRE_L2_FW_SHIFT;
-#elif BOOT_STAGE == 3
-    error_mask = BRE_L3_FW_MASK;
-    shift = BRE_L3_FW_SHIFT;
+    error_mask = BRE_S2_FW_MASK;
+    shift = BRE_S2_FW_SHIFT;
 #endif
 
     if ((fw_errno & error_mask) == BRE_OK) {
@@ -107,21 +113,19 @@ void set_last_error(uint32_t err) {
         fw_errno |= (err << shift) & error_mask;
 
 #ifdef _DEBUGMSGS
-        /* Save the first error in each L1,2,3 reporting zone */
-        if (err & BRE_L1_FW_MASK) {
+        /* Save the first error in each S1,S2 reporting zone */
+        if (err & (BRE_S1_PAIMARY_MASK | BRE_S1_FALLBACK_MASK)) {
             uint32_t    err_group = err & BRE_GROUP_MASK;
             /* Print out the error */
-            dbgprintx32((err_group == BRE_EFUSE_BASE)? "L1 e-Fuse err: ":
-                        (err_group == BRE_TFTF_BASE)? "L1 TFTF err: ":
-                        (err_group == BRE_FFFF_BASE)? "L1 FFFF err: " :
-                        (err_group == BRE_CRYPTO_BASE)? "L1 Crypto err: " :
-                                "L1 error: ",
+            dbgprintx32((err_group == BRE_EFUSE_BASE)? "S1 e-Fuse err: ":
+                        (err_group == BRE_TFTF_BASE)? "S1 TFTF err: ":
+                        (err_group == BRE_FFFF_BASE)? "S1 FFFF err: " :
+                        (err_group == BRE_CRYPTO_BASE)? "S1 Crypto err: " :
+                                "S1 error: ",
                                 err, "\n");
 
-        } else if (err & BRE_L2_FW_MASK) {
-             dbgprintx32("L2 err: ", err, "\n");
-        } else  {
-            dbgprintx32("L3 err: ", err, "\n");
+        } else if (err & BRE_S2_FW_MASK) {
+             dbgprintx32("S2 err: ", err, "\n");
         }
 #endif
     }

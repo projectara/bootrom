@@ -137,6 +137,15 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler);
 void chip_advertise_boot_status(uint32_t boot_status);
 
 /**
+ * @brief get the boot status from DME
+ *        The reason for not using a global variable to track the boot status
+ *        is in this way it can be cross boot stages.
+ * @return boot_status (will call halt_and_catch_fire if unable to read boot
+ *         status
+ */
+uint32_t chip_get_boot_status(void);
+
+/**
  * @brief advertise the boot type to the switch
  * @return 0 on success, <0 on error, >0 for UniPro error
  */

@@ -63,10 +63,18 @@ CMN_CSRC =  $(CMN_SRCDIR)/2ndstage_start.c
 else
 CMN_CSRC =  $(CMN_SRCDIR)/start.c
 endif
+
+ifneq ($(BOOT_STAGE), 3)
+# the error reporting over DME is for boot ROM and second stage only
+# So exclude it from third stage FW build. Also exclude TFTF/FFFF code
+# since they are not used by 3rd stage FW, while they rely on the error
+# reporting code
 CMN_CSRC += $(CMN_SRCDIR)/tftf.c
 CMN_CSRC += $(CMN_SRCDIR)/ffff.c
-CMN_CSRC += $(CMN_SRCDIR)/crypto.c
 CMN_CSRC += $(CMN_SRCDIR)/error.c
+endif
+
+CMN_CSRC += $(CMN_SRCDIR)/crypto.c
 CMN_CSRC += $(CMN_SRCDIR)/utils.c
 CMN_CSRC += $(CMN_SRCDIR)/ara_mailbox.c
 CMN_CSRC += $(CMN_SRCDIR)/gbcore.c

@@ -35,6 +35,8 @@
 #include "error.h"
 #include "bootrom.h"
 
+static bool boot_status_offline = false;
+
 /**
  * @brief advertise the boot status
  * @param boot_status
@@ -43,7 +45,6 @@
  *         status
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
-    static bool boot_status_offline = false;
     int status = 0;
 
     if (!boot_status_offline)
@@ -62,6 +63,34 @@ void chip_advertise_boot_status(uint32_t boot_status) {
         boot_status_offline = true;
         halt_and_catch_fire(boot_status);
     }
+}
+
+/**
+ * @brief get the boot status from DME
+ *        The reason for not using a global variable to track the boot status
+ *        is in this way it can be cross boot stages.
+ * @return boot_status (will call halt_and_catch_fire if unable to read boot
+ *         status
+ */
+uint32_t chip_get_boot_status(void) {
+    uint32_t boot_status;
+    int status = 0;
+
+    status = chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &boot_status, 0,
+                                   ATTR_LOCAL);
+    /*
+     * Being unable to read the DME value is regarded as a catastrophic failure.
+     */
+    if (status != 0) {
+        /*
+         * Set this flag so that halt_and_catch_fire doesn't try to
+         * recursively call us to advertise the boot status.
+         */
+        boot_status_offline = true;
+        halt_and_catch_fire(boot_status);
+    }
+
+    return boot_status;
 }
 
 /**
