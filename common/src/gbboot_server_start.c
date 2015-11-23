@@ -39,6 +39,7 @@
 #include "gbboot.h"
 #include "chipdef.h"
 #include "special_test.h"
+#include "bootrom.h"
 
 extern data_load_ops spi_ops;
 
