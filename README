@@ -56,3 +56,15 @@ Memory map (workram):
      ------------------------------------
     | 0x10000000 | workram start         |
      ------------------------------------
+
+
+ES2 vendor/product ids:
+We can't read ES2 vendor/product id specific DME attributes. In order to
+differentiate module vendors on the same ARA system, we pass user-defined set of
+vendor product ids to the AP over firmware protocol. These ids are passed as
+arguments to the ./configure command.
+
+./configure es2tsb <vendor-id> <product-id>
+
+After which you can follow general compilation steps. This will affect only ES2
+and the greybus core sends firmware request to get vid/pid, only for ES2 chips.

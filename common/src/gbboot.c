@@ -63,6 +63,12 @@ static int gbboot_get_version(uint32_t cportid, gb_operation_header *header) {
                                sizeof(payload));
 }
 
+static int gbboot_get_vid_pid(uint32_t cportid, gb_operation_header *header) {
+    struct gbboot_firmware_get_vid_pid response = {BOOTROM_MODULE_VID, BOOTROM_MODULE_PID};
+    return greybus_op_response(cportid, header, GB_OP_SUCCESS, (uint8_t*)&response,
+                               sizeof(response));
+}
+
 static int gbboot_ap_ready(uint32_t cportid, gb_operation_header *header) {
     return greybus_op_response(cportid, header, GB_OP_SUCCESS, NULL, 0);
 }
@@ -218,6 +224,9 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
         break;
     case GB_BOOT_OP_AP_READY:
         rc = gbboot_ap_ready(cportid, op_header);
+        break;
+    case GB_BOOT_OP_GET_VID_PID:
+        rc = gbboot_get_vid_pid(cportid, op_header);
         break;
     default:
         responded_op = GB_BOOT_OP_INVALID;

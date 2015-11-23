@@ -26,7 +26,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "bootrom.h"
+
 int efuse_init(void) {
+    /* Program user-defined values to VID/PID */
+    ara_vid = BOOTROM_MODULE_VID;
+    ara_pid = BOOTROM_MODULE_PID;
     return 0;
 }
 

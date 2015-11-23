@@ -24,3 +24,19 @@ then
 fi
 
 cp ${DEFCONFIG} .config
+
+# Echo Vendor/Product ids to .config, used only for es2
+if [ "$2" != "" ]; then
+	BOOTROM_MODULE_VID=$2
+else
+	BOOTROM_MODULE_VID=0
+fi
+
+if [ "$3" != "" ]; then
+	BOOTROM_MODULE_PID=$3
+else
+	BOOTROM_MODULE_PID=0
+fi
+
+echo "CONFIG_BOOTROM_MODULE_VID=$BOOTROM_MODULE_VID" >> .config
+echo "CONFIG_BOOTROM_MODULE_PID=$BOOTROM_MODULE_PID" >> .config

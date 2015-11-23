@@ -41,6 +41,7 @@ extern uint32_t gbboot_cportid;
 #define GB_BOOT_OP_GET_FIRMWARE       0x03
 #define GB_BOOT_OP_READY_TO_BOOT      0x04
 #define GB_BOOT_OP_AP_READY           0x05 /* Unidirectional request with no-payload */
+#define GB_BOOT_OP_GET_VID_PID        0x06
 
 /* Greybus FirmWare boot statuses */
 #define GB_BOOT_BOOT_STATUS_INVALID   0x00
@@ -77,6 +78,11 @@ struct __attribute__ ((__packed__)) gbboot_get_firmware_request {
 
 struct __attribute__ ((__packed__)) gbboot_ready_to_boot_request {
   uint8_t status;
+};
+
+struct __attribute__ ((__packed__)) gbboot_firmware_get_vid_pid {
+  uint32_t vendor;
+  uint32_t product;
 };
 
 int greybus_cport_connect(void);
