@@ -42,6 +42,7 @@
 #include "ffff.h"
 #include "crypto.h"
 #include "bootrom.h"
+#include "2ndstage_cfgdata.h"
 
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
@@ -111,6 +112,7 @@ void bootrom_main(void) {
     bool        boot_from_spi = true;
     bool        fallback_boot_unipro = false;
     uint32_t    is_secure_image;
+    secondstage_cfgdata *cfgdata;
 
     chip_init();
 
@@ -122,6 +124,10 @@ void bootrom_main(void) {
     crypto_init();
 
     dbgprint("\nHello world from s2fw\n");
+
+    if (!get_2ndstage_cfgdata(&cfgdata)) {
+        dbgprint("found valid config data\n");
+    }
 
     chip_unipro_init();
 

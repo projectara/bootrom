@@ -60,6 +60,7 @@ else ifeq ($(BOOT_STAGE), 3)
 CMN_CSRC =  $(CMN_SRCDIR)/3rdstage_start.c
 else ifeq ($(BOOT_STAGE), 2)
 CMN_CSRC =  $(CMN_SRCDIR)/2ndstage_start.c
+CMN_CSRC += $(CMN_SRCDIR)/2ndstage_cfgdata.c
 else
 CMN_CSRC =  $(CMN_SRCDIR)/start.c
 endif

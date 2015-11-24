@@ -17,11 +17,67 @@ ENTRY(Reset_Handler)
 
 REGION_ALIAS("REGION_TEXT", sram);
 
+_workram_start = ORIGIN(sram);
+_workram_end = ORIGIN(sram) + LENGTH(sram);
+_bufram_start = ORIGIN(bufram0);
+_bufram_end = ORIGIN(bufram3) + LENGTH(bufram3);
+
 /**
  * put data section below the data section of boot ROM, again, the number 24k
  * needs to be revised later when we have the code feature complete.
  */
-_bootrom_data_area = _workram_end - 24k;
-_bootrom_text_area = ((_bootrom_data_area - _text_size) & 0xfffffffc);
+_reserved_data_size = 24k;
+_config_data_size = 4k;
+_stage2_config = _workram_end - _reserved_data_size;
+_bootrom_data_area = _workram_end - _reserved_data_size + _config_data_size;
+_bootrom_text_area = ((_stage2_config - _text_size) & 0xfffffffc);
 
-INCLUDE chips/tsb/scripts/common.ld
+/**
+ * NOTE: _communication_area_size must match COMMUNICATION_AREA_LENGTH in
+ * bootrom.h!
+ */
+_communication_area_size = 1024; /* includes resume address */
+
+_resume_data_size = 12;  /* bytes */
+_resume_data = _workram_end - _resume_data_size;
+_communication_area = _workram_end - _communication_area_size;
+_stack_top = DEFINED(_stack_top) ?
+             _stack_top :
+             ORIGIN(bufram3) + LENGTH(bufram3);
+
+OUTPUT_ARCH(arm)
+SECTIONS
+{
+	.text (_bootrom_text_area) : {
+		_stext = ABSOLUTE(.);
+		*(.vectors)
+		*(.text .text.*)
+		*(.rodata .rodata.*)
+		*(.gnu.linkonce.t.*)
+		*(.gnu.linkonce.r.*)
+		_etext = ABSOLUTE(.);
+	} > REGION_TEXT AT > rom
+
+	_stext_lma = LOADADDR(.text);
+	_text_size = SIZEOF(.text);
+
+	.data (_bootrom_data_area): {
+		_sdata = ALIGN(4);
+		*(.data .data.*)
+		*(.gnu.linkonce.d.*)
+		_edata = ALIGN(4);
+	} > sram AT > rom
+
+	_data_in_rom = LOADADDR(.data);
+
+	.bss ALIGN(4): {
+		_sbss = ABSOLUTE(.);
+		*(.bss .bss.*)
+		*(.gnu.linkonce.b.*)
+		*(COMMON)
+		_ebss = ABSOLUTE(.);
+	} > sram
+
+	_total_data_size = SIZEOF(.data) + SIZEOF(.bss);
+}
+
