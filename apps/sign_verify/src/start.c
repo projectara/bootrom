@@ -35,7 +35,6 @@
 #include "chipapi.h"
 #include "tsb_scm.h"
 #include "tsb_isaa.h"
-#include "error.h"
 #include "efuse.h"
 #include "unipro.h"
 #include "chipdef.h"
@@ -79,8 +78,6 @@ void bootrom_main(void) {
     chip_init();
 
     dbginit();
-
-    init_last_error();
 
     dbgprint("sign-verify running...\n");
     check_ims_cms_access();

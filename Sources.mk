@@ -51,20 +51,6 @@ endif
 CMN_SRCDIR := common/src
 CMN_INCFLAGS := -I$(TOPDIR)/common/include
 
-ifeq ($(BUILD_FOR_GBBOOT_SERVER),1)
-CMN_CSRC =  $(CMN_SRCDIR)/gbboot_server_start.c
-CMN_CSRC += $(CMN_SRCDIR)/gbboot_fake_svc.c
-else ifeq ($(BUILD_FOR_SIGN_VERIFY),1)
-CMN_CSRC =  $(CMN_SRCDIR)/sign_verify.c
-else ifeq ($(BOOT_STAGE), 3)
-CMN_CSRC =  $(CMN_SRCDIR)/3rdstage_start.c
-else ifeq ($(BOOT_STAGE), 2)
-CMN_CSRC =  $(CMN_SRCDIR)/2ndstage_start.c
-CMN_CSRC += $(CMN_SRCDIR)/2ndstage_cfgdata.c
-else
-CMN_CSRC =  $(CMN_SRCDIR)/start.c
-endif
-
 ifneq ($(BOOT_STAGE), 3)
 # the error reporting over DME is for boot ROM and second stage only
 # So exclude it from third stage FW build. Also exclude TFTF/FFFF code
@@ -84,12 +70,14 @@ CMN_CSRC += $(CMN_SRCDIR)/gbboot.c
 
 CMN_ASRC =
 
-CSRC = $(CHIP_CSRC) $(CMN_CSRC) $(ARCH_EXTRA_CSRC)
-ASRC = $(CHIP_ASRC) $(CMN_ASRC) $(ARCH_EXTRA_ASRC)
+include $(TOPDIR)/apps/$(APPLICATION)/Sources.mk
 
-SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR) $(ARCH_EXTRA_SRCDIR) $(MANIFEST_SRCDIR)
+CSRC = $(CHIP_CSRC) $(CMN_CSRC) $(ARCH_EXTRA_CSRC) $(APP_CSRC)
+ASRC = $(CHIP_ASRC) $(CMN_ASRC) $(ARCH_EXTRA_ASRC) $(APP_ASRC)
+
+SRCDIRS := $(CHIP_SRCDIR) $(CMN_SRCDIR) $(APP_SRCDIR) $(ARCH_EXTRA_SRCDIR) $(MANIFEST_SRCDIR)
 
 COBJS := $(foreach f, $(CSRC), $(OUTROOT)/$(patsubst %.c,%.o, $(f)))
 AOBJS := $(foreach f, $(ASRC), $(OUTROOT)/$(patsubst %.S,%.o, $(f)))
 
-INCLUDES := $(CMN_INCFLAGS) $(CHIPINCLUDES)
+INCLUDES := $(CMN_INCFLAGS) $(CHIPINCLUDES) $(APP_INCLUDES)
