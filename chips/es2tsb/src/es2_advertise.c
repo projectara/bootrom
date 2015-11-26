@@ -36,7 +36,7 @@
 #include "error.h"
 #include "utils.h"
 
-static bool boot_status_offline = false;
+bool boot_status_offline = false;
 
 /**
  * @brief advertise the boot status
@@ -46,9 +46,6 @@ static bool boot_status_offline = false;
  */
 void chip_advertise_boot_status(uint32_t boot_status) {
     int rc;
-
-    if (!boot_status_offline)
-        return;
 
     rc = chip_unipro_attr_write(T_TSTSRCINCREMENT, ES2_INIT_STATUS(boot_status),
                                 0, ATTR_LOCAL);

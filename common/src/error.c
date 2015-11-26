@@ -178,7 +178,8 @@ void halt_and_catch_fire(uint32_t boot_status) {
     dbgflush();
     /* NOTE: NO FURTHER DEBUG MESSAGES BETWEEN HERE AND FUNCTION END! */
 
-    chip_advertise_boot_status(boot_status);
+    if (!boot_status_offline)
+        chip_advertise_boot_status(boot_status);
 
     /*
      * Indicate failure with GPIO 18 showing a '1' and execute a handshake
