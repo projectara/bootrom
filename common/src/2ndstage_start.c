@@ -46,6 +46,49 @@
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
 
+/**
+ * @brief control boot behavior
+ * @param boot_from_spi
+ * This function has to be called before second stage loader overrides the
+ * DME_DDBL2_INIT_STATUS
+ */
+static void boot_control(bool *boot_from_spi) {
+    uint32_t    boot_status = INIT_STATUS_OPERATING;
+    uint32_t    prev_boot_status;
+    uint32_t    bootctrl;
+    int rc;
+
+    *boot_from_spi = false;
+    prev_boot_status = chip_get_boot_status();
+
+    rc = chip_unipro_attr_read(ARA_BOOT_CONTROL,
+                               &bootctrl,
+                               0,
+                               ATTR_LOCAL);
+    if (rc) {
+        halt_and_catch_fire(boot_status);
+    }
+
+    if (prev_boot_status & INIT_STATUS_FAILED) {
+        /**
+         * We are in second stage loader at this moment, so the boot status
+         * should never been "FAILED".
+         * The check here is just for safety.
+         **/
+        halt_and_catch_fire(boot_status);
+    }
+
+    prev_boot_status &= INIT_STATUS_STATUS_MASK;
+
+    if (prev_boot_status == INIT_STATUS_TRUSTED_SPI_FLASH_BOOT_FINISHED ||
+        prev_boot_status == INIT_STATUS_UNTRUSTED_SPI_FLASH_BOOT_FINISHED) {
+        *boot_from_spi = true;
+    }
+
+    if (bootctrl & FORCE_UNIPRO_BOOT) {
+        *boot_from_spi = false;
+    }
+}
 
 /**
  * @brief Stage 2 loader "C" entry point. Started from Stage 1
@@ -65,7 +108,6 @@ void bootrom_main(void) {
     int rc;
     /* TA-20 R/W data in bufRAM */
     uint32_t    boot_status = INIT_STATUS_OPERATING;
-    uint32_t    register_val;
     bool        boot_from_spi = true;
     bool        fallback_boot_unipro = false;
     uint32_t    is_secure_image;
@@ -83,6 +125,8 @@ void bootrom_main(void) {
 
     chip_unipro_init();
 
+    boot_control(&boot_from_spi);
+
     /* Advertise our boot status */
     chip_advertise_boot_status(boot_status);
     /* Advertise our initialization type */
@@ -99,11 +143,6 @@ void bootrom_main(void) {
         halt_and_catch_fire(boot_status);
     }
 
-    /* determine if we're booting from flash or UniPro */
-    register_val = tsb_get_bootselector();
-
-   /* TA-02 Set SPIM_BOOT_N pin and read SPIBOOT_N register */
-    boot_from_spi = ((register_val & TSB_EBOOTSELECTOR_SPIBOOT_N) == 0);
     if (boot_from_spi) {
         dbgprint("Boot from SPIROM\n");
 

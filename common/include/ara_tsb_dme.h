@@ -41,6 +41,8 @@
 #define DME_DDBL2_INIT_STATUS       0x6101
 #define DME_DDBL2_ENDPOINTID_H      0x6102
 #define DME_DDBL2_ENDPOINTID_L      0x6103
+#define ARA_BOOT_CONTROL            0x610e
+    #define FORCE_UNIPRO_BOOT       (1 << 0)
 
 /*
  * Switch attributes and related values

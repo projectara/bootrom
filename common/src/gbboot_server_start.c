@@ -68,6 +68,12 @@ void bootrom_main(void) {
     dbgprint("gbboot Server\n");
 
     chip_wait_for_link_up();
+
+    chip_unipro_attr_write(ARA_BOOT_CONTROL,
+                           FORCE_UNIPRO_BOOT,
+                           0,
+                           ATTR_PEER);
+
     while(1) {
         server_loop();
     }
