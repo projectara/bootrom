@@ -40,8 +40,6 @@
 extern uint32_t ara_vid;
 extern uint32_t ara_pid;
 
-extern bool boot_status_offline;
-
 int locate_ffff_element_on_storage(data_load_ops *ops,
                                    uint32_t type,
                                    uint32_t *length);

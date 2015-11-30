@@ -35,7 +35,7 @@
 #include "error.h"
 #include "bootrom.h"
 
-bool boot_status_offline = false;
+static bool boot_status_offline = false;
 
 /**
  * @brief advertise the boot status
@@ -47,8 +47,13 @@ bool boot_status_offline = false;
 void chip_advertise_boot_status(uint32_t boot_status) {
     int status = 0;
 
+    if (boot_status_offline) {
+        return;
+    }
+
     status = chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
                                     ATTR_LOCAL);
+
     /*
      * Being unable to write the DME value is regarded as a catastrophic failure.
      */
