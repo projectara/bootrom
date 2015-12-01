@@ -185,8 +185,8 @@ void tsb_set_pinshare(uint32_t bits);
 void tsb_clr_pinshare(uint32_t bits);
 uint32_t tsb_get_bootselector(void);
 uint32_t tsb_get_eccerror(void);
-uint32_t tsb_get_vid(void);
-uint32_t tsb_get_pid(void);
+uint32_t tsb_get_ara_vid(void);
+uint32_t tsb_get_ara_pid(void);
 
 uint32_t tsb_get_debug_reg(uint32_t offset);
 

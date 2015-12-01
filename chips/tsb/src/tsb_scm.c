@@ -101,10 +101,10 @@ uint32_t tsb_get_eccerror(void) {
     return scm_read(TSB_SCM_ECCERROR);
 }
 
-uint32_t tsb_get_vid(void) {
+uint32_t tsb_get_ara_vid(void) {
     return scm_read(TSB_SCM_VID);
 }
 
-uint32_t tsb_get_pid(void) {
+uint32_t tsb_get_ara_pid(void) {
     return scm_read(TSB_SCM_PID);
 }

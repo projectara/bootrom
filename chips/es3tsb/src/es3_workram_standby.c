@@ -129,8 +129,7 @@ int chip_exit_hibern8_client(void) {
     return 0;
 }
 
-
-int chip_enter_hibern8_server(void) {
+static int enter_hibern8(void) {
     uint32_t tx_reset_offset, rx_reset_offset;
     uint32_t cportid;
     int rc;
@@ -164,6 +163,13 @@ int chip_enter_hibern8_server(void) {
     }
 
     dbgprint("hibernate entered\n");
+    return 0;
+}
+
+int chip_enter_hibern8_server(void) {
+    int rc;
+    uint32_t tempval;
+    enter_hibern8();
 
     dbgprint("wait for hibernate exit\n");
     do {
@@ -185,9 +191,11 @@ int standby_sequence(void) {
 
     putreg32(TEST_WAKEUPSRC, WAKEUPSRC);
 #if _SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY
-
     chip_enter_hibern8_client();
+#else
+    enter_hibern8();
 #endif
+
     while (0 != getreg32((volatile unsigned int*)UNIPRO_CLK_EN));
     tsb_clk_disable(TSB_CLK_UNIPROSYS);
 
@@ -232,9 +240,8 @@ void resume_sequence_in_workram(void) {
 
     dbginit();
 
-#if _SPECIAL_TEST == SPECIAL_GBBOOT_SERVER_STANDBY
     chip_exit_hibern8_client();
-#endif
+
     putreg32(0, ISO_FOR_IO_EN);
 
     /* write 1 to clear BOOTRET_o */

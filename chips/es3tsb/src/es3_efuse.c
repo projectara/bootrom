@@ -122,14 +122,14 @@ int efuse_init(void) {
      * TA-13 Write/Read  DME attribute (New area of 16 words)
      * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
-    ara_vid = tsb_get_vid();
+    ara_vid = tsb_get_ara_vid();
     if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
         dbgprintx32("Bad Ara VID: ", ara_vid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
     }
 
-    ara_pid = tsb_get_pid();
+    ara_pid = tsb_get_ara_pid();
     if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
         dbgprintx32("Bad Ara PID: ", ara_pid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_PID);

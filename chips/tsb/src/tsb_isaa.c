@@ -260,19 +260,19 @@ uint32_t tsb_get_scr(void) {
 }
 
 
-/* TODO: Remove after bootloader completion if not used */
 uint32_t tsb_get_retest(void) {
     return isaa_read(TSB_ISAA_RETEST);
 }
 
 
-/* TODO: Remove after bootloader completion if not used */
 uint32_t tsb_get_jtag_enable(void) {
     return isaa_read(TSB_ISAA_JTAG_ENABLE);
 }
 
+uint32_t tsb_get_jtag_disable(void) {
+    return isaa_read(TSB_ISAA_JTAG_DISABLE);
+}
 
-/* TODO: Remove after bootloader completion if not used */
 uint32_t tsb_get_software_jtag_control(void) {
     return isaa_read(TSB_ISAA_SOFTWARE_JTAG_CONTROL);
 }
