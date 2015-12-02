@@ -107,7 +107,7 @@ $(MANIFEST_OUTDIR)/public_keys.c: $(PUBLIC_KEYS_FILE)
 
 $(MANIFEST_OUTDIR)/manifest.c: $(MANIFEST_OUTDIR)/manifest.mnfb
 	@echo "Generating manifest data..."
-	$(Q) xxd -i $< >$@
+	$(Q) cd $(MANIFEST_OUTDIR) && xxd -i $(notdir $<) > $(notdir $@)
 
 $(MANIFEST_OUTDIR)/manifest.mnfb: $(MANIFEST_OUTDIR)/manifest
 	$(Q) manifesto $<
@@ -134,12 +134,12 @@ $(HEXAP): $(BIN)
 
 -include $(COBJS:.o=.d) $(AOBJS:.o=.d)
 
-build/%.o: %.c
+$(OUTROOT)/%.o: %.c
 	@ echo Compiling $<
 	$(Q) $(CC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) -c $<
 	$(Q) $(CC) $(CFLAGS) -o $@ -c $<
 
-build/%.o: %.S
+$(OUTROOT)/%.o: %.S
 	@ echo Assembling $<
 	$(Q) $(CC) $(AFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) -c $<
 	$(Q) $(CC) $(AFLAGS) -o $@ -c $<
