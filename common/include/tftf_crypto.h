@@ -26,37 +26,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMON_INCLUDE_2NDSTAGE_CFGDATA_H
-#define __COMMON_INCLUDE_2NDSTAGE_CFGDATA_H
+#ifndef __COMMON_INCLUDE_TFTF_CRYPTO_H
+#define __COMMON_INCLUDE_TFTF_CRYPTO_H
 
 #include <stdint.h>
+#include <tftf.h>
+
 #include <crypto.h>
-
-#define SECONDSTAGE_CFG_SENTINEL_SIZE 16
 /**
- * config data sentinel value. It is a 16bytes char array. The trailing '\0'
- * in the string is not used.
- */
-static const char secondstage_cfg_sentinel[] = "2ndStageFWConfig";
-/* Compile-time test to verify consistency of size and value */
-typedef char ___secondcfg_sentinel_test[(SECONDSTAGE_CFG_SENTINEL_SIZE ==
-                                      sizeof(secondstage_cfg_sentinel) - 1) ?
-                                     1 : 0];
+ * Compile-time test hack to verify the key_name in two different struct
+ * have the same size
+ **/
+static tftf_signature ___test_signature;
+static crypto_public_key  ___test_key;
+typedef char ___key_name_test[(sizeof (___test_signature.key_name) ==
+                               sizeof (___test_key.key_name)) ?
+                              1 : -1];
 
-typedef struct {
-    char sentinel[SECONDSTAGE_CFG_SENTINEL_SIZE];
-    uint32_t disable_jtag;
-    uint32_t number_of_public_keys;
-    crypto_public_key public_keys[0];
-} __attribute__ ((packed)) secondstage_cfgdata;
-
-/**
- * @brief get pointer for second stage config data
- * @param cfgdata pointer to the config data
- * @return 0 valid config data found
- *         <0 no valid config data
- */
-int get_2ndstage_cfgdata(secondstage_cfgdata **cfgdata);
-
-#endif /* __COMMON_INCLUDE_2NDSTAGE_CFGDATA_H */
-
+int verify_signature(unsigned char *digest, tftf_signature *signature);
+#endif /* __COMMON_INCLUDE_TFTF_CRYPTO_H */

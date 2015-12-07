@@ -32,6 +32,7 @@
 #include "tftf.h"
 #include "debug.h"
 #include "crypto.h"
+#include "2ndstage_cfgdata.h"
 
 #include "../vendors/MIRACL/bootrom.c"
 
@@ -89,6 +90,7 @@ void hash_final(unsigned char *digest) {
 #endif
 }
 
+#if BOOT_STAGE == 1
 static int find_public_key(tftf_signature *signature, const unsigned char **key) {
     uint32_t k;
 
@@ -114,6 +116,31 @@ static int find_public_key(tftf_signature *signature, const unsigned char **key)
     dbgprint("Failed to find pub. key\n");
     return -1;
 }
+#else
+static int find_public_key(tftf_signature *signature, const unsigned char **key) {
+    secondstage_cfgdata *cfgdata;
+    uint32_t k;
+
+    if (!get_2ndstage_cfgdata(&cfgdata)) {
+        for (k = 0; k < cfgdata->number_of_public_keys; k++) {
+            if (cfgdata->public_keys[k].type != signature->type) {
+                continue;
+            }
+
+            if (!strncmp(cfgdata->public_keys[k].key_name,
+                        signature->key_name,
+                        sizeof(cfgdata->public_keys[k].key_name))) {
+                dbgprint("Found pub. key\n");
+                *key = cfgdata->public_keys[k].key;
+                return 0;
+            }
+        }
+    }
+
+    dbgprint("Failed to find pub. key\n");
+    return -1;
+}
+#endif
 
 /**
  * @brief Verify a SHA digest against a signature

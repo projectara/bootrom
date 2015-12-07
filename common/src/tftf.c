@@ -33,7 +33,7 @@
 #include "debug.h"
 #include "data_loading.h"
 #include "chipapi.h"
-#include "crypto.h"
+#include "tftf_crypto.h"
 #include "unipro.h"
 #include "utils.h"
 #include "error.h"
