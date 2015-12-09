@@ -127,6 +127,17 @@ void bootrom_main(void) {
 
     if (!get_2ndstage_cfgdata(&cfgdata)) {
         dbgprint("found valid config data\n");
+        if (cfgdata->use_fake_ims) {
+            /**
+             * We don't really need to handle all the efuses as boot ROM
+             * does. But we do want to update the EPUID according to the
+             * fake IMS. And the rest of the efuse handling do no harm
+             * anyway.
+             */
+            if (efuse_init() != 0) {
+                halt_and_catch_fire(boot_status);
+            }
+        }
     }
 
     chip_unipro_init();
@@ -138,14 +149,6 @@ void bootrom_main(void) {
     /* Advertise our initialization type */
     rc = chip_advertise_boot_type();
     if (rc) {
-        halt_and_catch_fire(boot_status);
-    }
-
-    /*
-     * Validate and make available e-fuse information (it handles error
-     * reporting). Note that an error here is unrecoverable.
-     */
-    if (efuse_init() != 0) {
         halt_and_catch_fire(boot_status);
     }
 

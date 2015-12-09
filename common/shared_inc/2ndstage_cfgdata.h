@@ -43,12 +43,22 @@ typedef char ___secondcfg_sentinel_test[(SECONDSTAGE_CFG_SENTINEL_SIZE ==
                                       sizeof(secondstage_cfg_sentinel) - 1) ?
                                      1 : 0];
 
+/**
+ * There are 35 bytes of IMS in TSB chip.
+ * Fake ims is for developer debugging only.
+ */
+#define FAKE_IMS_SIZE 35
+
 typedef struct {
     char sentinel[SECONDSTAGE_CFG_SENTINEL_SIZE];
     uint32_t disable_jtag;
     uint32_t use_fake_ara_vidpid;
     uint32_t fake_ara_vid;
     uint32_t fake_ara_pid;
+
+    uint8_t  use_fake_ims;
+    uint8_t  fake_ims[FAKE_IMS_SIZE];
+
     uint32_t number_of_public_keys;
     crypto_public_key public_keys[0];
 } __attribute__ ((packed)) secondstage_cfgdata;

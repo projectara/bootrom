@@ -38,8 +38,13 @@
  * Author: Morgan Girling <morgang@bsquare.com>
  */
 
+#include <stddef.h>
+#include <string.h>
 #include <stdbool.h>
 #include "tsb_isaa.h"
+#if BOOT_STAGE == 2
+#include "2ndstage_cfgdata.h"
+#endif
 
 
 /* ISAA register offsets (relative to ISAA_BASE) */
@@ -178,6 +183,23 @@ uint64_t tsb_get_serial_no(void) {
 
 
 void tsb_get_ims(uint8_t * buf, uint32_t size) {
+#if BOOT_STAGE == 2
+    /**
+     * For S2FL, if the config data instructs to use
+     * fake IMS, use the data in the config data
+     * instead of reading from the registers
+     */
+    secondstage_cfgdata *cfgdata;
+    if (!get_2ndstage_cfgdata(&cfgdata)) {
+        if (size > sizeof(cfgdata->fake_ims)) {
+            size = sizeof(cfgdata->fake_ims);
+        }
+        if (cfgdata->use_fake_ims) {
+            memcpy(buf, cfgdata->fake_ims, size);
+        }
+        return;
+    }
+#endif
     if (size > TSB_ISAA_NUM_IMS_BYTES) {
         size = TSB_ISAA_NUM_IMS_BYTES;
     }
