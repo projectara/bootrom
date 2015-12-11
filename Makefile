@@ -61,6 +61,17 @@ else
 include $(TOPDIR)/testing.mk
 endif
 
+# no need to include a .config for these rules
+no-dot-config-targets := clean distclean
+dot-config :=1
+ifneq ($(filter $(no-dot-config-targets), $(MAKECMDGOALS)),)
+	ifeq ($(filter-out $(no-dot-config-targets), $(MAKECMDGOALS)),)
+		dot-config := 0
+	endif
+endif
+
+ifeq ($(dot-config),1)
+
 include $(TOPDIR)/.config
 
 CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
@@ -80,6 +91,8 @@ _dummy := $(shell [ -d $(OUTROOT) ] || mkdir -p $(OUTROOT))
 include $(TOPDIR)/Sources.mk
 _dummy := $(foreach d,$(SRCDIRS), \
 		  $(shell [ -d $(OUTROOT)/$(d) ] || mkdir -p $(OUTROOT)/$(d)))
+
+endif
 
 ELF = $(OUTROOT)/bootrom
 BIN = $(ELF).bin
