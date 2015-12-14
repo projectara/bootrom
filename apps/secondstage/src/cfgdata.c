@@ -47,7 +47,7 @@ int get_2ndstage_cfgdata(secondstage_cfgdata **cfgdata) {
 
     if (!memcmp((*cfgdata)->sentinel,
                 secondstage_cfg_sentinel,
-                sizeof(secondstage_cfg_sentinel))) {
+                SECONDSTAGE_CFG_SENTINEL_SIZE)) {
         valid = 0;
     }
 
