@@ -49,7 +49,7 @@ ifeq ($(PUBLIC_KEYS_FILE), )
 endif
 
 CMN_SRCDIR := common/src
-CMN_INCFLAGS := -I$(TOPDIR)/common/include
+CMN_INCFLAGS := -I$(TOPDIR)/common/include -I$(TOPDIR)/common/shared_inc
 
 ifneq ($(BOOT_STAGE), 3)
 # the error reporting over DME is for boot ROM and second stage only
