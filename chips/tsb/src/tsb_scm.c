@@ -35,7 +35,10 @@
  * This file is dereived from nuttx code
  */
 #include "tsb_scm.h"
-
+#include "debug.h"
+#if BOOT_STAGE == 2
+#include "2ndstage_cfgdata.h"
+#endif
 
 #define TSB_SCM_SOFTRESET0              0x00000000
 #define TSB_SCM_SOFTRESETRELEASE0       0x00000100
@@ -102,9 +105,23 @@ uint32_t tsb_get_eccerror(void) {
 }
 
 uint32_t tsb_get_ara_vid(void) {
+#if BOOT_STAGE == 2
+    secondstage_cfgdata *cfg;
+    if (!get_2ndstage_cfgdata(&cfg) ) {
+        dbgprintx32("use fake ARA VID: ", cfg->fake_ara_vid, "\n");
+        return cfg->fake_ara_vid;
+    }
+#endif
     return scm_read(TSB_SCM_VID);
 }
 
 uint32_t tsb_get_ara_pid(void) {
+#if BOOT_STAGE == 2
+    secondstage_cfgdata *cfg;
+    if (!get_2ndstage_cfgdata(&cfg) && cfg->use_fake_ara_vidpid) {
+        dbgprintx32("use fake ARA PID: ", cfg->fake_ara_pid, "\n");
+        return cfg->fake_ara_pid;
+    }
+#endif
     return scm_read(TSB_SCM_PID);
 }

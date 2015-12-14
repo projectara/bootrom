@@ -46,6 +46,9 @@ typedef char ___secondcfg_sentinel_test[(SECONDSTAGE_CFG_SENTINEL_SIZE ==
 typedef struct {
     char sentinel[SECONDSTAGE_CFG_SENTINEL_SIZE];
     uint32_t disable_jtag;
+    uint32_t use_fake_ara_vidpid;
+    uint32_t fake_ara_vid;
+    uint32_t fake_ara_pid;
     uint32_t number_of_public_keys;
     crypto_public_key public_keys[0];
 } __attribute__ ((packed)) secondstage_cfgdata;

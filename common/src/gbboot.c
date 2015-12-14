@@ -64,7 +64,7 @@ static int gbboot_get_version(uint32_t cportid, gb_operation_header *header) {
 }
 
 static int gbboot_get_vid_pid(uint32_t cportid, gb_operation_header *header) {
-    struct gbboot_firmware_get_vid_pid response = {BOOTROM_MODULE_VID, BOOTROM_MODULE_PID};
+    struct gbboot_firmware_get_vid_pid response = {ara_vid, ara_pid};
     return greybus_op_response(cportid, header, GB_OP_SUCCESS, (uint8_t*)&response,
                                sizeof(response));
 }
