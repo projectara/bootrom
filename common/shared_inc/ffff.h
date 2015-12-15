@@ -93,6 +93,24 @@ typedef union {
     unsigned char buffer[MAX_FFFF_HEADER_SIZE_SUPPORTED];
 } ffff_header;
 
+/**
+ * @brief Macro to calculate the last address in an element.
+ */
+#define ELEMENT_END_ADDRESS(element_ptr) \
+    ((element_ptr)->element_load_address + \
+     (element_ptr)->element_expanded_length - 1)
+
+
+/**
+ * @brief Macro to calculate the number of elements in an FFFF header
+ */
+#define CALC_MAX_FFFF_ELEMENTS(header_size) \
+		(((header_size) - \
+		 (offsetof(ffff_header, elements) + FFFF_SENTINEL_SIZE)) / \
+		 sizeof(ffff_element_descriptor))
+
+#define FFFF_HEADER_SIZE_DEFAULT    FFFF_HEADER_SIZE_MAX
+
 static inline char *get_trailing_sentinel_addr(ffff_header *header) {
     return (char *)header->buffer + header->header_size - FFFF_SENTINEL_SIZE;
 }

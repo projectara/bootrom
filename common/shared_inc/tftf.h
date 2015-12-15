@@ -102,6 +102,30 @@ typedef union {
     unsigned char buffer[MAX_TFTF_HEADER_SIZE_SUPPORTED];
 } tftf_header;
 
+/**
+ * @brief Macro to calculate the address of the start of the TFTF payload.
+ */
+#define SECTION_PAYLOAD_START(tftf_hdr) \
+    (((uint8_t *)(tftf_hdr)) + tftf_hdr->header_size)
+
+
+/**
+ * @brief Macro to calculate the last address in a section.
+ */
+#define SECTION_END_ADDRESS(section_ptr) \
+    ((section_ptr)->section_load_address + \
+     (section_ptr)->section_expanded_length - 1)
+
+
+/**
+ * @brief Macro to calculate the number of sections in a TFTF header
+ */
+#define CALC_MAX_TFTF_SECTIONS(header_size) \
+		(((header_size) - offsetof(tftf_header, sections)) / \
+		 sizeof(tftf_section_descriptor))
+
+#define TFTF_HEADER_SIZE_DEFAULT    TFTF_HEADER_SIZE_MIN
+
 static inline bool is_section_out_of_range(tftf_header *header,
                                            tftf_section_descriptor *section) {
     return ((unsigned char *)section >= header->buffer +
