@@ -45,6 +45,10 @@
 #include "utils.h"
 #include "string.h"
 #include "unipro.h"
+#include "communication_area.h"
+
+#define BOOTROM_SIZE  (16 * 1024) -1
+
 
 union large_uint {
   struct {
@@ -65,6 +69,69 @@ uint32_t tsb_get_jtag_enable(void);
 uint32_t tsb_get_jtag_disable(void);
 
 void check_ims_cms_access(void);
+void report_bootrom_hash(void);
+void report_communication_area(void);
+
+char * shared_function_names [NUMBER_OF_SHARED_FUNCTIONS] = {
+    "SHA256_INIT",
+    "SHA256_PROCESS",
+    "SHA256_HASH",
+    "RSA2048_VERIFY",
+    "ENTER_STANDBY",
+};
+
+
+
+/**
+ * @brief Print a buffer in hex.
+ *
+ * @param s1 (optional) prefix string
+ * @param buf The buffer to print
+ * @param len The length in bytes of the buffer
+ * @param s2 (optional) suffix string
+ *
+ * @returns Nothing.
+ */
+void dbgprintxbuf(char * s1, uint8_t * buf, size_t len, char * s2) {
+    size_t i;
+
+    dbgprint(s1);
+    for (i = 0; i < len; i++) {
+        dbgprinthex8(buf[i]);
+        dbgprint(" ");
+    }
+    dbgprint(s2);
+}
+
+
+/**
+ * @brief Print a pointer
+ *
+ * @param s1 (optional) prefix string
+ * @param ptr The pointer to print
+ * @param s2 (optional) suffix string
+ *
+ * @returns Nothing.
+ */
+void dbgprintxptr(char * s1, void *ptr, char * s2) {
+    dbgprintx32(s1, (uint32_t)ptr, s2);
+}
+
+
+/**
+ * @brief Print a string with optional prefix and suffix parts.
+ *
+ * @param s1 (optional) prefix string
+ * @param str The string to print
+ * @param s2 (optional) suffix string
+ *
+ * @returns Nothing.
+ */
+void dbgprintx(char * s1, char *str, char * s2) {
+    dbgprint(s1);
+    dbgprint(str);
+    dbgprint(s2);
+}
 
 #ifdef _STANDBY_TEST
 int chip_enter_hibern8_client(void);
@@ -119,6 +186,8 @@ void bootrom_main(void) {
     dbgprintx32("CMS DISABLE:   0x", tsb_get_disable_cms_access(), "\n");
 
     check_ims_cms_access();
+    report_bootrom_hash();
+    report_communication_area();
 
 #ifdef _STANDBY_TEST
     enter_standby();
@@ -220,8 +289,9 @@ void display_epuid(bool calculate, unsigned char *ims) {
     }
 }
 
+
 /**
- * @brief Verify that
+ * @brief Report on IMS and CMS value accessibility.
  *
  * @param none
  *
@@ -232,31 +302,32 @@ void check_ims_cms_access(void) {
     unsigned char cms[TSB_ISAA_NUM_CMS_BYTES];
     bool zero_ims;
     bool zero_cms;
+    int i;
+#ifdef IMS_CMS_HASH
     unsigned char ims_hash[SHA256_HASH_DIGEST_SIZE];
     unsigned char cms_hash[SHA256_HASH_DIGEST_SIZE];
-    int i;
-    /* Only show the hash when VID/PID are zero */
-    bool show_hash = (tsb_get_ara_vid() == 0) && (tsb_get_ara_pid() == 0);
+#endif
 
     /* Get, verify and clear the IMS and CMS values quickly */
     tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
     zero_ims = is_constant_fill(ims, TSB_ISAA_NUM_IMS_BYTES, 0);
-    display_epuid(!zero_ims, ims);
-    if (!zero_ims) {
-        hash_start();
-        hash_update(ims, sizeof(ims));
-        hash_final(ims_hash);
-    }
+    display_epuid(true, ims);
+#ifdef IMS_CMS_HASH
+    hash_start();
+    hash_update(ims, sizeof(ims));
+    hash_final(ims_hash);
+#endif
     /* Clear the buffer for security */
     memset(ims, 0, sizeof(ims));
 
+
     tsb_get_cms(cms, TSB_ISAA_NUM_CMS_BYTES);
     zero_cms = is_constant_fill(cms, TSB_ISAA_NUM_CMS_BYTES, 0);
-    if (!zero_cms) {
-        hash_start();
-        hash_update(cms, sizeof(cms));
-        hash_final(cms_hash);
-    }
+#ifdef IMS_CMS_HASH
+    hash_start();
+    hash_update(cms, sizeof(cms));
+    hash_final(cms_hash);
+#endif
     /* Clear the buffer for security */
     memset(cms, 0, sizeof(cms));
 
@@ -267,17 +338,9 @@ void check_ims_cms_access(void) {
     dbgprint("IMS reads ");
     dbgprint(zero_ims? "" : "non-");
     dbgprint("zero\n");
-    if (!zero_ims && show_hash) {
-        dbgprint("IMS hash:");
-        for (i = 0; i < SHA256_HASH_DIGEST_SIZE; i++) {
-            if ((i & 0x0F) == 0) {
-                dbgprint("\n    ");
-            }
-            dbgprinthex8(ims_hash[i]);
-            dbgprint(" ");
-        }
-        dbgprint("\n");
-    }
+#ifdef IMS_CMS_HASH
+    dbgprintxbuf("IMS hash: ", ims_hash, sizeof(ims_hash), "\n");
+#endif /* IMS_CMS_HASH */
 
     dbgprint("CMS access ");
     dbgprint((tsb_get_disable_cms_access() == 0)? "en" : "dis");
@@ -285,15 +348,99 @@ void check_ims_cms_access(void) {
     dbgprint("CMS reads ");
     dbgprint(zero_cms? "" : "non-");
     dbgprint("zero\n");
-    if (!zero_cms && show_hash) {
-        dbgprint("CMS hash:");
-        for (i = 0; i < SHA256_HASH_DIGEST_SIZE; i++) {
-            if ((i & 0x0F) == 0) {
-                dbgprint("\n    ");
-            }
-            dbgprinthex8(cms_hash[i]);
-            dbgprint(" ");
-        }
-        dbgprint("\n");
-    }
+#ifdef IMS_CMS_HASH
+    dbgprintxbuf("CMS hash: ", cms_hash, sizeof(cms_hash), "\n");
+#endif /* IMS_CMS_HASH */
 }
+
+/**
+ * @brief Report the BootRom SHA.
+ *
+ * @param none
+ *
+ * @returns Nothing.
+ */
+void report_bootrom_hash(void) {
+    uint8_t bootrom_hash[SHA256_HASH_DIGEST_SIZE];
+
+    /* Calculate the SHA256 for the bootrom... */
+    hash_start();
+    hash_update(0, BOOTROM_SIZE);
+    hash_final(bootrom_hash);
+
+    /* ...and display it */
+    dbgprintxbuf("bootrom hash: ", bootrom_hash, sizeof(bootrom_hash), "\n");
+}
+
+
+
+/**
+ * @brief Report all relevant data from Communication Area
+ *
+ * Report all relevant data from Communication Area, including:
+ *   - File version (name)
+ *   - Build time
+ *   - Validation key name
+ *   - Firmware Identifier
+ *   - Function pointers
+ *
+ * @param none
+ *
+ * @returns Nothing.
+ */
+void report_communication_area(void) {
+    communication_area *comm_area = (communication_area *)&_communication_area;
+    char text_buf[512];
+    int i;
+
+    dbgprint("Communication Area:\n");
+
+    /* shared_functions */
+    dbgprint("shared_functions:\n");
+    for (i = 0; i < NUMBER_OF_SHARED_FUNCTIONS; i++) {
+        dbgprintx("  ", shared_function_names[i], NULL);
+        dbgprintxptr("  0x", comm_area->shared_functions[i], "\n");
+    }
+    dbgprint("\n");
+
+    /* endpoint_unique_id */
+    dbgprintxbuf("endpoint_unique_id: ",
+            comm_area->endpoint_unique_id,
+            sizeof(comm_area->endpoint_unique_id),
+            "\n");
+
+    /* stage_2_firmware_identity */
+    dbgprintxbuf("stage_2_firmware_identity: ",
+                 comm_area->stage_2_firmware_identity,
+                 sizeof(comm_area->stage_2_firmware_identity),
+                 "\n");
+
+    /* stage_2_validation_key_name */
+    memcpy(text_buf, comm_area->stage_2_validation_key_name,
+           sizeof(comm_area->stage_2_validation_key_name));
+    text_buf[sizeof(comm_area->stage_2_validation_key_name)] = '\0';
+    dbgprintx("stage_2_validation_key_name: '", text_buf, "'\n");
+
+    /* build_timestamp */
+    memcpy(text_buf, comm_area->build_timestamp,
+           sizeof(comm_area->build_timestamp));
+    text_buf[sizeof(comm_area->build_timestamp)] = '\0';
+    dbgprintx("build_timestamp: '", text_buf, "'\n");
+
+    /* firmware_package_name */
+    memcpy(text_buf, comm_area->firmware_package_name,
+           sizeof(comm_area->firmware_package_name));
+    text_buf[sizeof(comm_area->firmware_package_name)] = '\0';
+    dbgprintx("firmware_package_name: '", text_buf, "'\n");
+
+    /* resume_data */
+    dbgprint("resume_data:\n");
+    dbgprintx32("  jtag_disabled             0x",
+                comm_area->resume_data.jtag_disabled, "\n");
+    dbgprintx32("  resume_address            0x",
+                comm_area->resume_data.resume_address, "\n");
+    dbgprintx32("  resume_address_complement 0x",
+                comm_area->resume_data.resume_address_complement, "\n");
+
+}
+

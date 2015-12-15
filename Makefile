@@ -173,9 +173,13 @@ third_stage:
 	@ echo "Building for third stage boot firmware"
 	$(Q) VERBOSE=$(VERBOSE) APPLICATION=test3rdstage make --no-print-directory
 
-sign_verify:
+es3_boot_verify:
 	@ echo "Building special sign-verify image"
-	$(Q) VERBOSE=$(VERBOSE) APPLICATION=sign_verify make --no-print-directory
+	$(Q) VERBOSE=$(VERBOSE) APPLICATION=es3_boot_verify make --no-print-directory
+
+es3_boot_verify_restricted:
+	@ echo "Building special sign-verify image c/w IMS/CMS hash calculation"
+	$(Q) VERBOSE=$(VERBOSE) APPLICATION=es3_boot_verify_restricted make --no-print-directory
 
 gbboot_server:
 	@ echo "Building server for downloading FW over UniPro"
