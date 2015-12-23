@@ -1,0 +1,129 @@
+TOPDIR := ${shell pwd}
+
+# Assign decorator
+DREC1 := EC1
+DREC2 := EC2
+DREC3 := EC3
+DRRSA1 := RSA1
+DRRSA2 := RSA2
+DRRSA3 := RSA3
+
+#  V==1: Echo commands
+#  V!=1: Do not echo commands
+ifeq ($(V),1)
+export Q :=
+else
+export Q := @
+endif
+
+# Include build configuration
+include $(TOPDIR)/defconfig
+
+_dummy := $(shell [ -d $(OUTBUILD) ] || mkdir -p $(OUTBUILD))
+_dummy := $(shell [ -d $(OUTBIN) ] || mkdir -p $(OUTBIN))
+
+# include files directory
+INCLUDEDIR=-I ./include
+
+# Crypto libs
+LIBMCL= $(OUTBIN)/libmclcurve$(DREC1).a $(OUTBIN)/libmclcurve$(DREC2).a \
+        $(OUTBIN)/libmclcurve$(DREC3).a $(OUTBIN)/libmclcore.a
+
+ifeq ($(CONFIG_ARM),y)
+  CC := $(CROSS_COMPILE)gcc
+  LD = $(CROSS_COMPILE)ld
+  AR = $(CROSS_COMPILE)ar
+  AS = $(CROSS_COMPILE)as
+  NM = $(CROSS_COMPILE)nm
+  STRIP = $(CROSS_COMPILE)strip --strip-all
+  SIZE = $(CROSS_COMPILE)size
+  OBJCOPY = $(CROSS_COMPILE)objcopy
+  OBJDUMP = $(CROSS_COMPILE)objdump
+
+  LD=$(CC)
+
+  CFLAGS=-Wno-address -g -fdata-sections -ffunction-sections \
+         -ffreestanding -MMD -Wall -fno-strict-aliasing -fno-common $(ARCH_FLAGS)
+
+  LDFLAGS=-Wl,--start-group   $(AWS_SDK)bin/libs/libfreertos.a \
+          $(AWS_SDK)wmsdk/libs/libwmsdk.a  $(LIBMCL)  -Wl,--end-group \
+          -T $(AWS_SDK)build/toolchains/GNU/mw300.ld -nostartfiles -Xlinker \
+          -M -Xlinker --cref -Xlinker --gc-sections -Xlinker --defsym=_rom_data=64 $(ARCH_FLAGS) 
+
+  INCLUDEDIR +=  -I$(AWS_SDK)wmsdk/src/incl/libc \
+                 -I$(AWS_SDK)wmsdk/src/incl/sdk \
+                 -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers \
+                 -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers/mw300 \
+                 -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers/mw300/regs \
+                 -include $(AWS_SDK)wmsdk/src/incl/autoconf.h \
+                 -I$(AWS_SDK)wmsdk/src/incl/platform/os/freertos \
+                 -I$(AWS_SDK)wmsdk/external/freertos/Source/include \
+                 -I$(AWS_SDK)wmsdk/external/freertos/Source/portable/GCC/ARM_CM3 \
+                 -I$(AWS_SDK)wmsdk/external/freertos 
+
+else
+  CC=gcc
+  LD=$(CC)
+  CFLAGS=-std=c99 -g -Wall
+  # CFLAGS=-std=c99 -g -Wall -D BUILD_OPTION=$(BUILD_OPTION) 
+  LDFLAGS = -Wl,--start-group $(LIBMCL)  -Wl,--end-group 
+  STRIP = strip --strip-all
+  SIZE = size
+endif
+
+ifeq ($(CONFIG_ARM),y)
+  CFLAGS+= -D MCL_BUILD_ARM
+endif 
+
+ifeq ($(CONFIG_TEST),y)
+  CFLAGS+=-D MCL_BUILD_TEST
+endif 
+
+# Choice architecture and three curves.
+CFLAGS+=-D MCL_CHUNK=$(MCL_CHUNK) -D MCL_CHOICE1=$(MCL_CHOICE1) -D MCL_CHOICE2=$(MCL_CHOICE2) -D MCL_CHOICE3=$(MCL_CHOICE3) -D MCL_FFLEN1=$(MCL_FFLEN1) -D MCL_FFLEN2=$(MCL_FFLEN2) -D MCL_FFLEN3=$(MCL_FFLEN3)
+
+include $(TOPDIR)/DecoratorRuntime.mk
+CFLAGS+= $(DRFLAGS)
+
+# test src files directory
+TEST_DIR=$(TOPDIR)/src/tests
+
+# Tests
+include $(TOPDIR)/Sources.mk
+TEST_OBJS  := $(RTEST_SRC:$(TEST_DIR)/%.c=$(OUTBUILD)/%.o)
+TEST_EXE  := $(RTEST_SRC:$(TEST_DIR)/%.c=$(OUTBUILD)/%)
+
+MCL_UTILS_OBJS := $(OUTBUILD)/mcl_utils.o
+# API 
+LINK_OBJS := $(OUTBIN)/mcl_ecdh$(DREC1).o $(OUTBIN)/mcl_ecdh$(DREC2).o  $(OUTBIN)/mcl_ecdh$(DREC3).o \
+             $(OUTBIN)/mcl_rsa$(DRRSA1).o $(OUTBIN)/mcl_rsa$(DRRSA2).o  $(OUTBIN)/mcl_rsa$(DRRSA3).o \
+             $(MCL_UTILS_OBJS)
+
+ifeq ($(CONFIG_ARM),y)
+MW302_OBJS := $(OUTBUILD)/mw302_rd.o
+LINK_OBJS += $(MW302_OBJS)
+endif
+
+all: $(TEST_EXE)
+
+$(TEST_EXE): $(TEST_OBJS)  $(LINK_OBJS) $(LIBMCL)
+	@echo $(TEST_EXE)
+ifeq ($(CONFIG_ARM),y)
+	$(Q)$(LD)  -o $@ $@.o $(LINK_OBJS) $(LDFLAGS) -Xlinker -Map=$@.map
+else
+	$(Q)$(LD)  -o $@ $@.o $(LINK_OBJS) $(LDFLAGS) 
+endif
+	$(Q)$(SIZE) $@
+
+$(TEST_OBJS):  $(OUTBUILD)/%.o : $(TEST_DIR)/%.c
+	$(Q)$(CC) $(CFLAGS) $(INCLUDEDIR)  -c $< -o $@
+
+$(MCL_UTILS_OBJS): $(TEST_DIR)/mcl_utils.c
+	$(Q)$(CC) $(CFLAGS) $(INCLUDEDIR)  -c $^ -o $@
+
+$(MW302_OBJS): $(AWS_SDK)wmsdk/src/boards/mw302_rd.c
+	$(Q)$(CC)  $(CFLAGS) $(INCLUDEDIR)  -c $^ -o $@
+
+clean:
+	$(Q)-rm -rf $(OUTBUILD)
+

@@ -1,0 +1,32 @@
+# libmcl build configuration
+
+# Output build directory
+OUTBUILD := build
+
+# Output directory
+OUTBIN := bin
+
+# Tool chain
+CROSS_COMPILE = arm-none-eabi-
+
+# Specific architecture
+ARCH_FLAGS=-mthumb -mcpu=cortex-m4
+
+# Turn on/off ARM cross compile
+CONFIG_ARM=n
+#CONFIG_ARM=y
+
+# Turn on/off Testing
+CONFIG_TEST=y
+#CONFIG_TEST=n
+
+# Turn on/off function decoration
+#CONFIG_DECORATOR=y
+CONFIG_DECORATOR=n
+
+# Marvell board SDK
+AWS_SDK=/home/kealan/cert_proj/ara/board/aws_starter_sdk/
+
+# Number of iterations to run benchmark tests
+ITERATIONS=10
+
