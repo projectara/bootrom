@@ -1,0 +1,32 @@
+# libmcl build configuration
+
+# Output build directory
+OUTBUILD := $(MIRACL_OUTROOT)
+
+# Output directory
+OUTBIN := $(MIRACL_OUTROOT)/lib
+
+# Tool chain
+CROSS_COMPILE = arm-none-eabi-
+
+# Specific architecture
+ARCH_FLAGS=-mcpu=cortex-m3 -mthumb
+
+# Turn on/off ARM cross compile
+#CONFIG_ARM=n
+CONFIG_ARM=y
+
+# Turn on/off Testing
+#CONFIG_TEST=y
+CONFIG_TEST=n
+
+# Turn on/off function decoration
+#CONFIG_DECORATOR=y
+CONFIG_DECORATOR=n
+
+# Marvell board SDK
+AWS_SDK=
+
+# Number of iterations to run benchmark tests
+ITERATIONS=10
+

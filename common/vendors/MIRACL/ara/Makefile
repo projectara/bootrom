@@ -1,8 +1,8 @@
 TOPDIR := ${shell pwd}
 
 # Include build configuration
-include $(TOPDIR)/defconfig
-include $(TOPDIR)/config.mk
+include $(MCL_CONFIG_DIR)/defconfig
+include $(MCL_CONFIG_DIR)/config.mk
 
 # Directory for .o files and final executibles
 _dummy := $(shell [ -d $(OUTBUILD) ] || mkdir -p $(OUTBUILD))
@@ -56,7 +56,6 @@ ifeq ($(CONFIG_ARM),y)
               -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers \
               -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers/mw300 \
               -I$(AWS_SDK)wmsdk/src/incl/sdk/drivers/mw300/regs \
-              -include $(AWS_SDK)wmsdk/src/incl/autoconf.h \
               -I$(AWS_SDK)wmsdk/src/incl/platform/os/freertos \
               -I$(AWS_SDK)wmsdk/external/freertos/Source/include \
               -I$(AWS_SDK)wmsdk/external/freertos/Source/portable/GCC/ARM_CM3 \

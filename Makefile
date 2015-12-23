@@ -86,7 +86,6 @@ include $(CHIP_DIR)/Make.defs
 CFLAGS += $(XCFLAGS)
 AFLAGS += $(XAFLAGS)
 
-
 _dummy := $(shell [ -d $(OUTROOT) ] || mkdir -p $(OUTROOT))
 include $(TOPDIR)/Sources.mk
 _dummy := $(foreach d,$(SRCDIRS), \
@@ -106,6 +105,9 @@ CFLAGS += -I$(MANIFEST_OUTDIR)
 
 CFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
 AFLAGS += -DBOOT_STAGE=$(BOOT_STAGE)
+
+CFLAGS += $(APP_CFLAGS)
+AFLAGS += $(APP_AFLAGS)
 
 COBJS += $(MANIFEST_OUTDIR)/manifest.o $(MANIFEST_OUTDIR)/public_keys.o
 
@@ -128,9 +130,9 @@ $(MANIFEST_OUTDIR)/manifest.mnfb: $(MANIFEST_OUTDIR)/manifest
 $(MANIFEST_OUTDIR)/manifest: $(MANIFEST_SRCDIR)/$(MANIFEST)
 	$(Q) cp $< $@
 
-$(ELF): $(AOBJS) $(COBJS)
+$(ELF): $(AOBJS) $(COBJS) $(APP_LIBS)
 	@ echo Linking $@
-	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(EXTRALIBS)
+	$(Q) $(LD) -T $(LDSCRIPT) $(LINKFLAGS) -o $@ $(AOBJS) $(COBJS) $(APP_LIBS) $(EXTRALIBS)
 
 $(BIN): $(ELF)
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $< $@

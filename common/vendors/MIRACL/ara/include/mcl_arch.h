@@ -61,7 +61,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.             *
 #endif // MCL_BUILD_ARM
 
 #else
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 #endif // MCL_BUILD_TEST
 
 #ifdef MCL_BUILD_ARM
