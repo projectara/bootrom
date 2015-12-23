@@ -111,7 +111,7 @@ typedef union {
 
 #define FFFF_HEADER_SIZE_DEFAULT    FFFF_HEADER_SIZE_MAX
 
-static inline char *get_trailing_sentinel_addr(ffff_header *header) {
+static inline char *get_trailing_sentinel_addr(const ffff_header *header) {
     return (char *)header->buffer + header->header_size - FFFF_SENTINEL_SIZE;
 }
 
