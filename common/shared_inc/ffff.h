@@ -54,6 +54,8 @@ typedef char ___ffff_sentinel_test[((sizeof(ffff_sentinel_value) -1) ==
                                     FFFF_SENTINEL_SIZE) ?
                                    1 : -1];
 
+#define FFFF_TIMESTAMP_SIZE               16
+#define FFFF_FLASH_IMAGE_NAME_SIZE        48
 #define FFFF_NUM_RESERVED                 4
 
 /* Element types */
@@ -80,8 +82,8 @@ typedef char ___ffff_element_test[(FFFF_ELEMENT_SIZE == 20) ? 1 : -1];
 typedef union {
     struct __attribute__ ((packed)) {
         char sentinel_value[FFFF_SENTINEL_SIZE];
-        char build_timestamp[16];
-        char flash_image_name[48];
+        char build_timestamp[FFFF_TIMESTAMP_SIZE];
+        char flash_image_name[FFFF_FLASH_IMAGE_NAME_SIZE];
         uint32_t flash_capacity;
         uint32_t erase_block_size;
         uint32_t header_size;

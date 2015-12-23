@@ -33,8 +33,10 @@
 #include <stdbool.h>
 #include "chipcfg.h"
 
-#define TFTF_HEADER_SIZE_MIN              512
-#define TFTF_HEADER_SIZE_MAX              32768
+#define TFTF_HEADER_SIZE_MIN            512
+#define TFTF_HEADER_SIZE_MAX            32768
+#define TFTF_HEADER_SIZE_DEFAULT        TFTF_HEADER_SIZE_MIN
+
 
 #if MAX_TFTF_HEADER_SIZE_SUPPORTED < TFTF_HEADER_SIZE_MIN || \
     MAX_TFTF_HEADER_SIZE_SUPPORTED > TFTF_HEADER_SIZE_MAX
@@ -55,6 +57,10 @@ static const char tftf_sentinel[] = "TFTF";
 typedef char ___tftf_sentinel_test[(TFTF_SENTINEL_SIZE ==
                                     sizeof(tftf_sentinel) - 1) ?
                                    1 : 0];
+
+#define TFTF_TIMESTAMP_SIZE               16
+#define TFTF_FW_PKG_NAME_SIZE             48
+
 
 /* Section types */
 #define TFTF_SECTION_END                  0xFE
@@ -88,8 +94,8 @@ typedef union {
     struct __attribute__ ((packed)) {
         char sentinel_value[TFTF_SENTINEL_SIZE];
         uint32_t header_size;
-        char build_timestamp[16];
-        char firmware_package_name[48];
+        char build_timestamp[TFTF_TIMESTAMP_SIZE];
+        char firmware_package_name[TFTF_FW_PKG_NAME_SIZE];
         uint32_t package_type;  /* Must match FFFF element_type */
         uint32_t start_location;
         uint32_t unipro_mid;    /* Match to MIPI DME 0x5003, or zero */
@@ -124,7 +130,6 @@ typedef union {
 		(((header_size) - offsetof(tftf_header, sections)) / \
 		 sizeof(tftf_section_descriptor))
 
-#define TFTF_HEADER_SIZE_DEFAULT    TFTF_HEADER_SIZE_MIN
 
 static inline bool is_section_out_of_range(tftf_header *header,
                                            tftf_section_descriptor *section) {
@@ -141,11 +146,14 @@ typedef char ___tftf_header_test[(sizeof(tftf_header) ==
                                  MAX_TFTF_HEADER_SIZE_SUPPORTED) ?
                                  1 : -1];
 
+#define TFTF_SIGNATURE_KEY_NAME_SIZE    96
+#define TFTF_SIGNATURE_SIZE             256
+
 typedef struct {
     uint32_t length;            /* total size of tftf_signature structure */
     uint32_t type;              /* Some ALGORITHM_TYPE_xxx from crypto.h */
-    char key_name[96];
-    unsigned char signature[256];
+    char key_name[TFTF_SIGNATURE_KEY_NAME_SIZE];
+    unsigned char signature[TFTF_SIGNATURE_SIZE];
 } __attribute__ ((packed)) tftf_signature;
 
 #endif /* __COMMON_INCLUDE_TFTF_H */
