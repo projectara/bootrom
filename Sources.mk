@@ -68,6 +68,11 @@ CMN_CSRC += $(CMN_SRCDIR)/gbcore.c
 CMN_CSRC += $(CMN_SRCDIR)/debug.c
 CMN_CSRC += $(CMN_SRCDIR)/gbboot.c
 
+ifeq ($(APP_CONFIG_BRIDGED_SPI),y)
+CFLAGS += -DCONFIG_BRIDGED_SPI
+CMN_CSRC += $(CMN_SRCDIR)/spi-gb.c
+endif
+
 CMN_ASRC =
 
 include $(TOPDIR)/apps/$(APPLICATION)/Sources.mk

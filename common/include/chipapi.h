@@ -72,6 +72,10 @@ void chip_unipro_init(void);
 int chip_unipro_init_cport(uint32_t cportid);
 int chip_unipro_recv_cport(uint32_t *cportid);
 
+#ifdef CONFIG_BRIDGED_SPI
+void chip_spi_master_init(void);
+#endif
+
 #define ATTR_LOCAL 0
 #define ATTR_PEER  1
 /**

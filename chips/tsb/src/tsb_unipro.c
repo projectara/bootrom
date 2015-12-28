@@ -276,7 +276,7 @@ int chip_unipro_receive(unsigned int cportid,
         eot_bit = (1 << cportid);
 
         if ((eom & eom_err_bit) != 0) {
-            dbgprint("UniPro Rx err\n");
+            dbgprintx32("UniPro cport ", cportid, " Rx err\n");
             return -1;
         }
         if ((eot & eot_bit) != 0) {

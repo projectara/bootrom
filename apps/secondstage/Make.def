@@ -34,3 +34,9 @@ endif
 ifneq ($(BOOT_STAGE),2)
 $(error "invalid BOOT_STAGE for second stage build")
 endif
+
+APP_CONFIG_BRIDGED_SPI=y
+
+ifeq ($(APP_CONFIG_BRIDGED_SPI),y)
+    CONFIG_GPIO=y
+endif

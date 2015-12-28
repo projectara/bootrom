@@ -48,6 +48,13 @@ typedef struct {
     uint16_t padding;
 } __attribute__ ((packed)) gb_operation_header;
 
+static inline int gb_operation_request_size(gb_operation_header *header) {
+    if (header == NULL) {
+        return 0;
+    }
+    return header->size - sizeof(gb_operation_header);
+}
+
 #define GB_TYPE_RESPONSE  0x80
 
 #define GB_CTRL_OP_VERSION           0x01

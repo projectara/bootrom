@@ -1,0 +1,56 @@
+;
+; Simple FIRMWARE Interface Manifest
+;
+; Copyright 2015 Google Inc.
+; Copyright 2015 Linaro Ltd.
+;
+; Provided under the three clause BSD license found in the LICENSE file.
+;
+
+[manifest-header]
+version-major = 0
+version-minor = 1
+
+[interface-descriptor]
+vendor-string-id = 1
+product-string-id = 2
+
+; Interface vendor string (id can't be 0)
+[string-descriptor 1]
+string = Project Ara
+
+; Interface product string (id can't be 0)
+[string-descriptor 2]
+string = Second stage boot loader Interface
+
+; Control cport and bundle are optional.
+; - Control cport's id must be 0 and its bundle number must be 0.
+; - No other bundle or control cport may use these values.
+; - Class and protocol of bundle and cport must be marked as 0x00.
+;
+;Control protocol on CPort 0
+[cport-descriptor 0]
+bundle = 0
+protocol = 0x00
+
+;Control protocol Bundle 0
+[bundle-descriptor 0]
+class = 0
+
+; FIRMWARE protocol on CPort 1
+[cport-descriptor 1]
+bundle = 1
+protocol = 0x15
+
+; Bundle 1
+[bundle-descriptor 1]
+class = 0x15
+
+; SPI protocol on CPort 2
+[cport-descriptor 2]
+bundle = 2
+protocol = 0x0b
+
+; Bundle 2
+[bundle-descriptor 2]
+class = 0x0b

@@ -36,6 +36,11 @@
 #define getreg32(a)          (*(volatile uint32_t *)(a))
 #define putreg32(v,a)        (*(volatile uint32_t *)(a) = (v))
 
+#define cpu_to_le16(v) v
+#define cpu_to_le32(v) v
+#define le16_to_cpu(v) v
+#define le32_to_cpu(v) v
+
 #include "chipdef.h"
 
 #endif /* __ARCH_ARM_TSB_CHIP_H */

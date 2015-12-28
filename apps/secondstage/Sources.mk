@@ -39,3 +39,5 @@ APP_LIBS = $(MIRACL_LIBS)
 APP_MCL_CONFIG_DIR = $(TOPDIR)/apps/$(APPLICATION)/MIRACL_cfg
 include $(TOPDIR)/common/vendors/MIRACL/Make.def
 APP_CFLAGS = $(MIRACL_CFLAGS)
+
+MANIFEST = IID1-secondstage-fw

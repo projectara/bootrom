@@ -59,6 +59,8 @@ static uint32_t current_addr;
 
 #define SPI_FLASH_READ_CMD 0x03
 
+int spi_clk_usage_count = 0;
+
 static int data_load_spi_init(void) {
     current_addr = 0;
 
@@ -66,6 +68,7 @@ static int data_load_spi_init(void) {
        Pinshare should be default to SPI (CS0) after reset */
     tsb_clk_enable(TSB_CLK_SPIP);
     tsb_clk_enable(TSB_CLK_SPIS);
+    spi_clk_usage_count++;
 
     putreg32(SPIM_SSI_DISABLE,  SPIM_SSIENR);
     putreg32(SPIM_CTRLR0_VALUE, SPIM_CTRLR0);
@@ -174,8 +177,11 @@ static int data_load_spi_read(void *dest, uint32_t addr, uint32_t length) {
 }
 
 static int data_load_spi_finish(bool valid, bool is_secure_image) {
-    tsb_clk_disable(TSB_CLK_SPIP);
-    tsb_clk_disable(TSB_CLK_SPIS);
+    spi_clk_usage_count--;
+    if (spi_clk_usage_count == 0) {
+        tsb_clk_disable(TSB_CLK_SPIP);
+        tsb_clk_disable(TSB_CLK_SPIS);
+    }
     return 0;
 }
 

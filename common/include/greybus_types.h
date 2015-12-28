@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Google Inc.
+/*
+ * Copyright (c) 2014-2015 Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,17 +24,24 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Fabien Parent <fparent@baylibre.com>
  */
-
-#ifndef __APPCFG_H
-#define __APPCFG_H
 
 /**
- * Maximum CPorts used/supported
+ * This file was copied from nuttx/include/greybus/types.h
  */
-#define CPORT_MAX  3
 
-#define GBBOOT_CPORT 1
-#define GB_SPI_CPORT 2
+#ifndef __GREYBUS_TYPES_H__
+#define __GREYBUS_TYPES_H__
 
-#endif /* __APPCFG_H */
+typedef uint8_t u8;
+typedef uint8_t __u8;
+typedef uint16_t __le16;
+typedef uint32_t __le32;
+typedef uint64_t __le64;
+
+#define __packed    __attribute__((packed))
+
+#endif /* __GREYBUS_TYPES_H__ */
+

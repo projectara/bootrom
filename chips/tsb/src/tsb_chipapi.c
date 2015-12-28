@@ -65,6 +65,10 @@ void chip_init(void) {
     chip_gpio_direction_out(GPIO_REQ, 0);
     chip_gpio_direction_out(GPIO_TEST_STATUS, GPIO_TEST_STATUS_OK);
 #endif
+
+#ifdef CONFIG_BRIDGED_SPI
+    chip_spi_master_init();
+#endif
 }
 
 extern char _workram_start;

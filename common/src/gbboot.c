@@ -253,13 +253,9 @@ static int data_load_greybus_init(void) {
     int rc;
 
     offset = 0;
-    rc = greybus_init();
-    if (rc) {
-        set_last_error(BRE_BOU_GBCTRL_CPORT);
-        return rc;
-    }
 
     greybus_register_handlers(GBBOOT_CPORT, gbboot_cport_handlers);
+
     rc = greybus_loop();
     if (rc) {
         set_last_error(BRE_BOU_GBBOOT_CPORT);

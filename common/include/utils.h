@@ -75,3 +75,5 @@ bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
 #define DISJOINT_OR(x, y)   (!x ? y : x)
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
+#define BIT(n) (1 << n)

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 Google Inc.
+/*
+ * Copyright (c) 2015 Google, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __APPCFG_H
-#define __APPCFG_H
+/**
+ * This file defines neccessary stuff to re-use device driver header from nuttx
+ */
+
+#ifndef __NUTTX_DEV_IF_H
+#define __NUTTX_DEV_IF_H
+
+struct device {
+    void *ops;
+};
+
+#define DEVICE_DRIVER_ASSERT_OPS(_dev) \
+    if (_dev == NULL || _dev->ops == NULL) { \
+        return -ENODEV; \
+    }
 
 /**
- * Maximum CPorts used/supported
+ * @brief Get the type ops of the driver for a device
+ * @param dev Device whose driver's type ops will be returned
+ * @param type Device type
+ * @return Pointer to the device driver's type ops
  */
-#define CPORT_MAX  3
+#define DEVICE_DRIVER_GET_OPS(_dev, _type)  \
+    ((struct device_##_type##_type_ops *)((_dev)->ops))
 
-#define GBBOOT_CPORT 1
-#define GB_SPI_CPORT 2
+#define device_is_open(_dev) true
 
-#endif /* __APPCFG_H */
+#endif /* __NUTTX_DEV_IF_H */

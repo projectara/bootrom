@@ -43,6 +43,16 @@
 #include "crypto.h"
 #include "bootrom.h"
 #include "2ndstage_cfgdata.h"
+#include "greybus.h"
+#include "spi-gb.h"
+
+/**
+ * Temporary macro here to run the S2L as SPI over Greybus.
+ * This is used before the S2L protocol gets defined and implemented.
+ * 0 means run normal S2L process
+ * 1 means run S2L as SPI over greybus
+ */
+#define RUN_SPI_TEST 0
 
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
@@ -204,6 +214,11 @@ void bootrom_main(void) {
         fallback_boot_unipro = false;
     }
 
+    if (greybus_init()) {
+        set_last_error(BRE_BOU_GBCTRL_CPORT);
+        halt_and_catch_fire(boot_status);
+    }
+
     /* Boot-Over-UniPro...
      * We get here if directed to do so by the bootselector, or as a fallback
      * for a failed SPIROM boot.
@@ -222,6 +237,16 @@ void bootrom_main(void) {
                     merge_errno_with_boot_status(boot_status),
                     ")\n");
         advertise_ready();
+#if RUN_SPI_TEST
+        spi_gb_init();
+        dbgprint("Running in loop to perform as SPI over Greybus\n");
+        while (1) {
+            if (greybus_loop()) {
+                dbgprint("ERROR in greuybus loop\n");
+                halt_and_catch_fire(boot_status);
+            }
+        }
+#endif
         dbgprint("Ready-poked; download-ready\n");
         if (greybus_ops.init() != 0) {
             halt_and_catch_fire(boot_status);
