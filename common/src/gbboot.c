@@ -33,6 +33,7 @@
 #include "chipapi.h"
 #include "chipdef.h"
 #include "debug.h"
+#include "error.h"
 #include "unipro.h"
 #include "tsb_unipro.h"
 #include "greybus.h"
@@ -267,6 +268,7 @@ static int data_load_greybus_init(void) {
 
     rc = chip_unipro_init_cport(CONTROL_CPORT);
     if (rc) {
+        set_last_error(BRE_BOU_GBCTRL_CPORT);
         return rc;
     }
 
@@ -277,16 +279,19 @@ static int data_load_greybus_init(void) {
             dbgprint("Greybus init failed\n");
         }
         if (rc) {
+            set_last_error(BRE_BOU_GBCTRL_CONNECTED);
             goto protocol_error;
         }
     }
     if (!manifest_fetched_by_ap()) {
         dbgprint("Greybus Control CPort timeout\n");
+        set_last_error(BRE_BOU_GBCTRL_TIMEOUT);
         return -ETIMEDOUT;
     }
 
     rc = chip_unipro_recv_cport(&gbboot_cportid);
     if (rc) {
+        set_last_error(BRE_BOU_GBBOOT_CPORT);
         return rc;
     }
 
@@ -297,11 +302,13 @@ static int data_load_greybus_init(void) {
             dbgprint("Greybus init failed\n");
         }
         if (rc) {
+            set_last_error(BRE_BOU_GBBOOT_CONNECTED);
             goto protocol_error;
         }
     }
     if (!cport_connected) {
         dbgprint("Greybus Control CPort timeout\n");
+        set_last_error(BRE_BOU_GBBOOT_TIMEOUT);
         return -ETIMEDOUT;
     }
 
@@ -311,11 +318,13 @@ static int data_load_greybus_init(void) {
         rc = chip_unipro_receive(gbboot_cportid, fw_cport_handler);
         if (rc) {
             dbgprint("Greybus FW CPort handler failed\n");
+            set_last_error(BRE_BOU_GBBOOT_RECV);
             goto protocol_error;
         }
     }
     if(responded_op != GB_BOOT_OP_AP_READY) {
         dbgprint("Greybus FW CPort timeout\n");
+        set_last_error(BRE_BOU_GBBOOT_AP_READY_TIMEOUT);
         return -ETIMEDOUT;
     }
 
@@ -324,10 +333,12 @@ static int data_load_greybus_init(void) {
     /* Fetch the firmware size. */
     rc = gbboot_firmware_size(NEXT_BOOT_STAGE, &firmware_size);
     if (rc) {
+        set_last_error(BRE_BOU_GBBOOT_FW_SIZE);
         goto protocol_error;
     }
     if (firmware_size > WORKRAM_SIZE) {
         rc = -EINVAL;
+        set_last_error(BRE_BOU_GBBOOT_FW_TOO_LARGE);
         goto protocol_error;
     }
 
@@ -354,6 +365,7 @@ static int data_load_greybus_load(void *dest, uint32_t length, bool hash) {
         blk_len = (length > GB_MAX_PAYLOAD_SIZE) ? GB_MAX_PAYLOAD_SIZE : length;
         rc = gbboot_get_firmware(offset, blk_len, dest, prev, prev_len);
         if (rc) {
+            set_last_error(BRE_BOU_GBBOOT_GET_FW);
             return rc;
         }
 
@@ -385,6 +397,9 @@ static int data_load_greybus_finish(bool valid, bool is_secure_image) {
     }
 
     rc = gbboot_ready_to_boot(status);
+    if (rc) {
+        set_last_error(BRE_BOU_GBBOOT_READY);
+    }
 
     dbgprint("Finished Greybus FW download\n");
 

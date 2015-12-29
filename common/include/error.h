@@ -96,6 +96,19 @@
 
 #define BRE_CRYPTO_BASE             ((uint32_t)0x000060)
 
+#define BRE_BOU_BASE                ((uint32_t)0x000080)
+#define BRE_BOU_GBCTRL_CPORT        ((uint32_t)(BRE_BOU_BASE + 0))
+#define BRE_BOU_GBCTRL_CONNECTED    ((uint32_t)(BRE_BOU_BASE + 1))
+#define BRE_BOU_GBCTRL_TIMEOUT      ((uint32_t)(BRE_BOU_BASE + 2))
+#define BRE_BOU_GBBOOT_CPORT        ((uint32_t)(BRE_BOU_BASE + 3))
+#define BRE_BOU_GBBOOT_CONNECTED    ((uint32_t)(BRE_BOU_BASE + 4))
+#define BRE_BOU_GBBOOT_TIMEOUT      ((uint32_t)(BRE_BOU_BASE + 5))
+#define BRE_BOU_GBBOOT_RECV         ((uint32_t)(BRE_BOU_BASE + 6))
+#define BRE_BOU_GBBOOT_AP_READY_TIMEOUT ((uint32_t)(BRE_BOU_BASE + 7))
+#define BRE_BOU_GBBOOT_FW_SIZE      ((uint32_t)(BRE_BOU_BASE + 8))
+#define BRE_BOU_GBBOOT_FW_TOO_LARGE ((uint32_t)(BRE_BOU_BASE + 9))
+#define BRE_BOU_GBBOOT_GET_FW       ((uint32_t)(BRE_BOU_BASE + 10))
+#define BRE_BOU_GBBOOT_READY        ((uint32_t)(BRE_BOU_BASE + 11))
 
 /*
  * Stage 2 Firmware error codes
