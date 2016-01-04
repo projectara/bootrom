@@ -47,7 +47,8 @@
 #include "unipro.h"
 #include "communication_area.h"
 
-#define BOOTROM_SIZE  (16 * 1024) -1
+#define BOOTROM_SIZE    (16 * 1024)
+#define BOOTROM_END     (BOOTROM_SIZE - 1)
 
 
 union large_uint {
@@ -59,8 +60,8 @@ union large_uint {
   uint8_t buffer[8];
 };
 
-void tsb_get_ims(uint8_t * buf, uint32_t size);
-void tsb_get_cms(uint8_t * buf, uint32_t size);
+//void tsb_get_ims(uint8_t * buf, uint32_t size);
+//void tsb_get_cms(uint8_t * buf, uint32_t size);
 uint32_t tsb_get_scr(void);
 uint32_t tsb_get_ara_vid(void);
 uint32_t tsb_get_ara_pid(void);
@@ -68,7 +69,7 @@ uint64_t tsb_get_serial_no(void);
 uint32_t tsb_get_jtag_enable(void);
 uint32_t tsb_get_jtag_disable(void);
 
-void check_ims_cms_access(void);
+void display_epuid_ims_cms_info(void);
 void report_bootrom_hash(void);
 void report_communication_area(void);
 
@@ -107,7 +108,7 @@ void dbgprintxbuf(char * s1, uint8_t * buf, size_t len, char * s2) {
 /**
  * @brief Print a pointer
  *
- * @param s1 (optional) prefix string
+ * @param s1 (optional) tsb_get_cmsprefix string
  * @param ptr The pointer to print
  * @param s2 (optional) suffix string
  *
@@ -147,7 +148,7 @@ void resume_point(void) {
      */
     resume_sequence_in_workram();
 
-    check_ims_cms_access();
+    display_epuid_ims_cms_info();
     while(1);
 }
 
@@ -170,22 +171,50 @@ int enter_standby(void) {
  * @returns Nothing. Should never return.
  */
 void bootrom_main(void) {
+    uint32_t unipro_mid = 0;
+    uint32_t unipro_pid = 0;
+
     chip_init();
     crypto_init();
-
     dbginit();
 
     dbgprint("\nES3 ASIC validation image\n");
-    dbgprintx32("ARA VID:       0x", tsb_get_ara_vid(), "\n");
-    dbgprintx32("ARA PID:       0x", tsb_get_ara_pid(), "\n");
-    dbgprintx64("SERIAL NUMBER: 0x", tsb_get_serial_no(), "\n");
-    dbgprintx32("SCR:           0x", tsb_get_scr(), "\n");
-    dbgprintx32("JTAG ENABLE:   0x", tsb_get_jtag_enable(), "\n");
-    dbgprintx32("JTAG DISABLE:  0x", tsb_get_jtag_disable(), "\n");
-    dbgprintx32("IMS DISABLE:   0x", tsb_get_disable_ims_access(), "\n");
-    dbgprintx32("CMS DISABLE:   0x", tsb_get_disable_cms_access(), "\n");
+    if (chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_mid, 0,
+                              ATTR_LOCAL) == 0) {
+        dbgprintx32("Unipro MID:           0x", tsb_get_unipro_mid(), "\n");
+    } else {
+        dbgprint("Unipro MID:           unavailable\n");
+    }
+    if (chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
+                              ATTR_LOCAL) == 0) {
+        dbgprintx32("Unipro PID:           0x", tsb_get_unipro_pid(), "\n");
+    } else {
+        dbgprint("Unipro PID:           unavailable\n");
+    }
+    if (chip_unipro_attr_read(DME_DDBL2_INIT_TYPE, &unipro_pid, 0,
+                              ATTR_LOCAL) == 0) {
+        dbgprintx32("ARA Boot Protocol: 0x", tsb_get_unipro_pid(), "\n");
+    } else {
+        dbgprint("ARA Boot Status:      unavailable\n");
+    }
+    if (chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &unipro_pid, 0,
+                              ATTR_LOCAL) == 0) {
+        dbgprintx32("ARA Boot Status:      0x", tsb_get_unipro_pid(), "\n");
+    } else {
+        dbgprint("ARA Boot Status:      unavailable\n");
+    }
+    dbgprintx32("ARA VID:              0x", tsb_get_ara_vid(), "\n");
+    dbgprintx32("ARA PID:              0x", tsb_get_ara_pid(), "\n");
+    dbgprintx64("SERIAL NUMBER:        0x", tsb_get_serial_no(), "\n");
+    dbgprintx32("SCR:                  0x", tsb_get_scr(), "\n");
+    dbgprintx32("JTAG ENABLE:          0x", tsb_get_jtag_enable(), "\n");
+    dbgprintx32("JTAG DISABLE:         0x", tsb_get_jtag_disable(), "\n");
+    dbgprintx32("IMS DISABLE:          0x", tsb_get_disable_ims_access(),
+                "\n");
+    dbgprintx32("CMS DISABLE:          0x", tsb_get_disable_cms_access(),
+                "\n");
 
-    check_ims_cms_access();
+    display_epuid_ims_cms_info();
     report_bootrom_hash();
     report_communication_area();
 
@@ -297,12 +326,11 @@ void display_epuid(bool calculate, unsigned char *ims) {
  *
  * @returns Nothing.
  */
-void check_ims_cms_access(void) {
+void display_epuid_ims_cms_info(void) {
     unsigned char ims[TSB_ISAA_NUM_IMS_BYTES];
     unsigned char cms[TSB_ISAA_NUM_CMS_BYTES];
     bool zero_ims;
     bool zero_cms;
-    int i;
 #ifdef IMS_CMS_HASH
     unsigned char ims_hash[SHA256_HASH_DIGEST_SIZE];
     unsigned char cms_hash[SHA256_HASH_DIGEST_SIZE];
@@ -336,7 +364,9 @@ void check_ims_cms_access(void) {
     dbgprint((tsb_get_disable_ims_access() == 0)? "en" : "dis");
     dbgprint("abled\n");
     dbgprint("IMS reads ");
-    dbgprint(zero_ims? "" : "non-");
+    if (!zero_ims) {
+        dbgprint("non-");
+    }
     dbgprint("zero\n");
 #ifdef IMS_CMS_HASH
     dbgprintxbuf("IMS hash: ", ims_hash, sizeof(ims_hash), "\n");
@@ -346,7 +376,9 @@ void check_ims_cms_access(void) {
     dbgprint((tsb_get_disable_cms_access() == 0)? "en" : "dis");
     dbgprint("abled\n");
     dbgprint("CMS reads ");
-    dbgprint(zero_cms? "" : "non-");
+    if (!zero_cms) {
+        dbgprint("non-");
+    }
     dbgprint("zero\n");
 #ifdef IMS_CMS_HASH
     dbgprintxbuf("CMS hash: ", cms_hash, sizeof(cms_hash), "\n");
@@ -365,7 +397,7 @@ void report_bootrom_hash(void) {
 
     /* Calculate the SHA256 for the bootrom... */
     hash_start();
-    hash_update(0, BOOTROM_SIZE);
+    hash_update(0, BOOTROM_END);
     hash_final(bootrom_hash);
 
     /* ...and display it */
@@ -432,15 +464,5 @@ void report_communication_area(void) {
            sizeof(comm_area->firmware_package_name));
     text_buf[sizeof(comm_area->firmware_package_name)] = '\0';
     dbgprintx("firmware_package_name: '", text_buf, "'\n");
-
-    /* resume_data */
-    dbgprint("resume_data:\n");
-    dbgprintx32("  jtag_disabled             0x",
-                comm_area->resume_data.jtag_disabled, "\n");
-    dbgprintx32("  resume_address            0x",
-                comm_area->resume_data.resume_address, "\n");
-    dbgprintx32("  resume_address_complement 0x",
-                comm_area->resume_data.resume_address_complement, "\n");
-
 }
 
