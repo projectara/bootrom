@@ -51,7 +51,7 @@ extern data_load_ops greybus_ops;
  * @brief control boot behavior
  * @param boot_from_spi
  * This function has to be called before second stage loader overrides the
- * DME_DDBL2_INIT_STATUS
+ * DME_ARA_INIT_STATUS
  */
 static void boot_control(bool *boot_from_spi) {
     uint32_t    boot_status = INIT_STATUS_OPERATING;
@@ -62,7 +62,7 @@ static void boot_control(bool *boot_from_spi) {
     *boot_from_spi = false;
     prev_boot_status = chip_get_boot_status();
 
-    rc = chip_unipro_attr_read(ARA_BOOT_CONTROL,
+    rc = chip_unipro_attr_read(DME_ARA_BOOT_CONTROL,
                                &bootctrl,
                                0,
                                ATTR_LOCAL);

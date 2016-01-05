@@ -308,11 +308,11 @@ void chip_unipro_init(void) {
 int chip_unipro_attr_read(uint16_t attr, uint32_t *val, uint16_t selector,
                           int peer) {
     switch(attr) {
-        case DME_DDBL2_VID:
+        case DME_ARA_VID:
             *val = ara_vid;
             return 0;
             break;
-        case DME_DDBL2_PID:
+        case DME_ARA_PID:
             *val = ara_pid;
             return 0;
             break;

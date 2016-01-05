@@ -51,7 +51,7 @@ void chip_advertise_boot_status(uint32_t boot_status) {
         return;
     }
 
-    status = chip_unipro_attr_write(DME_DDBL2_INIT_STATUS, boot_status, 0,
+    status = chip_unipro_attr_write(DME_ARA_INIT_STATUS, boot_status, 0,
                                     ATTR_LOCAL);
 
     /*
@@ -78,7 +78,7 @@ uint32_t chip_get_boot_status(void) {
     uint32_t boot_status;
     int status = 0;
 
-    status = chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &boot_status, 0,
+    status = chip_unipro_attr_read(DME_ARA_INIT_STATUS, &boot_status, 0,
                                    ATTR_LOCAL);
     /*
      * Being unable to read the DME value is regarded as a catastrophic failure.
@@ -101,7 +101,7 @@ uint32_t chip_get_boot_status(void) {
  * @return 0 on success, <0 on error
  */
 int chip_advertise_boot_type(void) {
-    return chip_unipro_attr_write(DME_DDBL2_INIT_TYPE, INIT_TYPE_TOSHIBA, 0,
+    return chip_unipro_attr_write(DME_ARA_INIT_TYPE, INIT_TYPE_TOSHIBA, 0,
                                   ATTR_LOCAL);
 }
 

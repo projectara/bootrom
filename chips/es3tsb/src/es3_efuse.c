@@ -151,13 +151,13 @@ int efuse_init(void) {
         }
     } else {
         dbgprintx64("Endpoint ID: ", endpoint_id.quad, "\n");
-        urc = chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_L, endpoint_id.low, 0,
+        urc = chip_unipro_attr_write(DME_ARA_ENDPOINTID_L, endpoint_id.low, 0,
                                 ATTR_LOCAL);
         if (urc) {
             set_last_error(BRE_EFUSE_ENDPOINT_ID_WRITE);
             return -1;
         }
-        urc = chip_unipro_attr_write(DME_DDBL2_ENDPOINTID_H, endpoint_id.high,
+        urc = chip_unipro_attr_write(DME_ARA_ENDPOINTID_H, endpoint_id.high,
                                 0, ATTR_LOCAL);
         if (urc) {
             set_last_error(BRE_EFUSE_ENDPOINT_ID_WRITE);

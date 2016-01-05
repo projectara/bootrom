@@ -32,16 +32,16 @@
 /**
  * This file defines ARA specific DME attributes
  */
-#define DME_DDBL2_VID               0x6000
-#define DME_DDBL2_PID               0x6001
-#define DME_DDBL2_SERIALNO_L        0x6002
-#define DME_DDBL2_SERIALNO_H        0x6003
-#define DME_DDBL2_INIT_TYPE         0x6100
+#define DME_ARA_VID                 0x6000
+#define DME_ARA_PID                 0x6001
+#define DME_ARA_SERIALNO_L          0x6002
+#define DME_ARA_SERIALNO_H          0x6003
+#define DME_ARA_INIT_TYPE           0x6100
     #define INIT_TYPE_TOSHIBA                                    (0x01260001)
-#define DME_DDBL2_INIT_STATUS       0x6101
-#define DME_DDBL2_ENDPOINTID_H      0x6102
-#define DME_DDBL2_ENDPOINTID_L      0x6103
-#define ARA_BOOT_CONTROL            0x610e
+#define DME_ARA_INIT_STATUS         0x6101
+#define DME_ARA_ENDPOINTID_H        0x6102
+#define DME_ARA_ENDPOINTID_L        0x6103
+#define DME_ARA_BOOT_CONTROL        0x610e
     #define FORCE_UNIPRO_BOOT       (1 << 0)
 
 /*

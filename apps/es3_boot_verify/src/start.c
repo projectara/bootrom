@@ -48,7 +48,6 @@
 #include "communication_area.h"
 
 #define BOOTROM_SIZE    (16 * 1024)
-#define BOOTROM_END     (BOOTROM_SIZE - 1)
 
 
 union large_uint {
@@ -173,6 +172,8 @@ int enter_standby(void) {
 void bootrom_main(void) {
     uint32_t unipro_mid = 0;
     uint32_t unipro_pid = 0;
+    uint32_t ara_init_type = 0;
+    uint32_t ara_init_status = 0;
 
     chip_init();
     crypto_init();
@@ -181,25 +182,25 @@ void bootrom_main(void) {
     dbgprint("\nES3 ASIC validation image\n");
     if (chip_unipro_attr_read(DME_DDBL1_MANUFACTURERID, &unipro_mid, 0,
                               ATTR_LOCAL) == 0) {
-        dbgprintx32("Unipro MID:           0x", tsb_get_unipro_mid(), "\n");
+        dbgprintx32("Unipro MID:           0x", unipro_mid, "\n");
     } else {
         dbgprint("Unipro MID:           unavailable\n");
     }
     if (chip_unipro_attr_read(DME_DDBL1_PRODUCTID, &unipro_pid, 0,
                               ATTR_LOCAL) == 0) {
-        dbgprintx32("Unipro PID:           0x", tsb_get_unipro_pid(), "\n");
+        dbgprintx32("Unipro PID:           0x", unipro_pid, "\n");
     } else {
         dbgprint("Unipro PID:           unavailable\n");
     }
-    if (chip_unipro_attr_read(DME_DDBL2_INIT_TYPE, &unipro_pid, 0,
+    if (chip_unipro_attr_read(DME_ARA_INIT_TYPE, &ara_init_type, 0,
                               ATTR_LOCAL) == 0) {
-        dbgprintx32("ARA Boot Protocol: 0x", tsb_get_unipro_pid(), "\n");
+        dbgprintx32("ARA Boot Protocol: 0x", ara_init_type, "\n");
     } else {
         dbgprint("ARA Boot Status:      unavailable\n");
     }
-    if (chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &unipro_pid, 0,
+    if (chip_unipro_attr_read(DME_ARA_INIT_STATUS, &ara_init_status, 0,
                               ATTR_LOCAL) == 0) {
-        dbgprintx32("ARA Boot Status:      0x", tsb_get_unipro_pid(), "\n");
+        dbgprintx32("ARA Boot Status:      0x", ara_init_status, "\n");
     } else {
         dbgprint("ARA Boot Status:      unavailable\n");
     }
@@ -301,9 +302,9 @@ void display_epuid(bool calculate, unsigned char *ims) {
     union large_uint endpoint_id;
     union large_uint endpoint_id_calc;
 
-    rc = chip_unipro_attr_read(DME_DDBL2_ENDPOINTID_L, &endpoint_id.low, 0,
+    rc = chip_unipro_attr_read(DME_ARA_ENDPOINTID_L, &endpoint_id.low, 0,
                                 ATTR_LOCAL);
-    rc |= chip_unipro_attr_read(DME_DDBL2_ENDPOINTID_H, &endpoint_id.high,
+    rc |= chip_unipro_attr_read(DME_ARA_ENDPOINTID_H, &endpoint_id.high,
                                  0, ATTR_LOCAL);
     if (rc) {
         dbgprint("Failed to read Enpoint UID from DME\n");
@@ -397,7 +398,7 @@ void report_bootrom_hash(void) {
 
     /* Calculate the SHA256 for the bootrom... */
     hash_start();
-    hash_update(0, BOOTROM_END);
+    hash_update((unsigned char *)0x00000000, BOOTROM_SIZE);
     hash_final(bootrom_hash);
 
     /* ...and display it */

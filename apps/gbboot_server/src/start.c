@@ -69,7 +69,7 @@ void bootrom_main(void) {
 
     chip_wait_for_link_up();
 
-    chip_unipro_attr_write(ARA_BOOT_CONTROL,
+    chip_unipro_attr_write(DME_ARA_BOOT_CONTROL,
                            FORCE_UNIPRO_BOOT,
                            0,
                            ATTR_PEER);

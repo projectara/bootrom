@@ -62,7 +62,7 @@ void init_last_error(void) {
     fw_errno = BRE_OK;
 #else
     {
-        if (chip_unipro_attr_read(DME_DDBL2_INIT_STATUS, &fw_errno, 0,
+        if (chip_unipro_attr_read(DME_ARA_INIT_STATUS, &fw_errno, 0,
                                   ATTR_LOCAL) != 0)
         {
             dbgprint("S2: init_last_error: can't read Boot Status\n");
