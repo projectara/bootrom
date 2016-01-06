@@ -220,3 +220,89 @@ void chip_wait_for_link_up(void) {
                                    ATTR_LOCAL);
     } while (!rc && (tempval != POWERSTATE_LINKUP));
 }
+
+/**
+ * @brief send data down a CPort
+ * @param cportid cport to send down
+ * @param buf data buffer
+ * @param len size of data to send
+ * @param 0 on success, <0 on error
+ */
+int chip_unipro_send(unsigned int cportid, const void *buf, size_t len) {
+    unsigned int i;
+    struct cport *cport;
+    char *data = (char*)buf;
+
+    if (cportid >= CPORT_MAX || len > CPORT_BUF_SIZE) {
+        return -1;
+    }
+
+    cport = cport_handle(cportid);
+    if (!cport) {
+        return -1;
+    }
+
+    /*
+     * Data payload
+     */
+    for (i = 0; i < len; i++) {
+        putreg8(data[i], &cport->tx_buf[i]);
+    }
+
+    /* Hit EOM */
+    putreg8(1, CPORT_EOM_BIT(cport));
+
+    return 0;
+}
+
+int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
+    uint32_t bytes_received;
+    struct cport *cport;
+
+    uint32_t eom_nom_bit;
+    uint32_t eom_err_bit;
+    uint32_t eot_bit;
+
+    uint32_t eom;
+    uint32_t eot;
+
+    cport = cport_handle(cportid);
+    if (!cport) {
+        return -1;
+    }
+
+    while(1) {
+        eom = tsb_unipro_read(AHM_RX_EOM_INT_BEF_0);
+        eot = tsb_unipro_read(AHM_RX_EOT_INT_BEF_0);
+
+        eom_nom_bit = (0x01 << (cportid << 1));
+        eom_err_bit = (0x10 << (cportid << 1));
+        eot_bit = (1 << cportid);
+
+        if ((eom & eom_err_bit) != 0) {
+            dbgprint("UniPro Rx err\n");
+            return -1;
+        }
+        if ((eot & eot_bit) != 0) {
+            dbgprint("Rx data overflow\n");
+            return -1;
+        }
+        if ((eom & eom_nom_bit) != 0) {
+            bytes_received = tsb_unipro_read(CPB_RX_TRANSFERRED_DATA_SIZE_00 +
+                                             (cportid << 2));
+            tsb_unipro_write(AHM_RX_EOM_INT_BEF_0, eom_nom_bit);
+
+            if (handler != NULL) {
+                if(0 != handler(cportid,
+                                cport->rx_buf,
+                                bytes_received)) {
+                    dbgprint("Rx handler err\n");
+                    return -1;
+                }
+            }
+            tsb_unipro_restart_rx(cport);
+            return 0;
+        }
+    }
+    return 0;
+}
