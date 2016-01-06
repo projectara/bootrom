@@ -26,52 +26,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
+#ifndef __APPCFG_H
+#define __APPCFG_H
 
 /**
- * @brief Determine if a value is a power of 2
- *
- * @param x the value to check.
- *
- * @returns true if it is a power of 2, false otherwise
+ * Maximum CPorts used/supported
  */
-bool is_power_of_2(uint32_t x);
+#define CPORT_MAX  2
 
-/**
- * @brief Determine if an address is block-aligned
- *
- * @param location The address to check
- * @param block_size The size of a block (must be a power of 2)
- *
- * @returns true if it is block-aligned, false otherwise
- */
-bool block_aligned(uint32_t address, uint32_t block_size);
+#define GBBOOT_CPORT 1
 
-/**
- * @brief Round up an address to the next block boundary
- *
- * @param location The address to check
- * @param block_size The size of a block (must be a power of 2)
- *
- * @returns A block-aligned address
- */
-uint32_t next_block_boundary(uint32_t address, uint32_t block_size);
+#endif /* __APPCFG_H */
 
-/**
- * @brief Check a range of bytes for a constant fill
- *
- * @param buf Points to the start of the region to check
- * @param len The number of bytes to check
- * @param fill_byte The constant byte to check against
- *
- * @returns True if the buffer is filled with a constan byte, false otherwise.
- */
-bool is_constant_fill(uint8_t * buf, uint32_t len, uint8_t fill_byte);
-
-#define TIMING_BUG_DELAY_LENGTH (0xfffff)
-
-#define DISJOINT_OR(x, y)   (!x ? y : x)
-
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))

@@ -29,6 +29,7 @@
 #ifndef __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H
 #define __ARCH_ARM_SRC_TSB_TSB_UNIPRO_H
 
+#include "appcfg.h"
 #include "chip.h"
 #include "unipro.h"
 
@@ -65,8 +66,7 @@ struct cport {
     uint16_t cportid;
 };
 
-extern struct cport cporttable[4];
-#define CPORT_MAX  (sizeof(cporttable)/sizeof(struct cport))
+extern struct cport cporttable[];
 
 static inline struct cport *cport_handle(uint16_t cportid) {
     if (cportid >= CPORT_MAX) {

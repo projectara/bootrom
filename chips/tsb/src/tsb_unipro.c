@@ -36,9 +36,14 @@
 #include "utils.h"
 
 /* Statically allocate the CPort buffers in BufRam, 8kB each */
-struct cport cporttable[4] = {
+struct cport cporttable[] = {
     DECLARE_CPORT(0),  DECLARE_CPORT(1),  DECLARE_CPORT(2),  DECLARE_CPORT(3),
 };
+
+/* compiler hack to verify array size */
+typedef char ___cport_num_test[(CPORT_MAX <=
+                                ARRAY_SIZE(cporttable)) ?
+                               1 : -1];
 
 #define CPORT_SW_RESET_BITS 3
 /**
