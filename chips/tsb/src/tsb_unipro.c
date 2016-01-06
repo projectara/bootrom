@@ -124,8 +124,6 @@ int tsb_reset_all_cports(void) {
  */
 int tsb_unipro_init_cport(uint32_t cportid) {
     struct cport *cport;
-    int rc;
-    uint32_t mail = 0;
 
     if (cportid >= CPORT_MAX) {
         return -EINVAL;
@@ -136,17 +134,9 @@ int tsb_unipro_init_cport(uint32_t cportid) {
         return -EINVAL;
     }
 
-    rc = read_mailbox(&mail);
-    if (rc) {
-        return rc;
-    }
-    if (mail != cportid + 1) {
-        return -ENOSYS;
-    }
-
     tsb_unipro_restart_rx(cport);
 
-    return ack_mailbox((uint16_t)mail);
+    return 0;
 }
 
 /**
@@ -172,8 +162,6 @@ int tsb_unipro_recv_cport(uint32_t *cportid) {
     if (!cport) {
         return -EINVAL;
     }
-
-    tsb_unipro_restart_rx(cport);
 
     return ack_mailbox((uint16_t)(cport_recv + 1));
 }

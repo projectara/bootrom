@@ -28,13 +28,14 @@
 
 #include <stddef.h>
 #include <string.h>
+#include "appcfg.h"
 #include "bootrom.h"
 #include "chipapi.h"
 #include "debug.h"
 #include "greybus.h"
 #include "gbboot.h"
 
-uint32_t gbboot_cportid = 0;
+uint32_t gbboot_cportid = GBBOOT_CPORT;
 
 extern unsigned char manifest_mnfb[];
 extern unsigned int manifest_mnfb_len;

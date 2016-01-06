@@ -265,8 +265,15 @@ int greybus_cport_disconnect(void) {
 static int data_load_greybus_init(void) {
     int rc;
     uint32_t retries = CPORT_POLLING_TIMEOUT;
+    uint32_t mbox;
 
     rc = chip_unipro_init_cport(CONTROL_CPORT);
+    if (rc) {
+        set_last_error(BRE_BOU_GBCTRL_CPORT);
+        return rc;
+    }
+
+    rc = chip_unipro_recv_cport(&mbox);
     if (rc) {
         set_last_error(BRE_BOU_GBCTRL_CPORT);
         return rc;
@@ -289,7 +296,13 @@ static int data_load_greybus_init(void) {
         return -ETIMEDOUT;
     }
 
-    rc = chip_unipro_recv_cport(&gbboot_cportid);
+    rc = chip_unipro_init_cport(gbboot_cportid);
+    if (rc) {
+        set_last_error(BRE_BOU_GBBOOT_CPORT);
+        return rc;
+    }
+
+    rc = chip_unipro_recv_cport(&mbox);
     if (rc) {
         set_last_error(BRE_BOU_GBBOOT_CPORT);
         return rc;

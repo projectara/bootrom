@@ -140,6 +140,7 @@ int wait_for_mailbox_ack(uint32_t wval, int peer) {
 }
 
 int create_connection(struct unipro_connection *c) {
+    uint32_t mbox;
     switch_cport_connect(NULL, c);
 
     /**
@@ -148,6 +149,7 @@ int create_connection(struct unipro_connection *c) {
      */
     poke_mailbox(c->cport_id0 + 1, 0);
     chip_unipro_init_cport(c->cport_id0);
+    chip_unipro_recv_cport(&mbox);
     wait_for_mailbox_ack(c->cport_id0 + 1, 0);
 
     write_mailbox(c->cport_id1 + 1);
