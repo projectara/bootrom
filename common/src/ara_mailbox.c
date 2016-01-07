@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 #include <errno.h>
 #include "bootrom.h"
 #include "chipapi.h"
@@ -37,6 +38,19 @@
 #include "unipro.h"
 #include "greybus.h"
 #include "utils.h"
+
+bool is_mailbox_irq_pending(void) {
+    int rc;
+    uint32_t irq_status;
+
+    rc = chip_unipro_attr_read(ARA_INTERRUPTSTATUS, &irq_status, 0,
+                               ATTR_LOCAL);
+    if (rc) {
+        dbgprint("XX\n");
+        return false;
+    }
+    return (0 != (irq_status & ARA_INTERRUPTSTATUS_MAILBOX));
+}
 
 /**
  * @brief Synchronously read from our local mailbox.

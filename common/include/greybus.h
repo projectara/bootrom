@@ -84,4 +84,32 @@ int greybus_send_request(uint32_t cport,
 
 bool manifest_fetched_by_ap(void);
 
+/**
+ * @brief handler for greybus operation
+ * @param cportid CPort ID
+ * @param op_header pointer to the operation header (payload of the
+ *                  operation is right after the header
+ * @return 0 success, but keep in the unipro loop
+ *         >0 success and breakout of the unipro loop
+ *         <0 error
+ */
+typedef int (*greybus_op_handler_func)(uint32_t cportid,
+                                       gb_operation_header *op_header);
+
+#define HANDLER_TABLE_END 0xFFFF
+typedef struct {
+    /**
+     * Greybus operation type is uint8_t.
+     * Use HANDLER_TABLE_END here to indicate end of table
+     */
+    uint16_t type;
+    greybus_op_handler_func handler;
+} greybus_op_handler;
+
+
+int greybus_init(void);
+void greybus_register_handlers(uint32_t cportid,
+                               greybus_op_handler *handlers);
+int greybus_loop(void);
+
 #endif /* __COMMON_INCLUDE_GREYBUS_H */

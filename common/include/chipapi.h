@@ -114,7 +114,14 @@ int chip_unipro_send(unsigned int cportid, const void *buf, size_t len);
  * @param cportid cport which received data
  * @param data pointer to the data buffer
  * @param len number of bytes of data received
- * @return 0 on success, <0 on error
+ * @return 0 success, but keep in the unipro loop
+ *         >0 success and breakout of the unipro loop
+ *         <0 error
+ * @NOTE: The unipro stack would be in a loop to monitor all cports in use.
+ *        If extra handling needed, such as handling received data, or jump
+ *        to loaded image, the "breakout" would indicate that and the code
+ *        will break out of the loop. If more unipro transaction is expected,
+ *        the code will enter the loop again after handling the data.
  */
 typedef int (*unipro_rx_handler)(uint32_t cportid,
                                  void *data,
@@ -124,8 +131,26 @@ typedef int (*unipro_rx_handler)(uint32_t cportid,
  * @brief wait for data from a cport
  * @param cportid cport for the rx
  * @param handler rx handler callback, called before RX is restarted
+ * @param blocking indicates if the call should block until something received
+ *                 on this cport
+ * @return 0 success, but keep in the unipro loop
+ *         >0 success and breakout of the unipro loop
+ *         <0 error
+ * @NOTE: chip_unipro_receive should not be blocking
  */
-int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler);
+int chip_unipro_receive(unsigned int cportid,
+                        unipro_rx_handler handler,
+                        bool blocking);
+
+static inline int unipro_receive(unsigned int cportid,
+                                 unipro_rx_handler handler) {
+    return chip_unipro_receive(cportid, handler, false);
+}
+
+static inline int unipro_receive_blocking(unsigned int cportid,
+                                 unipro_rx_handler handler) {
+    return chip_unipro_receive(cportid, handler, true);
+}
 
 /**
  * @brief advertise the boot status to the switch

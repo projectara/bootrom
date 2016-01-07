@@ -248,8 +248,11 @@ int chip_unipro_send(unsigned int cportid, const void *buf, size_t len) {
     return 0;
 }
 
-int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
+int chip_unipro_receive(unsigned int cportid,
+                        unipro_rx_handler handler,
+                        bool blocking) {
     uint32_t bytes_received;
+    int rc = 0;
     struct cport *cport;
 
     uint32_t eom_nom_bit;
@@ -264,7 +267,7 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
         return -1;
     }
 
-    while(1) {
+    do {
         eom = tsb_unipro_read(AHM_RX_EOM_INT_BEF_0);
         eot = tsb_unipro_read(AHM_RX_EOT_INT_BEF_0);
 
@@ -286,16 +289,13 @@ int chip_unipro_receive(unsigned int cportid, unipro_rx_handler handler) {
             tsb_unipro_write(AHM_RX_EOM_INT_BEF_0, eom_nom_bit);
 
             if (handler != NULL) {
-                if(0 != handler(cportid,
-                                cport->rx_buf,
-                                bytes_received)) {
-                    dbgprint("Rx handler err\n");
-                    return -1;
-                }
+                rc = handler(cportid,
+                             cport->rx_buf,
+                             bytes_received);
             }
             tsb_unipro_restart_rx(cport);
-            return 0;
+            return rc;
         }
-    }
-    return 0;
+    } while(blocking);
+    return rc;
 }

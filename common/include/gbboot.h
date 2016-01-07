@@ -32,8 +32,6 @@
 #ifndef __COMMON_INCLUDE_GBFIRMWARE_H
 #define __COMMON_INCLUDE_GBFIRMWARE_H
 
-extern uint32_t gbboot_cportid;
-
 /* Greybus FirmWare request types */
 #define GB_BOOT_OP_INVALID            0x00
 #define GB_BOOT_OP_PROTOCOL_VERSION   0x01
@@ -84,8 +82,5 @@ struct __attribute__ ((__packed__)) gbboot_firmware_get_vid_pid {
   uint32_t vendor;
   uint32_t product;
 };
-
-int greybus_cport_connect(void);
-int greybus_cport_disconnect(void);
 
 #endif

@@ -29,6 +29,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+#include "appcfg.h"
 #include "bootrom.h"
 #include "chipapi.h"
 #include "chipdef.h"
@@ -44,6 +45,8 @@
 #if (GB_MAX_PAYLOAD_SIZE > CPORT_RX_BUF_SIZE)
     #error "Greybus maximal payload must be smaller than CPort RX buffer"
 #endif
+
+static uint32_t gbboot_cportid = GBBOOT_CPORT;
 
 /* We are receiving a firmware package in TFTF format, and not a raw firmware
  * binary
@@ -71,7 +74,13 @@ static int gbboot_get_vid_pid(uint32_t cportid, gb_operation_header *header) {
 }
 
 static int gbboot_ap_ready(uint32_t cportid, gb_operation_header *header) {
-    return greybus_op_response(cportid, header, GB_OP_SUCCESS, NULL, 0);
+    int rc;
+    rc = greybus_op_response(cportid, header, GB_OP_SUCCESS, NULL, 0);
+    if (rc) {
+        return rc;
+    }
+    /* return >0 to break out from greybus loop */
+    return 1;
 }
 
 static struct gbboot_firmware_size_response firmware_size_response;
@@ -85,7 +94,8 @@ static int gbboot_firmware_size(uint8_t stage, uint32_t *size) {
         return rc;
     }
 
-    rc = chip_unipro_receive(gbboot_cportid, fw_cport_handler);
+    /* following loop breaks out after getting the firmware_size_response */
+    rc = greybus_loop();
     if (rc) {
         return rc;
     }
@@ -96,12 +106,17 @@ static int gbboot_firmware_size(uint8_t stage, uint32_t *size) {
 
 static int gbboot_firmware_size_response(gb_operation_header *head, void *data,
                                        uint32_t len) {
+    if (head->status) {
+        dbgprint("gbboot_firmware_size_response(): err status\n");
+        return -head->status;
+    }
     if(len < sizeof(struct gbboot_firmware_size_response)) {
         dbgprint("gbboot_firmware_size_response: bad resp. size\n");
         return GB_BOOT_ERR_INVALID;
     }
     memcpy(&firmware_size_response, data, sizeof(firmware_size_response));
-    return 0;
+    /* return >0 to break out from greybus loop */
+    return 1;
 }
 
 static struct fw_get_firmware_buff {
@@ -127,7 +142,8 @@ static int gbboot_get_firmware(uint32_t offset, uint32_t size, void *data,
     fw_get_firmware_buff.buffer = data;
     fw_get_firmware_buff.size   = size;
 
-    rc = chip_unipro_receive(gbboot_cportid, fw_cport_handler);
+    /* following loop breaks out after getting the firmware_response */
+    rc = greybus_loop();
     if (rc) {
         dbgprintx32("FW receive failed: -", -rc, "\n");
         return rc;
@@ -142,17 +158,18 @@ static int gbboot_get_firmware(uint32_t offset, uint32_t size, void *data,
 
 static int gbboot_get_firmware_response(gb_operation_header *header, void *data,
                                       uint32_t len) {
+    if (header->status) {
+        dbgprint("gbboot_get_firmware_response(): err status\n");
+        return -header->status;
+    }
     if (header->size - sizeof(gb_operation_header) != len ||
         len != fw_get_firmware_buff.size) {
         dbgprint("gbboot_get_firmware_response(): wrong response size\n");
         return GB_BOOT_ERR_INVALID;
     }
-    if (header->status) {
-        dbgprint("gbboot_get_firmware_response(): err status\n");
-        return -header->status;
-    }
     memcpy(fw_get_firmware_buff.buffer, data, fw_get_firmware_buff.size);
-    return 0;
+    /* return >0 to break out from greybus loop */
+    return 1;
 }
 
 static int gbboot_ready_to_boot(uint8_t status) {
@@ -164,7 +181,8 @@ static int gbboot_ready_to_boot(uint8_t status) {
         return rc;
     }
 
-    rc = chip_unipro_receive(gbboot_cportid, fw_cport_handler);
+    /* following loop breaks out after getting the ready_to_boot_response */
+    rc = greybus_loop();
     if (rc) {
         return rc;
     }
@@ -178,172 +196,80 @@ static int gbboot_ready_to_boot_response(gb_operation_header *header, void *data
         dbgprint("gbboot_ready_to_boot_response(): err status\n");
         return -header->status;
     }
-    return 0;
+    /* return >0 to break out from greybus loop */
+    return 1;
 }
 
-int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
-    int rc = 0;
-    if (cportid != gbboot_cportid) {
-        dbgprint("fw_cport_handler: wrong CPort #");
-        return GB_BOOT_ERR_INVALID;
-    }
-    if (len < sizeof(gb_operation_header)) {
-        dbgprint("fw_cport_handler: RX data length err\n");
-        return GB_BOOT_ERR_INVALID;
-    }
+static int firmware_size_response_handler(uint32_t cportid,
+                                          gb_operation_header *op_header) {
+    void *data;
+    size_t len;
 
-    gb_operation_header *op_header = (gb_operation_header *)data;
-    if(op_header->size < len) {
-        dbgprint("fw_cport_handler: nonsense msg\n");
-        return GB_BOOT_ERR_INVALID;
-    }
-    if (op_header->type & GB_TYPE_RESPONSE && op_header->status) {
-        dbgprintx32("fw_cport_handler: Greybus response, status 0x",
-                   op_header->status, "\n");
-        return GB_BOOT_ERR_FAILURE;
-    }
-    /*
-     * This works here because we're actually calling this handler
-     * synchronously.  We set the constant and return to the recipient rather
-     * than setting the constant in parallel with the recipient.
-     */
+    data = (void *)(((uint8_t *)op_header) + sizeof(gb_operation_header));
+    len = op_header->size - sizeof(gb_operation_header);
     responded_op = op_header->type;
-    data += sizeof(gb_operation_header);
-    len -= sizeof(gb_operation_header);
-    switch (op_header->type) {
-    case GB_BOOT_OP_PROTOCOL_VERSION:
-        rc = gbboot_get_version(cportid, op_header);
-        break;
-    case GB_BOOT_OP_FIRMWARE_SIZE | GB_TYPE_RESPONSE:
-        rc = gbboot_firmware_size_response(op_header, data, len);
-        break;
-    case GB_BOOT_OP_GET_FIRMWARE | GB_TYPE_RESPONSE:
-        rc = gbboot_get_firmware_response(op_header, data, len);
-        break;
-    case GB_BOOT_OP_READY_TO_BOOT | GB_TYPE_RESPONSE:
-        rc = gbboot_ready_to_boot_response(op_header, data, len);
-        break;
-    case GB_BOOT_OP_AP_READY:
-        rc = gbboot_ap_ready(cportid, op_header);
-        break;
-    case GB_BOOT_OP_GET_VID_PID:
-        rc = gbboot_get_vid_pid(cportid, op_header);
-        break;
-    default:
-        responded_op = GB_BOOT_OP_INVALID;
-        break;
-    }
-
-    if (rc) {
-        responded_op = GB_BOOT_OP_INVALID;
-    }
-
-    return rc;
+    return gbboot_firmware_size_response(op_header, data, len);
 }
 
-static int cport_connected = 0, offset = -1;
+static int get_firmware_response_handler(uint32_t cportid,
+                                         gb_operation_header *op_header) {
+    void *data;
+    size_t len;
+
+    data = (void *)(((uint8_t *)op_header) + sizeof(gb_operation_header));
+    len = op_header->size - sizeof(gb_operation_header);
+    responded_op = op_header->type;
+    return gbboot_get_firmware_response(op_header, data, len);
+}
+
+static int ready_to_boot_response_handler(uint32_t cportid,
+                                          gb_operation_header *op_header) {
+    void *data;
+    size_t len;
+
+    data = (void *)(((uint8_t *)op_header) + sizeof(gb_operation_header));
+    len = op_header->size - sizeof(gb_operation_header);
+    responded_op = op_header->type;
+    return gbboot_ready_to_boot_response(op_header, data, len);
+}
+
+static greybus_op_handler gbboot_cport_handlers[] = {
+    {GB_BOOT_OP_PROTOCOL_VERSION, gbboot_get_version},
+    {GB_BOOT_OP_FIRMWARE_SIZE | GB_TYPE_RESPONSE,
+        firmware_size_response_handler},
+    {GB_BOOT_OP_GET_FIRMWARE | GB_TYPE_RESPONSE,
+        get_firmware_response_handler},
+    {GB_BOOT_OP_READY_TO_BOOT | GB_TYPE_RESPONSE,
+        ready_to_boot_response_handler},
+    {GB_BOOT_OP_AP_READY,gbboot_ap_ready},
+    {GB_BOOT_OP_GET_VID_PID, gbboot_get_vid_pid},
+    {HANDLER_TABLE_END, NULL}
+};
+
+static int offset = -1;
 static uint32_t firmware_size = 0;
-int greybus_cport_connect(void) {
-    if (cport_connected == 1) {
-        /* Don't know what to do if it is already connected */
-        return GB_BOOT_ERR_INVALID;
-    }
-
-    offset = 0;
-    cport_connected = 1;
-    return 0;
-}
-
-int greybus_cport_disconnect(void) {
-    if (cport_connected == 0) {
-        return -EINVAL;
-    }
-    return 0;
-}
-
 
 static int data_load_greybus_init(void) {
     int rc;
-    uint32_t retries = CPORT_POLLING_TIMEOUT;
-    uint32_t mbox;
 
-    rc = chip_unipro_init_cport(CONTROL_CPORT);
+    offset = 0;
+    rc = greybus_init();
     if (rc) {
         set_last_error(BRE_BOU_GBCTRL_CPORT);
         return rc;
     }
 
-    rc = chip_unipro_recv_cport(&mbox);
-    if (rc) {
-        set_last_error(BRE_BOU_GBCTRL_CPORT);
-        return rc;
-    }
-
-    /* poll until data cport connected */
-    while (!manifest_fetched_by_ap() && retries-- > 0) {
-        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
-        if (rc == GB_BOOT_ERR_INVALID) {
-            dbgprint("Greybus init failed\n");
-        }
-        if (rc) {
-            set_last_error(BRE_BOU_GBCTRL_CONNECTED);
-            goto protocol_error;
-        }
-    }
-    if (!manifest_fetched_by_ap()) {
-        dbgprint("Greybus Control CPort timeout\n");
-        set_last_error(BRE_BOU_GBCTRL_TIMEOUT);
-        return -ETIMEDOUT;
-    }
-
-    rc = chip_unipro_init_cport(gbboot_cportid);
+    greybus_register_handlers(1, gbboot_cport_handlers);
+    rc = greybus_loop();
     if (rc) {
         set_last_error(BRE_BOU_GBBOOT_CPORT);
         return rc;
     }
 
-    rc = chip_unipro_recv_cport(&mbox);
-    if (rc) {
-        set_last_error(BRE_BOU_GBBOOT_CPORT);
-        return rc;
-    }
-
-    retries = CPORT_POLLING_TIMEOUT;
-    while (cport_connected == 0 && retries-- > 0) {
-        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
-        if (rc == GB_BOOT_ERR_INVALID) {
-            dbgprint("Greybus init failed\n");
-        }
-        if (rc) {
-            set_last_error(BRE_BOU_GBBOOT_CONNECTED);
-            goto protocol_error;
-        }
-    }
-    if (!cport_connected) {
-        dbgprint("Greybus Control CPort timeout\n");
-        set_last_error(BRE_BOU_GBBOOT_TIMEOUT);
-        return -ETIMEDOUT;
-    }
-
-    retries = CPORT_POLLING_TIMEOUT;
-    /* Spin until the AP asks for our protocol version. */
-    while(responded_op != GB_BOOT_OP_AP_READY && retries-- > 0) {
-        rc = chip_unipro_receive(gbboot_cportid, fw_cport_handler);
-        if (rc) {
-            dbgprint("Greybus FW CPort handler failed\n");
-            set_last_error(BRE_BOU_GBBOOT_RECV);
-            goto protocol_error;
-        }
-    }
-    if(responded_op != GB_BOOT_OP_AP_READY) {
-        dbgprint("Greybus FW CPort timeout\n");
-        set_last_error(BRE_BOU_GBBOOT_AP_READY_TIMEOUT);
-        return -ETIMEDOUT;
-    }
-
-    dbgprint("Beginning Greybus FW download\n");
-
-    /* Fetch the firmware size. */
+    /**
+     * Above loop would break out after AP_READY
+     * Fetch the firmware size.
+     */
     rc = gbboot_firmware_size(NEXT_BOOT_STAGE, &firmware_size);
     if (rc) {
         set_last_error(BRE_BOU_GBBOOT_FW_SIZE);
@@ -358,7 +284,6 @@ static int data_load_greybus_init(void) {
     return 0;
 
 protocol_error:
-    cport_connected = 0;
     return rc;
 }
 
@@ -366,7 +291,7 @@ static int data_load_greybus_load(void *dest, uint32_t length, bool hash) {
     int rc;
     uint32_t blk_len, prev_len = 0;
     void *prev = NULL;
-    if (cport_connected != 1 || offset + length > firmware_size) {
+    if (offset + length > firmware_size) {
         return GB_BOOT_ERR_INVALID;
     }
 
@@ -417,7 +342,6 @@ static int data_load_greybus_finish(bool valid, bool is_secure_image) {
     dbgprint("Finished Greybus FW download\n");
 
     firmware_size = offset = -1;
-    cport_connected = 0;
     return rc;
 }
 

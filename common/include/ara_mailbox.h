@@ -51,4 +51,9 @@ int write_mailbox(uint32_t val);
  */
 int advertise_ready(void);
 
+/**
+ * @brief return if there is mailbox irq pending
+ */
+bool is_mailbox_irq_pending(void);
+
 #endif /* __COMMON_INCLUDE_ARA_MAILBOX_H */

@@ -29,13 +29,14 @@
 #include <stddef.h>
 #include <string.h>
 #include "appcfg.h"
+#include "chipcfg.h"
 #include "bootrom.h"
 #include "chipapi.h"
 #include "debug.h"
 #include "greybus.h"
 #include "gbboot.h"
+#include "ara_mailbox.h"
 
-uint32_t gbboot_cportid = GBBOOT_CPORT;
 
 extern unsigned char manifest_mnfb[];
 extern unsigned int manifest_mnfb_len;
@@ -154,7 +155,6 @@ static int gbctrl_get_manifest(uint32_t cportid,
 
 static int gbctrl_connected(uint32_t cportid,
                           gb_operation_header *op_header) {
-    int rc;
     uint16_t *payload = (uint16_t *)(op_header + 1);
 
     if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload)) {
@@ -166,15 +166,8 @@ static int gbctrl_connected(uint32_t cportid,
         return -1;
     }
 
-    rc = greybus_cport_connect();
-    if (rc != 0 || *payload != gbboot_cportid) {
-        greybus_op_response(cportid,
-                            op_header,
-                            GB_OP_UNKNOWN_ERROR,
-                            NULL,
-                            0);
-        return -1;
-    }
+    chip_unipro_init_cport(*payload);
+
     return greybus_op_response(cportid,
                                op_header,
                                GB_OP_SUCCESS,
@@ -184,11 +177,9 @@ static int gbctrl_connected(uint32_t cportid,
 
 static int gbctrl_disconnected(uint32_t cportid,
                              gb_operation_header *op_header) {
-    int rc;
     uint16_t *payload = (uint16_t *)(op_header + 1);
 
-    if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload) ||
-        *payload != gbboot_cportid) {
+    if (op_header->size != sizeof(gb_operation_header) + sizeof(*payload)) {
         greybus_op_response(cportid,
                             op_header,
                             GB_OP_INVALID,
@@ -197,15 +188,6 @@ static int gbctrl_disconnected(uint32_t cportid,
         return -1;
     }
 
-    rc = greybus_cport_disconnect();
-    if (rc != 0) {
-        greybus_op_response(cportid,
-                            op_header,
-                            GB_OP_UNKNOWN_ERROR,
-                            NULL,
-                            0);
-        return -1;
-    }
     return greybus_op_response(cportid,
                                op_header,
                                GB_OP_SUCCESS,
@@ -213,47 +195,97 @@ static int gbctrl_disconnected(uint32_t cportid,
                                0);
 }
 
-int control_cport_handler(uint32_t cportid,
-                          void *data,
-                          size_t len)
+static greybus_op_handler *handler_table[CPORT_MAX];
+
+int common_cport_handler(uint32_t cportid,
+                         void *data,
+                         size_t len)
 {
     int rc = 0;
+    int i;
 
-    /* If the message is longer than the buffer, it will have been rejected by the Rx function
-     * If the message is shorter than the buffer but longer than the specific message type,
-     * the remainder of the buffer is silently and benignly ignored.
+    /* If the message is longer than the buffer, it will have been rejected
+     * by the Rx function.
+     * If the message is shorter than the buffer but longer than the specific
+     * message type, the remainder of the buffer is silently and benignly
+     * ignored.
      * */
     if (len < sizeof(gb_operation_header)) {
-        dbgprint("control_cport_handler: RX data length error\r\n");
+        dbgprintx32("cport ", cportid, " RX data length error\r\n");
         return -1;
     }
 
     gb_operation_header *op_header = (gb_operation_header *)data;
 
-    switch (op_header->type) {
-    case GB_CTRL_OP_VERSION:
-        rc = gbctrl_get_version(cportid, op_header);
-        break;
-    case GB_CTRL_OP_PROBE_AP:
-        rc = gbctrl_probe_ap(cportid, op_header);
-        break;
-    case GB_CTRL_OP_GET_MANIFEST_SIZE:
-        rc = gbctrl_get_manifest_size(cportid, op_header);
-        break;
-    case GB_CTRL_OP_GET_MANIFEST:
-        rc = gbctrl_get_manifest(cportid, op_header);
-        break;
-    case GB_CTRL_OP_CONNECTED:
-        rc = gbctrl_connected(cportid, op_header);
-        break;
-    case GB_CTRL_OP_DISCONNECTED:
-        rc = gbctrl_disconnected(cportid, op_header);
-        break;
-    default:
-        /* treat unknown operations as error */
-        rc = -1;
-        break;
+    greybus_op_handler_func handler = NULL;
+    i = 0;
+    while (handler_table[cportid] != NULL &&
+           handler_table[cportid][i].type != HANDLER_TABLE_END) {
+        if (handler_table[cportid][i].type == op_header->type) {
+            handler = handler_table[cportid][i].handler;
+            break;
+        }
+        i++;
     }
 
+    if (handler == NULL) {
+        dbgprint("Failed to find greybus operation handler\n");
+        /* treat unknown operations as error */
+        return -1;
+    }
+
+    rc = handler(cportid, op_header);
     return rc;
+}
+
+static greybus_op_handler control_cport_handlers[] = {
+    {GB_CTRL_OP_VERSION, gbctrl_get_version},
+    {GB_CTRL_OP_PROBE_AP, gbctrl_probe_ap},
+    {GB_CTRL_OP_GET_MANIFEST_SIZE, gbctrl_get_manifest_size},
+    {GB_CTRL_OP_GET_MANIFEST, gbctrl_get_manifest},
+    {GB_CTRL_OP_CONNECTED, gbctrl_connected},
+    {GB_CTRL_OP_DISCONNECTED, gbctrl_disconnected},
+    {HANDLER_TABLE_END, NULL}
+};
+
+void greybus_register_handlers(uint32_t cportid,
+                               greybus_op_handler *handlers) {
+    handler_table[cportid] = handlers;
+}
+
+int greybus_init(void) {
+    int i;
+    int rc;
+
+    for (i = 0; i < CPORT_MAX; i++) {
+        handler_table[i] = NULL;
+    }
+
+    rc = chip_unipro_init_cport(CONTROL_CPORT);
+    greybus_register_handlers(CONTROL_CPORT, control_cport_handlers);
+    return rc;
+}
+
+int greybus_loop(void) {
+    int rc;
+    uint32_t cportid;
+    uint32_t mbox;
+
+    while(1) {
+        if (is_mailbox_irq_pending()) {
+            chip_unipro_recv_cport(&mbox);
+        }
+        for (cportid = 0; cportid < CPORT_MAX; cportid++) {
+            if (handler_table[cportid]) {
+                rc = unipro_receive(cportid, common_cport_handler);
+                if (rc < 0) {
+                    return -1;
+                }
+                if (rc > 0) {
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
 }

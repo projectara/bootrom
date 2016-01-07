@@ -163,35 +163,35 @@ static int gb_control(void) {
                          GB_CTRL_OP_VERSION,
                          ver,
                          2);
-    chip_unipro_receive(CONTROL_CPORT, server_control_cport_handler);
+    unipro_receive_blocking(CONTROL_CPORT, server_control_cport_handler);
     greybus_send_request(CONTROL_CPORT,
                          1,
                          GB_CTRL_OP_PROBE_AP,
                          ver,
                          2);
-    chip_unipro_receive(CONTROL_CPORT, server_control_cport_handler);
+    unipro_receive_blocking(CONTROL_CPORT, server_control_cport_handler);
     greybus_send_request(CONTROL_CPORT,
                          1,
                          GB_CTRL_OP_GET_MANIFEST_SIZE,
                          NULL,
                          0);
-    chip_unipro_receive(CONTROL_CPORT, server_control_cport_handler);
+    unipro_receive_blocking(CONTROL_CPORT, server_control_cport_handler);
     greybus_send_request(CONTROL_CPORT,
                          1,
                          GB_CTRL_OP_GET_MANIFEST,
                          NULL,
                          0);
-    chip_unipro_receive(CONTROL_CPORT, server_control_cport_handler);
+    unipro_receive_blocking(CONTROL_CPORT, server_control_cport_handler);
     struct unipro_connection *c = &conn[1];
     uint16_t to_connect = c->cport_id1;
+    create_connection(c);
     greybus_send_request(CONTROL_CPORT,
                          1,
                          GB_CTRL_OP_CONNECTED,
                          (unsigned char *)&to_connect,
                          sizeof(to_connect));
 
-    create_connection(c);
-    chip_unipro_receive(CONTROL_CPORT, server_control_cport_handler);
+    unipro_receive_blocking(CONTROL_CPORT, server_control_cport_handler);
     return 0;
 }
 
@@ -313,16 +313,16 @@ static int gbboot_process(void) {
                          GB_BOOT_OP_PROTOCOL_VERSION,
                          ver,
                          2);
-    chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
+    unipro_receive_blocking(gbboot_CPORT, gbboot_cport_handler);
     greybus_send_request(gbboot_CPORT,
                          1,
                          GB_BOOT_OP_AP_READY,
                          NULL,
                          0);
-    chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
+    unipro_receive_blocking(gbboot_CPORT, gbboot_cport_handler);
     image_download_finished = false;
     while (!image_download_finished) {
-        chip_unipro_receive(gbboot_CPORT, gbboot_cport_handler);
+        unipro_receive_blocking(gbboot_CPORT, gbboot_cport_handler);
     }
     return 0;
 }
