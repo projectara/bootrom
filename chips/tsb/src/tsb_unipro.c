@@ -272,7 +272,7 @@ int chip_unipro_receive(unsigned int cportid,
         eot = tsb_unipro_read(AHM_RX_EOT_INT_BEF_0);
 
         eom_nom_bit = (0x01 << (cportid << 1));
-        eom_err_bit = (0x10 << (cportid << 1));
+        eom_err_bit = (0x02 << (cportid << 1));
         eot_bit = (1 << cportid);
 
         if ((eom & eom_err_bit) != 0) {
