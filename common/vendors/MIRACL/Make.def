@@ -30,16 +30,43 @@ MIRACL_DIR=$(TOPDIR)/common/vendors/MIRACL/ara
 MIRACL_INCDIR=$(MIRACL_DIR)/include
 MIRACL_OUTDIR=$(TOPDIR)/$(OUTROOT)/MIRACL
 
-LIBMCLCORE=$(MIRACL_OUTDIR)/lib/libmclcore.a
-LIBMCLCURVE=$(MIRACL_OUTDIR)/lib/libmclcurveEC.a
-
-MIRACL_LIBS=$(LIBMCLCORE) $(LIBMCLCURVE)
-
 include $(APP_MCL_CONFIG_DIR)/defconfig
 include $(APP_MCL_CONFIG_DIR)/config.mk
 
-MIRACL_CFLAGS = -D MCL_BUILD_ARM -D MCL_CHUNK=$(MCL_CHUNK) -D MCL_CHOICE=$(MCL_CHOICE) \
-         -D MCL_CURVETYPE=$(MCL_CURVETYPE) -D MCL_FFLEN=$(MCL_FFLEN)
+MCL_CHOICE1:=$(MCL_$(DREC1))
+MCL_CHOICE2:=$(MCL_$(DREC2))
+
+# Associate the DRRSA with the curve for libmclcurve building
+# to simplify the build script below
+DRRSA_$(DREC1)=$(DRRSA1)
+DRRSA_$(DREC2)=$(DRRSA2)
+
+include $(MIRACL_DIR)/DecoratorRuntime.mk
+
+# extra functions that need the decorator
+DRFLAGS += -D MCL_FF_fromOctet=MCL_FF_fromOctet_$(DREC1)
+DRFLAGS += -D MCL_FF_toOctet=MCL_FF_toOctet_$(DREC1)
+DRFLAGS += -D MCL_FF_inc=MCL_FF_inc_$(DREC1)
+DRFLAGS += -D MCL_FF_mul=MCL_FF_mul_$(DREC1)
+
+LIBMCLCORE=$(MIRACL_OUTDIR)/lib/libmclcore.a
+LIBMCLCURVE1=$(MIRACL_OUTDIR)/$(DREC1)/lib/libmclcurve$(DREC1).a
+LIBMCLCURVE2=$(MIRACL_OUTDIR)/$(DREC2)/lib/libmclcurve$(DREC2).a
+
+MIRACL_LIBS=$(LIBMCLCURVE1) $(LIBMCLCURVE2) $(LIBMCLCORE)
+
+MIRACL_CFLAGS = -D MCL_BUILD_ARM -D MCL_CHUNK=$(MCL_CHUNK) \
+                -D MCL_CHOICE1=$(MCL_CHOICE1) -D MCL_FFLEN1=$(MCL_FFLEN) \
+                -D MCL_CHOICE2=$(MCL_CHOICE2) -D MCL_FFLEN2=$(MCL_FFLEN) \
+                -D MCL_FFLEN3=$(MCL_FFLEN) -D MCL_FFLEN=$(MCL_FFLEN) \
+                $(DRFLAGS)
+
+$(MIRACL_OUTDIR)/$(DREC1)/lib/libmclcurve%.a $(MIRACL_OUTDIR)/$(DREC2)/lib/libmclcurve%.a:
+	@ echo Building $@
+	$(Q) MCL_CONFIG_DIR=$(APP_MCL_CONFIG_DIR) \
+    MIRACL_OUTROOT=$(MIRACL_OUTDIR)/$* \
+	make CONFIG_DECORATOR=y DREC=$* DRRSA=$(DRRSA_$*) \
+        MCL_CHOICE=$(MCL_$*) $@ -C $(MIRACL_DIR)
 
 $(MIRACL_OUTDIR)/lib/%.a:
 	@ echo Building $@
