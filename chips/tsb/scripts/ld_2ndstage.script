@@ -30,7 +30,13 @@ _reserved_data_size = 24k;
 _config_data_size = 4k;
 _stage2_config = _workram_end - _reserved_data_size;
 _bootrom_data_area = _workram_end - _reserved_data_size + _config_data_size;
-_bootrom_text_area = ((_stage2_config - _text_size) & 0xfffffffc);
+/**
+ * add a 32byte gap between .text and config data.
+ * Theoretically a 4byte gap should be good enough. But for some reason, if
+ * I only do -4 here, although _bootrom_text_area gets calculated correctly,
+ * .text is still placed at the address without the 4byte gap. Not sure why yet.
+ */
+_bootrom_text_area = ((_stage2_config - _text_size) & 0xfffffffc) - 32;
 
 /**
  * NOTE: _communication_area_size must match COMMUNICATION_AREA_LENGTH in

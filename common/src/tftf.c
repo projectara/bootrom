@@ -471,7 +471,7 @@ bool valid_tftf_section(tftf_section_descriptor * section,
         other_section_end = other_section_start +
                             other_section->section_expanded_length;
         if ((other_section->section_type != TFTF_SECTION_END) &&
-            (!((other_section_end < section_start) ||
+            (!((other_section_end <= section_start) ||
             (other_section_start >= section_end)))) {
             set_last_error(BRE_TFTF_COLLISION);
             return false;
