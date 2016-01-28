@@ -167,7 +167,7 @@ distclean: clean
 
 second_stage:
 	@ echo "Building for second stage boot loader"
-	$(Q) VERBOSE=$(VERBOSE) APPLICATION=secondstage make --no-print-directory
+	$(Q) VERBOSE=$(VERBOSE) APPLICATION=secondstage make $(ELF) --no-print-directory
 
 third_stage:
 	@ echo "Building for third stage boot firmware"

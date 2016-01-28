@@ -62,7 +62,7 @@ SECTIONS
 		*(.gnu.linkonce.t.*)
 		*(.gnu.linkonce.r.*)
 		_etext = ABSOLUTE(.);
-	} > REGION_TEXT AT > rom
+	} > REGION_TEXT
 
 	_stext_lma = LOADADDR(.text);
 	_text_size = SIZEOF(.text);
@@ -72,7 +72,7 @@ SECTIONS
 		*(.data .data.*)
 		*(.gnu.linkonce.d.*)
 		_edata = ALIGN(4);
-	} > sram AT > rom
+	} > sram
 
 	_data_in_rom = LOADADDR(.data);
 
