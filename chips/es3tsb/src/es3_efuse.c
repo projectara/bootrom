@@ -45,7 +45,7 @@
 #include "unipro.h"
 #include "efuse.h"
 #include "crypto.h"
-
+#include "secret_keys.h"
 
 /* Mask values used by "count_ones" */
 #define MASK8_1S    ((uint8_t)0x55) /* binary: 0101... */
@@ -58,26 +58,12 @@
 #define MASK32_8S   ((uint32_t)0x00ff00ff) /* binary:  8 zeros,  8 ones ... */
 #define MASK32_16S  ((uint32_t)0x0000ffff) /* binary:  16 zeros, 16 ones ... */
 
-
-union large_uint {
-  struct {
-    uint32_t low;
-    uint32_t high;
-  };
-  uint64_t quad;
-};
-
-static uint8_t          ims_value[TSB_ISAA_NUM_IMS_BYTES];
-
 /* IMS is 35 bytes long, but boot ROM only cares about the first 32 bytes */
 #define IMS_MEANINGFUL_LENGTH  32
 
 /* Prototypes */
 static int count_ones(uint8_t *buf, int len);
-static bool valid_hamming_weight(uint8_t *buf, int len);
-static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val);
-static bool get_endpoint_id(union large_uint * endpoint_id);
-
+static bool valid_hamming_weight(uint8_t *buf, int leni, bool *all_zero);
 
 /**
  * @brief Valdate and publish the e-Fuses as DME attributes
@@ -91,7 +77,8 @@ int efuse_init(void) {
     uint32_t    register_val;
     uint32_t    urc;
     union large_uint endpoint_id;
-
+    uint8_t     ims_value[TSB_ISAA_NUM_IMS_BYTES];
+    bool all_zero;
 
     /* Check for e­-Fuse CRC error
      * See ARA_ESx_APBridge_RegisterMap_revxxx.pdf
@@ -123,14 +110,18 @@ int efuse_init(void) {
      * TA-03 Set e-Fuse data as SN, PID, VID, CMS, SCR, IMS and read...
      */
     ara_vid = tsb_get_ara_vid();
-    if (!valid_hamming_weight((uint8_t *)&ara_vid, sizeof(ara_vid))) {
+    if (!valid_hamming_weight((uint8_t *)&ara_vid,
+                              sizeof(ara_vid),
+                              &all_zero)) {
         dbgprintx32("Bad Ara VID: ", ara_vid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_VID);
         return -1;
     }
 
     ara_pid = tsb_get_ara_pid();
-    if (!valid_hamming_weight((uint8_t *)&ara_pid, sizeof(ara_pid))) {
+    if (!valid_hamming_weight((uint8_t *)&ara_pid,
+                              sizeof(ara_pid),
+                              &all_zero)) {
         dbgprintx32("Bad Ara PID: ", ara_pid, "\n");
         set_last_error(BRE_EFUSE_BAD_ARA_PID);
         return -1;
@@ -139,17 +130,25 @@ int efuse_init(void) {
     /* Extract Internal Master Secret (IMS) from e­-Fuse, and if it is
      * non-zero, compute the Endpoint Unique ID
      */
-    if (!get_endpoint_id(&endpoint_id)) {
-        /*
-         * Note that we get false returned if there was a bad IMS or if there
-         * was no IMS from which to calculate a Unique Endpoint ID. Since
-         * get_endpoint_id sets last error if it was a bad IMS, we use that
-         * to differentiate between a benign omission and an error.
-         */
-        if (get_last_error() != BRE_OK) {
-            return -1;
-        }
-    } else {
+    tsb_get_ims(ims_value, IMS_MEANINGFUL_LENGTH);
+
+    if (!valid_hamming_weight((uint8_t *)ims_value,
+                              IMS_MEANINGFUL_LENGTH,
+                              &all_zero)) {
+        dbgprint("Bad IMS\n");
+        set_last_error(BRE_EFUSE_BAD_IMS);
+        return -1;
+    }
+
+    if (!all_zero) {
+#ifdef _NOCRYPTO
+        /* Some fake value for simulation build */
+        endpoint_id->low = 0x12345678;
+        endpoint_id->high = 0x9ABCDEF0;
+#else
+        /* Calculate a real value from the IMS */
+        calculate_es3_epuid(ims_value, &endpoint_id);
+#endif
         dbgprintx64("Endpoint ID: ", endpoint_id.quad, "\n");
         urc = chip_unipro_attr_write(DME_ARA_ENDPOINTID_L, endpoint_id.low, 0,
                                 ATTR_LOCAL);
@@ -254,121 +253,19 @@ static int count_ones(uint8_t *buf, int len)
  *
  * @param buf The buffer to test
  * @param len The length in bytes of buf
+ * @param all_zero if all the bits in the buf are zero
  *
  * @returns The number of set bits in x (0 <= n <= 32)
  */
-static bool valid_hamming_weight(uint8_t *buf, int len)
+static bool valid_hamming_weight(uint8_t *buf, int len, bool *all_zero)
 {
     int         count;
 
     count = count_ones(buf, len);
 
+    *all_zero = (count == 0);
+
     return ((count == 0) ||
             (count == (len * 8 / 2)));
 }
 
-
-/**
- * @brief Determine if a buffer is filled with a constant value
- *
- * @param buf The buffer to test.
- * @param size The size in bytes of buf,
- * @param val The constant value to check against.
- *
- * @returns Nothing
- */
-static bool is_buf_const(uint8_t *buf, uint32_t size, uint8_t val) {
-    uint32_t val32 = val;
-    val32 |= (val32 << 8);
-    val32 |= (val32 << 16);
-    while (size > sizeof(uint32_t)) {
-        if (*(uint32_t *)buf != val32) {
-            return false;
-        }
-        buf += sizeof(uint32_t);
-        size -= sizeof(uint32_t);
-    }
-
-    while (size > 0) {
-        if (*buf++ != val) {
-            return false;
-        }
-        size--;
-    }
-
-    return true;
-}
-
-
-/**
- * @brief Extract Internal Master Secret (IMS) from e­-Fuse
- *
- * If the IMS is non-zero, compute the Endpoint Unique ID from it.
- *
- * @param endpoint_id Pointer to a 64-bit field, into which will go the
- * calculated endpoint ID
- * @returns True if it calculated an endpoint ID, false if there was no IMS
- * from which to calculate it (get_last_error will return BRE_OK), or if
- * the IMS was deemed invalid (get_last_error will return BRE_EFUSE_BAD_IMS).
- */
-static bool get_endpoint_id(union large_uint * endpoint_id) {
-    /* Establish the default (i.e., no endpoint ID) */
-    bool have_endpoint_id = false;
-    endpoint_id->quad = 0;
-
-    /* Get the IMS and determine the course of action if non-zero */
-    tsb_get_ims(ims_value, IMS_MEANINGFUL_LENGTH);
-    if (!is_buf_const(ims_value, IMS_MEANINGFUL_LENGTH, 0)) {
-        /* Compute Endpoint Unique ID */
-        if (!valid_hamming_weight((uint8_t *)ims_value,
-                                  IMS_MEANINGFUL_LENGTH)) {
-            dbgprint("Bad IMS\n");
-            set_last_error(BRE_EFUSE_BAD_IMS);
-        } else {
-#ifdef _NOCRYPTO
-            /* Some fake value for simulation build */
-            endpoint_id->low = 0x12345678;
-            endpoint_id->high = 0x9ABCDEF0;
-#else
-            /* Calculate a real value from the IMS */
-            int i;
-            /**
-             * The algorithm used to calculate Endpoint Unique ID is:
-             * Y1 = sha256(IMS[0:15] xor copy(0x3d, 16))
-             * Z0 = sha256(Y1 || copy(0x01, 32))
-             * EP_UID[0:7] = sha256(Z0)[0:7]
-             */
-            unsigned char EP_UID[SHA256_HASH_DIGEST_SIZE];
-            unsigned char Y1[SHA256_HASH_DIGEST_SIZE];
-            unsigned char Z0[SHA256_HASH_DIGEST_SIZE];
-            uint32_t temp;
-            uint32_t *pims = (uint32_t *)ims_value;
-
-            hash_start();
-            /*** grab IMS 4bytes at a time and feed that to hash_update */
-            for (i = 0; i < 4; i++) {
-                temp = pims[i] ^ 0x3d3d3d3d;
-                hash_update((unsigned char *)&temp, 1);
-            }
-            hash_final(Y1);
-
-            hash_start();
-            hash_update(Y1, SHA256_HASH_DIGEST_SIZE);
-            temp = 0x01010101;
-            for (i = 0; i < 8; i++) {;
-                hash_update((unsigned char *)&temp, 1);
-            }
-            hash_final(Z0);
-
-            hash_start();
-            hash_update(Z0, SHA256_HASH_DIGEST_SIZE);
-            hash_final(EP_UID);
-
-            memcpy(endpoint_id, EP_UID, 8);
-#endif
-            have_endpoint_id =  true;
-        }
-    }
-
-    return have_endpoint_id;
-}

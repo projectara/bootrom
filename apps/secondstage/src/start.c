@@ -45,6 +45,7 @@
 #include "2ndstage_cfgdata.h"
 #include "greybus.h"
 #include "spi-gb.h"
+#include "secret_keys.h"
 
 /**
  * Temporary macro here to run the S2L as SPI over Greybus.
@@ -149,6 +150,10 @@ void bootrom_main(void) {
             }
         }
     }
+
+    uint8_t ims[TSB_ISAA_NUM_IMS_BYTES];
+    tsb_get_ims(ims, TSB_ISAA_NUM_IMS_BYTES);
+    key_generation(ims);
 
     chip_unipro_init();
 

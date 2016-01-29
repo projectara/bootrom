@@ -46,18 +46,9 @@
 #include "string.h"
 #include "unipro.h"
 #include "communication_area.h"
+#include "secret_keys.h"
 
 #define BOOTROM_SIZE    (16 * 1024)
-
-
-union large_uint {
-  struct {
-    uint32_t low;
-    uint32_t high;
-  };
-  uint64_t quad;
-  uint8_t buffer[8];
-};
 
 //void tsb_get_ims(uint8_t * buf, uint32_t size);
 //void tsb_get_cms(uint8_t * buf, uint32_t size);
@@ -225,76 +216,6 @@ void bootrom_main(void) {
 
     /* Our work is done */
     while(1);
-}
-
-/**
- * Some mistake in ES3 boot ROM makes the EPUID of ES3 different
- * than the spec says
- */
-void calculate_es3_epuid(unsigned char *ims_value,
-                         union large_uint * endpoint_id) {
-    /* same code used in ES3 boot ROM to generate the EUID */
-    int i;
-    unsigned char EP_UID[SHA256_HASH_DIGEST_SIZE];
-    unsigned char Y1[SHA256_HASH_DIGEST_SIZE];
-    unsigned char Z0[SHA256_HASH_DIGEST_SIZE];
-    uint32_t temp;
-    uint32_t *pims = (uint32_t *)ims_value;
-
-    hash_start();
-    /*** grab IMS 4bytes at a time and feed that to hash_update */
-    for (i = 0; i < 4; i++) {
-        temp = pims[i] ^ 0x3d3d3d3d;
-        hash_update((unsigned char *)&temp, 1);
-    }
-    hash_final(Y1);
-
-    hash_start();
-    hash_update(Y1, SHA256_HASH_DIGEST_SIZE);
-    temp = 0x01010101;
-    for (i = 0; i < 8; i++) {;
-        hash_update((unsigned char *)&temp, 1);
-    }
-    hash_final(Z0);
-
-    hash_start();
-    hash_update(Z0, SHA256_HASH_DIGEST_SIZE);
-    hash_final(EP_UID);
-
-    memcpy(endpoint_id, EP_UID, 8);
-}
-
-void calculate_epuid(unsigned char *ims_value,
-                     union large_uint * endpoint_id) {
-    /* same code used in ES3 boot ROM to generate the EUID */
-    int i;
-    unsigned char EP_UID[SHA256_HASH_DIGEST_SIZE];
-    unsigned char Y1[SHA256_HASH_DIGEST_SIZE];
-    unsigned char Z0[SHA256_HASH_DIGEST_SIZE];
-    uint32_t temp;
-    uint32_t *pims = (uint32_t *)ims_value;
-
-    hash_start();
-    /*** grab IMS 4bytes at a time and feed that to hash_update */
-    for (i = 0; i < 4; i++) {
-        temp = pims[i] ^ 0x3d3d3d3d;
-        hash_update((unsigned char *)&temp, sizeof(temp));
-    }
-    hash_final(Y1);
-
-    hash_start();
-    hash_update(Y1, SHA256_HASH_DIGEST_SIZE);
-    temp = 0x01010101;
-    for (i = 0; i < 8; i++) {;
-        hash_update((unsigned char *)&temp, sizeof(temp));
-    }
-    hash_final(Z0);
-
-    hash_start();
-    hash_update(Z0, SHA256_HASH_DIGEST_SIZE);
-    hash_final(EP_UID);
-
-    memcpy(endpoint_id, EP_UID, 8);
 }
 
 void display_epuid(bool calculate, unsigned char *ims) {

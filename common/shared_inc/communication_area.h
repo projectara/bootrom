@@ -64,7 +64,23 @@ typedef enum {
     NUMBER_OF_SHARED_FUNCTIONS
 } shared_function_index;
 
+#define EPSK_SIZE           56
+#define ESSK_SIZE           32
+#define ERGS_SIZE           32
+#define ERRK_N_SIZE         256
+typedef struct {
+    uint8_t epsk[EPSK_SIZE];
+    uint8_t essk[ESSK_SIZE];
+    uint8_t ergs[ERGS_SIZE];
+    uint8_t errk_n[ERRK_N_SIZE];
+} __attribute__ ((packed)) secret_keys_comm_area;
+
+typedef struct {
+    secret_keys_comm_area keys;
+} __attribute__ ((packed)) second_stage_comm_area;
+
 #define COMMUNICATION_AREA_DATA_FIELDS \
+    second_stage_comm_area second_stage; \
     void * shared_functions[NUMBER_OF_SHARED_FUNCTIONS]; \
     unsigned char endpoint_unique_id[EUID_LENGTH]; \
     unsigned char stage_2_firmware_identity[S2_FW_ID_LENGTH]; \

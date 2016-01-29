@@ -62,6 +62,10 @@ CMN_CSRC += $(CMN_SRCDIR)/error.c
 endif
 
 CMN_CSRC += $(CMN_SRCDIR)/crypto.c
+CMN_CSRC += $(CMN_SRCDIR)/epuid.c
+ifeq ($(BOOT_STAGE), 2)
+CMN_CSRC += $(CMN_SRCDIR)/secret_keys.c
+endif
 CMN_CSRC += $(CMN_SRCDIR)/utils.c
 CMN_CSRC += $(CMN_SRCDIR)/ara_mailbox.c
 CMN_CSRC += $(CMN_SRCDIR)/gbcore.c

@@ -59,7 +59,7 @@ MIRACL_CFLAGS = -D MCL_BUILD_ARM -D MCL_CHUNK=$(MCL_CHUNK) \
                 -D MCL_CHOICE1=$(MCL_CHOICE1) -D MCL_FFLEN1=$(MCL_FFLEN) \
                 -D MCL_CHOICE2=$(MCL_CHOICE2) -D MCL_FFLEN2=$(MCL_FFLEN) \
                 -D MCL_FFLEN3=$(MCL_FFLEN) -D MCL_FFLEN=$(MCL_FFLEN) \
-                $(DRFLAGS)
+                $(DRFLAGS) -D MCL_CHOICE=$(MCL_CHOICE1)
 
 $(MIRACL_OUTDIR)/$(DREC1)/lib/libmclcurve%.a $(MIRACL_OUTDIR)/$(DREC2)/lib/libmclcurve%.a:
 	@ echo Building $@
