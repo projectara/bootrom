@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include <crypto.h>
 
+#define S2LCFG_MAX_SIZE 1024
+
 #define SECONDSTAGE_CFG_SENTINEL_SIZE 16
 /**
  * config data sentinel value. It is a 16bytes char array. The trailing '\0'

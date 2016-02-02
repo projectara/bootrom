@@ -33,13 +33,13 @@
 #include "2ndstage_cfgdata.h"
 #include "debug.h"
 
-extern secondstage_cfgdata _stage2_config;
+static __attribute__((section(".s2lcfg"))) uint8_t s2l_buf[S2LCFG_MAX_SIZE];
 
 int get_2ndstage_cfgdata(secondstage_cfgdata **cfgdata) {
     static bool initialized = false;
     static int valid = -1;
 
-    *cfgdata = &_stage2_config;
+    *cfgdata = (secondstage_cfgdata *)s2l_buf;
 
     if (initialized == true) {
         return valid;
