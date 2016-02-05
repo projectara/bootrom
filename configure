@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Get the path of this script (works even if this script is sourced and not
+# executed, but won't work with symlink)
+SCRIPT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd )
+
 if [ "$1" != "" ]
 then
 	CONFIG_CHIP=$1
@@ -8,14 +12,14 @@ else
 fi
 
 echo "Configuring for chip "${CONFIG_CHIP}
-DEFCONFIG=chips/${CONFIG_CHIP}/defconfig
+DEFCONFIG=${SCRIPT_PATH}/chips/${CONFIG_CHIP}/defconfig
 if test ! -f ${DEFCONFIG}
 then
 	echo "ERROR - invalid chip name \""${CONFIG_CHIP}"\" to be configured"
 	echo "Valid chip names currently supported are:"
-	for chip in `ls chips/`
+	for chip in `ls ${SCRIPT_PATH}/chips/`
 	do
-		if test -f chips/${chip}/defconfig
+		if test -f ${SCRIPT_PATH}/chips/${chip}/defconfig
 		then
 			echo "	${chip}"
 		fi
@@ -23,7 +27,7 @@ then
 	exit 1
 fi
 
-cp ${DEFCONFIG} .config
+cp ${DEFCONFIG} ${SCRIPT_PATH}/.config
 
 # Echo Vendor/Product ids to .config, used only for es2
 if [ "$2" != "" ]; then
@@ -38,5 +42,5 @@ else
 	BOOTROM_MODULE_PID=0
 fi
 
-echo "CONFIG_BOOTROM_MODULE_VID=$BOOTROM_MODULE_VID" >> .config
-echo "CONFIG_BOOTROM_MODULE_PID=$BOOTROM_MODULE_PID" >> .config
+echo "CONFIG_BOOTROM_MODULE_VID=$BOOTROM_MODULE_VID" >> ${SCRIPT_PATH}/.config
+echo "CONFIG_BOOTROM_MODULE_PID=$BOOTROM_MODULE_PID" >> ${SCRIPT_PATH}/.config
