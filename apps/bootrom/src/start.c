@@ -42,6 +42,7 @@
 #include "ffff.h"
 #include "crypto.h"
 #include "bootrom.h"
+#include "greybus.h"
 
 extern data_load_ops spi_ops;
 extern data_load_ops greybus_ops;
@@ -166,6 +167,11 @@ void bootrom_main(void) {
         dbgprintx32("Boot over UniPro (",
                     merge_errno_with_boot_status(boot_status),
                     ")\n");
+
+        if (greybus_init()) {
+            halt_and_catch_fire(boot_status);
+        }
+
         advertise_ready();
         dbgprint("Ready-poked; download-ready\n");
         if (greybus_ops.init() != 0) {
