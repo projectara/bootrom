@@ -122,6 +122,7 @@ static int gb_spi_type_device_config(uint32_t cportid,
     payload.mode = cpu_to_le16(dev_cfg.mode);
     payload.bpw = cpu_to_le32(dev_cfg.bpw);
     payload.max_speed_hz = cpu_to_le32(dev_cfg.max_speed_hz);
+    payload.device_type = dev_cfg.device_type;
     memcpy(payload.name, dev_cfg.name, sizeof(dev_cfg.name));
     return greybus_op_response(cportid,
                                op_header,

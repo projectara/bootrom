@@ -103,6 +103,11 @@ struct gb_spi_device_config_response {
     __u8    bpw;
     /** max speed be set in device */
     __le32  max_speed_hz;
+    /** device type */
+    __u8	device_type;
+#define GB_SPI_SPI_DEV		0x00
+#define GB_SPI_SPI_NOR		0x01
+#define GB_SPI_SPI_MODALIAS	0x02
     /** chip name */
     __u8    name[32];
 } __packed;

@@ -110,7 +110,7 @@
  * case "flashcp" on AP can be used to program the SPI ROM here
  */
 static struct device_spi_cfg chips_info[CONFIG_SPI_MAX_CHIPS] = {
-    {0, 8, CONFIG_SPI_MAX_FREQ, "w25q16dw"},
+    {0, 8, CONFIG_SPI_MAX_FREQ, GB_SPI_SPI_NOR, "w25q16dw"},
 };
 
 extern int spi_clk_usage_count;
@@ -345,6 +345,7 @@ static int es3_get_device_cfg(struct device *dev,
     dev_cfg->mode = info->dev_cfg[cs].mode;
     dev_cfg->bpw = info->dev_cfg[cs].bpw;
     dev_cfg->max_speed_hz = info->dev_cfg[cs].max_speed_hz;
+    dev_cfg->device_type = info->dev_cfg[cs].device_type;
     memcpy(dev_cfg->name, &info->dev_cfg[cs].name,
            sizeof(info->dev_cfg[cs].name));
     return 0;

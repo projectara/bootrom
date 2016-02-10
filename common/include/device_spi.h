@@ -120,6 +120,8 @@ struct device_spi_cfg {
     uint8_t bpw;
     /** max speed be set in device */
     uint32_t max_speed_hz;
+    /** device type */
+    uint8_t	device_type;
     /** chip name */
     uint8_t name[32];
 };
